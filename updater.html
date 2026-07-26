@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方塊世界 一鍵更新</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"PingFang TC","Microsoft JhengHei",sans-serif; background:#1a1d24; color:#eee; padding:20px; min-height:100vh; }
+  .card { max-width:520px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:4px; }
+  .sub { color:#8a9; font-size:13px; margin-bottom:18px; }
+  label { display:block; font-size:14px; color:#bcd; margin:14px 0 6px; }
+  input[type=text], input[type=password] { width:100%; padding:12px; border-radius:10px; border:1px solid #445; background:#232733; color:#fff; font-size:15px; }
+  .filebox { margin-top:8px; border:2px dashed #567; border-radius:12px; padding:22px; text-align:center; background:#20242e; }
+  .filebox.ok { border-color:#5c5; background:#1e2a1e; }
+  .filebox input { display:none; }
+  .filebtn { display:inline-block; background:#2c5f8a; color:#fff; padding:10px 22px; border-radius:8px; font-size:15px; }
+  #fileName { margin-top:10px; font-size:13px; color:#9fd68f; word-break:break-all; }
+  .go { width:100%; margin-top:22px; padding:16px; font-size:19px; border:none; border-radius:12px; background:#3a7d2c; color:#fff; font-weight:bold; }
+  .go:disabled { background:#444; color:#888; }
+  #status { margin-top:16px; padding:12px; border-radius:10px; font-size:14px; line-height:1.7; display:none; }
+  #status.info { display:block; background:#223; }
+  #status.good { display:block; background:#1e3a1e; color:#9fd68f; }
+  #status.bad { display:block; background:#3a1e1e; color:#f99; }
+  details { margin-top:24px; font-size:13px; color:#aab; }
+  summary { cursor:pointer; color:#8ac; padding:6px 0; }
+  details ol { margin:8px 0 8px 20px; line-height:1.9; }
+  a { color:#8ac; }
+  .small { font-size:12px; color:#778; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🎮 方塊世界 一鍵更新</h1>
+  <div class="sub">選擇新版遊戲檔案 → 按更新 → 一分鐘後網站就是新版</div>
+
+  <label>GitHub Token（只需輸入一次，會記住）</label>
+  <input type="password" id="token" placeholder="ghp_ 或 github_pat_ 開頭的一串文字">
+  <div class="small">Token 只存在這支手機裡，不會傳給任何其他人</div>
+
+  <label>要更新的遊戲檔案（.html）</label>
+  <div class="filebox" id="fileBox">
+    <label class="filebtn" for="file">📂 選擇檔案</label>
+    <input type="file" id="file" accept=".html,text/html">
+    <div id="fileName">尚未選擇</div>
+  </div>
+
+  <button class="go" id="goBtn" disabled>🚀 更新到網站</button>
+  <div id="status"></div>
+
+  <details>
+    <summary>❓ 第一次使用：如何取得 Token（只要做一次）</summary>
+    <ol>
+      <li>Safari 開 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a></li>
+      <li>Token name 隨便取（例如 blockworld）</li>
+      <li>Expiration 選 <b>Custom</b> 挑一年後的日期（或 90 days）</li>
+      <li>Repository access 選 <b>Only select repositories</b> → 勾 <b>block-world</b></li>
+      <li>Permissions → Repository permissions → 找到 <b>Contents</b> → 選 <b>Read and write</b></li>
+      <li>按最下面 <b>Generate token</b> → 把整串文字複製，貼到上面的欄位</li>
+    </ol>
+  </details>
+</div>
+
+<script>
+(function(){
+const OWNER='jummychang-juju', REPO='block-world', PATH='index.html', BRANCH='main';
+const $=id=>document.getElementById(id);
+let fileContent=null;
+
+try{ const t=localStorage.getItem('bw_token'); if(t) $('token').value=t; }catch(e){}
+
+function refresh(){
+  $('goBtn').disabled = !($('token').value.trim() && fileContent);
+}
+$('token').addEventListener('input',refresh);
+
+$('file').addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    fileContent=r.result;
+    if(fileContent.indexOf('<html')===-1){
+      status('bad','⚠️ 這不像是遊戲的 HTML 檔案，請確認選對檔案');
+      fileContent=null;
+    } else {
+      $('fileBox').classList.add('ok');
+      $('fileName').textContent='✅ '+f.name+'（'+Math.round(f.size/1024)+' KB）';
+      status('info','檔案已讀取，按下方按鈕開始更新');
+    }
+    refresh();
+  };
+  r.readAsText(f,'utf-8');
+});
+
+function status(cls,msg){ const s=$('status'); s.className=cls; s.innerHTML=msg; }
+
+function toBase64(str){
+  const bytes=new TextEncoder().encode(str);
+  let bin='';
+  for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
+  return btoa(bin);
+}
+
+$('goBtn').addEventListener('click',async ()=>{
+  const token=$('token').value.trim();
+  try{ localStorage.setItem('bw_token',token); }catch(e){}
+  $('goBtn').disabled=true;
+  status('info','⏳ 正在連線 GitHub…');
+  const api=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
+  const headers={ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' };
+  try{
+    /* 1. 取得目前檔案的 sha */
+    let sha=null;
+    const g=await fetch(api+'?ref='+BRANCH,{headers});
+    if(g.status===200){ sha=(await g.json()).sha; }
+    else if(g.status===401){ throw new Error('Token 無效或過期，請重新產生一個'); }
+    else if(g.status===404){ /* 檔案不存在也沒關係，直接建立 */ }
+    else if(g.status===403){ throw new Error('Token 權限不足：要勾 block-world 並給 Contents 讀寫權限'); }
+    status('info','⏳ 正在上傳新版本…');
+    /* 2. 上傳新內容 */
+    const body={ message:'更新方塊世界 '+new Date().toLocaleString('zh-TW'), content:toBase64(fileContent), branch:BRANCH };
+    if(sha) body.sha=sha;
+    const p=await fetch(api,{method:'PUT',headers,body:JSON.stringify(body)});
+    if(p.status===200||p.status===201){
+      status('good','🎉 <b>更新成功！</b><br>等 1～2 分鐘後打開遊戲就是新版：<br><a href="https://'+OWNER+'.github.io/'+REPO+'/" target="_blank">https://'+OWNER+'.github.io/'+REPO+'/</a><br><span style="color:#889">若畫面沒變，關掉網頁重開一次即可</span>');
+    } else {
+      const err=await p.json().catch(()=>({}));
+      throw new Error('上傳失敗（'+p.status+'）'+(err.message?'：'+err.message:''));
+    }
+  }catch(err){
+    status('bad','❌ '+err.message);
+  }
+  $('goBtn').disabled=false;
+});
+})();
+</script>
+</body>
+</html>
