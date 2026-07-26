@@ -15,58 +15,107 @@
   #crosshair:before { left:8px; top:0; width:2px; height:18px; }
   #crosshair:after { left:0; top:8px; width:18px; height:2px; }
 
-  #hotbar { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); display:flex; gap:4px; z-index:10; }
-  .slot { width:44px; height:44px; border:2px solid rgba(255,255,255,.45); background:rgba(0,0,0,.35); border-radius:4px; display:flex; align-items:center; justify-content:center; position:relative; }
+  #hotbar { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); display:flex; gap:4px; z-index:10; max-width:96vw; overflow-x:auto; padding:4px; }
+  .slot { flex:0 0 auto; width:42px; height:42px; border:2px solid rgba(255,255,255,.45); background:rgba(0,0,0,.35); border-radius:4px; display:flex; align-items:center; justify-content:center; position:relative; }
   .slot.sel { border-color:#fff; background:rgba(255,255,255,.18); box-shadow:0 0 0 2px rgba(255,255,255,.35); }
-  .slot canvas { width:32px; height:32px; image-rendering:pixelated; }
-  .slot .num { position:absolute; top:1px; left:3px; font-size:9px; color:rgba(255,255,255,.7); }
+  .slot canvas { width:30px; height:30px; image-rendering:pixelated; }
+  .slot .num { position:absolute; top:0; left:3px; font-size:9px; color:rgba(255,255,255,.7); }
 
-  .btn { position:fixed; z-index:10; border:none; border-radius:50%; background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.5); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; }
+  .btn { position:fixed; z-index:10; border-radius:50%; background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.5); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; }
   .btn:active { background:rgba(255,255,255,.25); }
   #btnJump { right:24px; bottom:96px; width:64px; height:64px; }
-  #btnMine { right:104px; bottom:150px; width:56px; height:56px; }
-  #btnPlace { right:34px; bottom:180px; width:56px; height:56px; }
+  #btnDown { right:104px; bottom:88px; width:52px; height:52px; display:none; }
+  #btnMine { right:104px; bottom:158px; width:56px; height:56px; }
+  #btnPlace { right:34px; bottom:186px; width:56px; height:56px; }
+  #btnFly { right:112px; bottom:236px; width:44px; height:44px; font-size:18px; }
+  #btnFly.on { background:rgba(120,200,255,.45); border-color:#9df; }
+  #btnAct { right:34px; bottom:262px; width:52px; height:52px; display:none; background:rgba(80,160,60,.5); }
 
-  #topbar { position:fixed; top:10px; right:10px; display:flex; gap:8px; z-index:10; }
-  .tbtn { border:none; border-radius:8px; padding:8px 14px; background:rgba(0,0,0,.5); color:#fff; font-size:14px; border:1px solid rgba(255,255,255,.4); }
-  .tbtn:active { background:rgba(255,255,255,.2); }
+  #btnMenu { position:fixed; top:10px; left:10px; z-index:10; border-radius:10px; padding:8px 14px; background:rgba(0,0,0,.5); color:#fff; font-size:18px; border:1px solid rgba(255,255,255,.4); }
+  #hearts { position:fixed; top:12px; left:64px; z-index:10; font-size:15px; letter-spacing:1px; text-shadow:0 1px 2px #000; pointer-events:none; white-space:nowrap; }
+  #statusBar { position:fixed; top:38px; left:64px; z-index:10; font-size:14px; color:#fff; text-shadow:0 1px 2px #000; display:flex; gap:10px; align-items:center; }
+  #statusBar .food { background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.4); border-radius:12px; padding:3px 8px; }
+  #dayIcon { position:fixed; top:12px; right:12px; z-index:10; font-size:22px; text-shadow:0 1px 3px #000; pointer-events:none; }
 
-  #joyZone { position:fixed; left:0; bottom:0; width:45%; height:55%; z-index:8; }
-  #joyBase { position:absolute; width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.35); display:none; }
-  #joyKnob { position:absolute; width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.5); left:31px; top:31px; }
-
-  #toast { position:fixed; top:56px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; z-index:20; opacity:0; transition:opacity .3s; pointer-events:none; }
+  #toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; z-index:20; opacity:0; transition:opacity .3s; pointer-events:none; }
   #toast.show { opacity:1; }
 
-  #startOverlay { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; gap:14px; padding:20px; }
-  #startOverlay h1 { font-size:34px; letter-spacing:6px; text-shadow:3px 3px 0 #3a7d2c; }
-  #startOverlay p { color:#ccc; font-size:14px; line-height:1.8; max-width:420px; }
-  #startBtn { font-size:18px; padding:12px 40px; border-radius:8px; border:2px solid #fff; background:#3a7d2c; color:#fff; }
-  #startBtn:active { background:#4d9c3a; }
+  #hurtFlash { position:fixed; inset:0; background:rgba(255,0,0,.35); z-index:15; opacity:0; pointer-events:none; transition:opacity .4s; }
+
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; gap:12px; padding:16px; }
+  .overlay h1 { font-size:34px; letter-spacing:6px; text-shadow:3px 3px 0 #3a7d2c; }
+  .overlay h2 { font-size:24px; letter-spacing:3px; }
+  .overlay p { color:#ccc; font-size:13px; line-height:1.7; max-width:460px; }
+  .obtn { font-size:16px; padding:11px 32px; border-radius:8px; border:2px solid #fff; background:#3a7d2c; color:#fff; min-width:210px; }
+  .obtn:active { background:#4d9c3a; }
+  .obtn.gray { background:#555; }
+  .obtn.red { background:#a33; }
   #saveInfo { font-size:13px; color:#9fd68f; }
+  #deathOverlay { background:rgba(120,0,0,.6); display:none; }
+  #pauseOverlay { display:none; }
+
+  #craftOverlay { display:none; z-index:32; background:rgba(20,15,10,.92); justify-content:flex-start; padding-top:34px; overflow-y:auto; }
+  #craftOverlay h2 { color:#ffd66e; }
+  #invRow { font-size:15px; background:rgba(255,255,255,.08); border-radius:10px; padding:8px 14px; line-height:1.9; max-width:480px; }
+  .recipe { display:flex; align-items:center; justify-content:space-between; gap:10px; width:min(480px,92vw); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.2); border-radius:10px; padding:9px 12px; }
+  .recipe .rname { text-align:left; font-size:15px; }
+  .recipe .rcost { font-size:12px; color:#bbb; }
+  .rbtn { border:none; border-radius:8px; padding:8px 16px; font-size:14px; background:#3a7d2c; color:#fff; white-space:nowrap; }
+  .rbtn:disabled { background:#444; color:#888; }
+  .rbtn.equip { background:#2c5f8a; }
+  .rbtn.equipped { background:#886a00; }
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="crosshair"></div>
 <div id="hotbar"></div>
+<div id="hurtFlash"></div>
 
-<div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
+<div id="joyZone" style="position:fixed;left:0;bottom:0;width:45%;height:55%;z-index:8;">
+  <div id="joyBase" style="position:absolute;left:26px;bottom:110px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);">
+    <div id="joyKnob" style="position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.8);left:29px;top:29px;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>
+  </div>
+</div>
 <button class="btn" id="btnJump">⬆</button>
+<button class="btn" id="btnDown">⬇</button>
 <button class="btn" id="btnMine">⛏</button>
 <button class="btn" id="btnPlace">🧱</button>
+<button class="btn" id="btnFly">🕊</button>
+<button class="btn" id="btnAct">🔨</button>
 
-<div id="topbar">
-  <button class="tbtn" id="btnSave">💾 儲存</button>
-  <button class="tbtn" id="btnNew">🌍 新世界</button>
-</div>
+<button id="btnMenu">☰</button>
+<div id="hearts"></div>
+<div id="statusBar"></div>
+<div id="dayIcon">☀️</div>
 <div id="toast"></div>
 
-<div id="startOverlay">
+<div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
-  <button id="startBtn">開始遊戲</button>
+  <button class="obtn" id="startBtn">開始遊戲</button>
+</div>
+
+<div class="overlay" id="pauseOverlay">
+  <h2>⏸ 遊戲暫停</h2>
+  <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
+  <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
+  <button class="obtn gray" id="newWorldBtn">🌍 建立新世界</button>
+  <button class="obtn red" id="exitBtn">🚪 退出遊戲</button>
+</div>
+
+<div class="overlay" id="deathOverlay">
+  <h2>💀 你死掉了！</h2>
+  <p>別灰心，重生後再來一次！</p>
+  <button class="obtn" id="respawnBtn">🔄 重生</button>
+</div>
+
+<div class="overlay" id="craftOverlay">
+  <h2>🔨 合成台</h2>
+  <div id="invRow"></div>
+  <div id="recipeList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  <button class="obtn gray" id="craftCloseBtn" style="margin-top:6px;">關閉</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -75,20 +124,21 @@
 "use strict";
 
 /* ================= 基本設定 ================= */
-const WX=64, WY=40, WZ=64;       // 世界尺寸
-const CHUNK=16;                   // 區塊大小
-const SEA=9;                      // 海平面
+const WX=64, WY=40, WZ=64;
+const CHUNK=16;
+const SEA=9;
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
-const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8, BEDROCK=9, WATER=10, BRICK=11;
-const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊"};
-const HOTBAR = [GRASS,DIRT,STONE,SAND,WOOD,LEAF,PLANK,GLASS,BRICK];
+const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8, BEDROCK=9, WATER=10, BRICK=11, TNT=12, GLOW=13,
+      COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24;
+const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
+  14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"玉髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台"};
+const HOTBAR = [GRASS,DIRT,STONE,SAND,WOOD,LEAF,PLANK,GLASS,BRICK,TNT,GLOW,OBSID,CRAFT];
 
 /* ================= 亂數 ================= */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 let seed = (Math.random()*1e9)|0;
 
-/* 2D 值雜訊 */
 function makeNoise(sd){
   const r = mulberry32(sd);
   const perm = new Uint8Array(512);
@@ -106,16 +156,28 @@ function makeNoise(sd){
   };
 }
 
-/* ================= 世界資料 ================= */
-const world = new Uint8Array(WX*WY*WZ);
-const genWorld = new Uint8Array(WX*WY*WZ);
-const diffs = new Map();
+/* ================= 世界資料（雙維度） ================= */
+const N = WX*WY*WZ;
+const dims = {
+  over:   { world:new Uint8Array(N), gen:new Uint8Array(N), diffs:new Map(), made:false },
+  nether: { world:new Uint8Array(N), gen:new Uint8Array(N), diffs:new Map(), made:false }
+};
+let dim='over';
+let world=dims.over.world, genWorld=dims.over.gen, diffs=dims.over.diffs;
+
 const idx = (x,y,z)=> (x*WZ + z)*WY + y;
 const inBounds = (x,y,z)=> x>=0&&x<WX&&y>=0&&y<WY&&z>=0&&z<WZ;
 const getB = (x,y,z)=> inBounds(x,y,z) ? world[idx(x,y,z)] : AIR;
 
-function generate(sd){
-  world.fill(0);
+let graveyard={x:20,z:20};
+
+function topSolid(w,x,z){
+  for(let y=WY-1;y>=0;y--){ const b=w[idx(x,y,z)]; if(b!==AIR&&b!==WATER&&b!==LAVA) return y; }
+  return 0;
+}
+
+function generateOver(sd, w){
+  w.fill(0);
   const n1 = makeNoise(sd), n2 = makeNoise(sd^0x9e3779b9);
   const rng = mulberry32(sd^0x1234);
   const hmap = new Float32Array(WX*WZ);
@@ -131,30 +193,123 @@ function generate(sd){
       else if(y<h-2) id=STONE;
       else if(y<h) id=DIRT;
       else id = (h<=SEA+1) ? SAND : GRASS;
-      world[idx(x,y,z)]=id;
+      w[idx(x,y,z)]=id;
     }
-    if(h<SEA) for(let y=h+1;y<=SEA;y++) world[idx(x,y,z)]=WATER;
+    if(h<SEA) for(let y=h+1;y<=SEA;y++) w[idx(x,y,z)]=WATER;
   }
-  // 樹
+  /* 礦物（含玉髓）與深層岩漿 */
+  const oreRng = mulberry32(sd^0x5555aa);
+  for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=1;y<WY;y++){
+    if(w[idx(x,y,z)]!==STONE) continue;
+    const r=oreRng();
+    if(y<=3 && r<0.13) w[idx(x,y,z)]=LAVA;
+    else if(y<6 && r<0.006+0.13) w[idx(x,y,z)] = r<0.006+0.13 && r>=0.13 ? DIAMOND : w[idx(x,y,z)];
+    else if(y<9 && r<0.016) w[idx(x,y,z)]=GOLD;
+    else if(y<12 && r<0.028) w[idx(x,y,z)]=CHAL;
+    else if(y<14 && r<0.055) w[idx(x,y,z)]=IRON;
+    else if(r<0.085) w[idx(x,y,z)]=COAL;
+  }
+  /* 修正鑽石判斷（簡化重跑一次極深層） */
+  const dRng = mulberry32(sd^0x77dd);
+  for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=1;y<6;y++){
+    if(w[idx(x,y,z)]===STONE && dRng()<0.008) w[idx(x,y,z)]=DIAMOND;
+  }
+  /* 樹 */
   for(let x=3;x<WX-3;x++) for(let z=3;z<WZ-3;z++){
     const h=hmap[x*WZ+z];
-    if(world[idx(x,h,z)]===GRASS && rng()<0.012 && h+7<WY){
+    if(w[idx(x,h,z)]===GRASS && rng()<0.012 && h+7<WY){
       const th = 4 + (rng()*2|0);
-      for(let y=1;y<=th;y++) world[idx(x,h+y,z)]=WOOD;
+      for(let y=1;y<=th;y++) w[idx(x,h+y,z)]=WOOD;
       for(let dy=-2;dy<=1;dy++) for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++){
         const dist=Math.abs(dx)+Math.abs(dz)+Math.abs(dy-0.5);
         if(dist<=3.6 && !(dx===0&&dz===0&&dy<=0)){
           const px=x+dx, py=h+th+dy, pz=z+dz;
-          if(inBounds(px,py,pz) && world[idx(px,py,pz)]===AIR) world[idx(px,py,pz)]=LEAF;
+          if(inBounds(px,py,pz) && w[idx(px,py,pz)]===AIR) w[idx(px,py,pz)]=LEAF;
         }
       }
     }
   }
-  genWorld.set(world);
+  /* 地表岩漿池（周圍生成黑曜石） */
+  const lRng = mulberry32(sd^0xfeed);
+  for(let p=0;p<2;p++){
+    const lx=6+((lRng()*(WX-12))|0), lz=6+((lRng()*(WZ-12))|0);
+    const h=topSolid(w,lx,lz);
+    if(h<=SEA) continue;
+    for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++){
+      const d=Math.hypot(dx,dz);
+      const x=lx+dx, z=lz+dz;
+      if(!inBounds(x,h,z)) continue;
+      if(d<=1.6) w[idx(x,h,z)]=LAVA;
+      else if(d<=2.6) w[idx(x,h,z)]=OBSID;
+    }
+  }
+  /* 墓地：柵欄圍起的墓碑區，晚上殭屍特別多 */
+  const gRng = mulberry32(sd^0xdead);
+  graveyard.x = 8+((gRng()*(WX-24))|0);
+  graveyard.z = 8+((gRng()*(WZ-24))|0);
+  const gx=graveyard.x, gz=graveyard.z;
+  for(let i=0;i<3;i++) for(let j=0;j<2;j++){
+    const x=gx+i*3, z=gz+j*4;
+    if(!inBounds(x,0,z+1)) continue;
+    const h=topSolid(w,x,z);
+    if(h<SEA||h+3>=WY) continue;
+    w[idx(x,h+1,z)]=DIRT;                 /* 墳丘 */
+    const h2=topSolid(w,x,z+1);
+    w[idx(x,h2+1,z+1)]=STONE;             /* 墓碑 */
+    w[idx(x,h2+2,z+1)]=STONE;
+  }
+  /* 木柵欄 */
+  for(let x=gx-2;x<=gx+8;x++) for(let z=gz-2;z<=gz+6;z++){
+    if(x!==gx-2&&x!==gx+8&&z!==gz-2&&z!==gz+6) continue;
+    if(!inBounds(x,0,z)) continue;
+    if((x+z)%2===0) continue;             /* 間隔柵欄 */
+    const h=topSolid(w,x,z);
+    if(h<SEA||h+1>=WY) continue;
+    w[idx(x,h+1,z)]=PLANK;
+  }
+}
+
+function generateNether(sd, w){
+  w.fill(0);
+  const n1=makeNoise(sd^0x666), n2=makeNoise(sd^0x999);
+  const rng=mulberry32(sd^0x6b6b);
+  for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++){
+    const fH = Math.floor(4 + n1(x/13,z/13)*8);
+    const cH = Math.floor(WY-5 - n2(x/15,z/15)*9);
+    for(let y=0;y<WY;y++){
+      let id=AIR;
+      if(y===0||y===WY-1) id=BEDROCK;
+      else if(y<=fH || y>=cH) id=NETHER;
+      w[idx(x,y,z)]=id;
+    }
+    /* 岩漿海 */
+    for(let y=fH+1;y<=7;y++) if(w[idx(x,y,z)]===AIR) w[idx(x,y,z)]=LAVA;
+    /* 靈魂沙 */
+    if(rng()<0.18 && fH>7) w[idx(x,fH,z)]=SOUL;
+    /* 天花板發光石 */
+    if(rng()<0.035 && cH<WY-2){
+      w[idx(x,cH,z)]=GLOW;
+      if(rng()<0.5 && cH-1>8) w[idx(x,cH-1,z)]=GLOW;
+    }
+    /* 地獄裡也有礦：石英當玉髓看 */
+    for(let y=1;y<=fH;y++) if(w[idx(x,y,z)]===NETHER && rng()<0.02) w[idx(x,y,z)]=GLOW;
+  }
+}
+
+function ensureDim(d){
+  const D=dims[d];
+  if(D.made) return;
+  if(d==='over') generateOver(seed, D.gen); else generateNether(seed, D.gen);
+  D.world.set(D.gen);
+  for(const [k,v] of D.diffs){
+    const [x,y,z]=k.split(',').map(Number);
+    D.world[idx(x,y,z)]=v;
+  }
+  D.made=true;
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=13;
+const TILE=16, NTILES=27;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -172,19 +327,72 @@ function drawTile(i, base, noiseAmt, fn){
   }
   actx.putImageData(img, i*TILE, 0);
 }
-drawTile(0,[95,169,73],18);                                        // 草頂
-drawTile(1,[134,96,67],14,(x,y,r,b)=> y<4 ? [95,169,73,255] : (y<5&&r()<0.5?[95,169,73,255]:[b[0],b[1],b[2],255])); // 草側
-drawTile(2,[134,96,67],16);                                        // 泥土
-drawTile(3,[128,128,128],14);                                      // 石頭
-drawTile(4,[219,207,163],10);                                      // 沙
-drawTile(5,[103,82,49],10,(x,y,r,b)=> (x===0||x===15)?[80,62,36,255]:[b[0],b[1],b[2],255]); // 木側
-drawTile(6,[168,140,95],8,(x,y)=>{const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));return d>6?[103,82,49,255]:(((d|0)%2)?[150,122,80,255]:[178,148,100,255]);}); // 木頂年輪
-drawTile(7,[58,124,44],22,(x,y,r)=> r()<0.12?[40,95,32,255]:[58,124,44,255]);  // 樹葉
-drawTile(8,[168,133,86],10,(x,y)=> (y%4===3||((y<4?x===7:(y<8?x===15:(y<12?x===3:x===11))))&&false)?[120,95,60,255]:[(y%4===3)?130:168,(y%4===3)?100:133,(y%4===3)?66:86,255]); // 木板
-drawTile(9,[210,235,240],0,(x,y)=>{const edge=x===0||y===0||x===15||y===15;const streak=(x+y)%7===0&&x>2&&x<13;return edge?[255,255,255,180]:(streak?[255,255,255,120]:[210,235,240,40]);}); // 玻璃
-drawTile(10,[45,45,45],25);                                        // 基岩
-drawTile(11,[52,110,198],8,(x,y,r)=> [52,110,198, 165]);           // 水
-drawTile(12,[150,70,60],10,(x,y)=>{const m=(y%4===3)||((y<4?x===7:(y<8?x===2:(y<12?x===10:x===5)))===true&&(x!==0));return m?[188,188,188,255]:[150,70,60,255];}); // 磚
+drawTile(0,[95,169,73],18);
+drawTile(1,[134,96,67],14,(x,y,r,b)=> y<4 ? [95,169,73,255] : (y<5&&r()<0.5?[95,169,73,255]:[b[0],b[1],b[2],255]));
+drawTile(2,[134,96,67],16);
+drawTile(3,[128,128,128],14);
+drawTile(4,[219,207,163],10);
+drawTile(5,[103,82,49],10,(x,y,r,b)=> (x===0||x===15)?[80,62,36,255]:[b[0],b[1],b[2],255]);
+drawTile(6,[168,140,95],8,(x,y)=>{const d=Math.max(Math.abs(x-7.5),Math.abs(y-7.5));return d>6?[103,82,49,255]:(((d|0)%2)?[150,122,80,255]:[178,148,100,255]);});
+drawTile(7,[58,124,44],22,(x,y,r)=> r()<0.12?[40,95,32,255]:[58,124,44,255]);
+drawTile(8,[168,133,86],10,(x,y)=> [(y%4===3)?130:168,(y%4===3)?100:133,(y%4===3)?66:86,255]);
+drawTile(9,[210,235,240],0,(x,y)=>{const edge=x===0||y===0||x===15||y===15;const streak=(x+y)%7===0&&x>2&&x<13;return edge?[255,255,255,180]:(streak?[255,255,255,120]:[210,235,240,40]);});
+drawTile(10,[45,45,45],25);
+drawTile(11,[52,110,198],8,()=> [52,110,198,165]);
+drawTile(12,[150,70,60],10,(x,y)=>{const m=(y%4===3)||((y<4?x===7:(y<8?x===2:(y<12?x===10:x===5)))===true&&(x!==0));return m?[188,188,188,255]:[150,70,60,255];});
+drawTile(13,[196,60,44],8,(x,y)=>{
+  if(y>=5&&y<=10){
+    const on = (y>=6&&y<=9) && ((x>=1&&x<=2)||(x===4)||(x>=6&&x<=7)||(x===9)||(x>=11&&x<=12)||(x===14));
+    return on?[40,40,40,255]:[235,230,215,255];
+  }
+  return [196,60,44,255];
+});
+drawTile(14,[255,214,90],12,(x,y)=>{
+  const g=((x>>2)+(y>>2))%2===0;
+  return g?[255,224,110,255]:[240,180,60,255];
+});
+function oreTile(i, oreCol, bg){
+  const B = bg||[128,128,128];
+  drawTile(i,B,14,(x,y)=>{
+    const spots=[[3,3],[4,3],[3,4],[10,5],[11,5],[10,6],[5,10],[6,10],[6,11],[12,12],[12,11],[13,12]];
+    for(const s of spots) if(x===s[0]&&y===s[1]) return [oreCol[0],oreCol[1],oreCol[2],255];
+    return [B[0],B[1],B[2],255];
+  });
+}
+oreTile(15,[35,35,35]);       /* 煤 */
+oreTile(16,[216,167,124]);    /* 鐵 */
+oreTile(17,[250,215,80]);     /* 金 */
+oreTile(18,[95,225,230]);     /* 鑽石 */
+oreTile(19,[205,140,235]);    /* 玉髓：紫水晶點 */
+/* 黑曜石 (20) */
+drawTile(20,[28,20,42],8,(x,y,r)=> r()<0.1?[70,45,110,255]:[28,20,42,255]);
+/* 岩漿 (21) */
+drawTile(21,[240,120,20],20,(x,y,r)=>{
+  const s=Math.sin(x*0.9)+Math.cos(y*0.8);
+  return s>0.9?[255,220,80,255]:(s<-0.9?[190,60,10,255]:[240,120,20,255]);
+});
+/* 地獄岩 (22) */
+drawTile(22,[110,40,40],16,(x,y,r)=> r()<0.15?[80,25,25,255]:[110,40,40,255]);
+/* 地獄門 (23) */
+drawTile(23,[120,40,200],10,(x,y)=>{
+  const s=Math.sin((x+y)*0.8)*0.5+Math.sin(x*1.3-y*0.7)*0.5;
+  return s>0.3?[170,90,255,255]:(s<-0.3?[70,20,140,255]:[120,40,200,255]);
+});
+/* 靈魂沙 (24) */
+drawTile(24,[92,70,54],12,(x,y,r)=> r()<0.06?[50,38,30,255]:[92,70,54,255]);
+/* 合成台頂 (25) 與側 (26) */
+drawTile(25,[168,133,86],8,(x,y)=>{
+  if(x<2||x>13||y<2||y>13) return [120,92,58,255];
+  if((x===7||x===8)&&y>3&&y<12) return [90,70,45,255];
+  if((y===7||y===8)&&x>3&&x<12) return [90,70,45,255];
+  return [178,143,92,255];
+});
+drawTile(26,[168,133,86],8,(x,y)=>{
+  if(y<3) return [120,92,58,255];
+  if(y>=6&&y<=9&&x>=3&&x<=6) return [140,140,145,255];  /* 工具圖樣 */
+  if(y>=5&&y<=10&&x>=9&&x<=12) return [110,80,50,255];
+  return [(y%4===3)?130:168,(y%4===3)?100:133,(y%4===3)?66:86,255];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -195,14 +403,68 @@ const TILES = {
   [GRASS]:{top:0,side:1,bot:2}, [DIRT]:{top:2,side:2,bot:2}, [STONE]:{top:3,side:3,bot:3},
   [SAND]:{top:4,side:4,bot:4}, [WOOD]:{top:6,side:5,bot:6}, [LEAF]:{top:7,side:7,bot:7},
   [PLANK]:{top:8,side:8,bot:8}, [GLASS]:{top:9,side:9,bot:9}, [BEDROCK]:{top:10,side:10,bot:10},
-  [WATER]:{top:11,side:11,bot:11}, [BRICK]:{top:12,side:12,bot:12}
+  [WATER]:{top:11,side:11,bot:11}, [BRICK]:{top:12,side:12,bot:12},
+  [TNT]:{top:13,side:13,bot:13}, [GLOW]:{top:14,side:14,bot:14},
+  [COAL]:{top:15,side:15,bot:15}, [IRON]:{top:16,side:16,bot:16},
+  [GOLD]:{top:17,side:17,bot:17}, [DIAMOND]:{top:18,side:18,bot:18},
+  [CHAL]:{top:19,side:19,bot:19}, [OBSID]:{top:20,side:20,bot:20},
+  [LAVA]:{top:21,side:21,bot:21}, [NETHER]:{top:22,side:22,bot:22},
+  [PORTAL]:{top:23,side:23,bot:23}, [SOUL]:{top:24,side:24,bot:24},
+  [CRAFT]:{top:25,side:26,bot:8}
 };
-const isTransparent = id => id===AIR||id===GLASS||id===WATER;
-const isSolid = id => id!==AIR && id!==WATER;
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL;
+const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL;
 
-/* ================= Three.js 場景 ================= */
+/* ================= 音效 ================= */
+let AC=null;
+function initAudio(){ if(AC) return; try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function tone(freq, dur, type, vol, slideTo){
+  if(!AC) return;
+  try{
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, AC.currentTime+dur);
+    g.gain.value=vol||0.12;
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+function noiseBurst(dur, vol, fc){
+  if(!AC) return;
+  try{
+    const len=AC.sampleRate*dur, buf=AC.createBuffer(1,len,AC.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+    const s=AC.createBufferSource(); s.buffer=buf;
+    const g=AC.createGain(); g.gain.value=vol||0.25;
+    const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=fc||600;
+    s.connect(f); f.connect(g); g.connect(AC.destination); s.start();
+  }catch(e){}
+}
+const sfx = {
+  dig:   ()=>tone(90,0.12,'square',0.1,60),
+  place: ()=>tone(220,0.08,'square',0.09),
+  hurt:  ()=>tone(180,0.25,'sawtooth',0.14,70),
+  zHit:  ()=>tone(140,0.15,'sawtooth',0.12,90),
+  zGroan:()=>tone(85,0.5,'sawtooth',0.06,60),
+  boom:  ()=>{noiseBurst(0.6,0.3); tone(60,0.5,'sine',0.2,30);},
+  die:   ()=>tone(300,0.8,'sawtooth',0.12,50),
+  fly:   ()=>tone(500,0.15,'sine',0.08,800),
+  craft: ()=>{tone(300,0.1,'square',0.1); setTimeout(()=>tone(450,0.12,'square',0.1),90);},
+  eat:   ()=>noiseBurst(0.15,0.2,1200),
+  oink:  ()=>tone(160,0.18,'sawtooth',0.09,110),
+  cluck: ()=>tone(700,0.1,'square',0.06,500),
+  ignite:()=>noiseBurst(0.4,0.25,2000),
+  portal:()=>tone(120,1.0,'sine',0.15,700),
+  ore:   ()=>tone(700,0.2,'sine',0.1,1200),
+};
+
+/* ================= 場景 ================= */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x8fc4e8);
+const dayCol = new THREE.Color(0x8fc4e8), nightCol = new THREE.Color(0x0b1035), netherCol = new THREE.Color(0x2a0808);
+const skyCol = dayCol.clone();
+scene.background = skyCol;
 scene.fog = new THREE.Fog(0x8fc4e8, 40, 95);
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 300);
 camera.rotation.order = 'YXZ';
@@ -211,15 +473,16 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
 document.getElementById('game').appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+scene.add(ambient);
 const sun = new THREE.DirectionalLight(0xfff4d6, 0.6);
 sun.position.set(0.5,1,0.3);
 scene.add(sun);
 
 const matOpaque = new THREE.MeshLambertMaterial({map:atlasTex, vertexColors:true});
 const matTrans  = new THREE.MeshLambertMaterial({map:atlasTex, vertexColors:true, transparent:true, depthWrite:false, side:THREE.DoubleSide});
+const matGlow   = new THREE.MeshBasicMaterial({map:atlasTex, vertexColors:true});
 
-/* 目標方塊外框 */
 const hlGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.002,1.002,1.002));
 const hlBox = new THREE.LineSegments(hlGeo, new THREE.LineBasicMaterial({color:0x111111}));
 hlBox.visible=false; scene.add(hlBox);
@@ -228,27 +491,29 @@ hlBox.visible=false; scene.add(hlBox);
 const NCX = WX/CHUNK, NCZ = WZ/CHUNK;
 const chunks = [];
 const FACES = [
-  {dir:[1,0,0],  corners:[[1,1,0],[1,0,0],[1,1,1],[1,0,1]], shade:0.8, uvRot:0},
-  {dir:[-1,0,0], corners:[[0,1,1],[0,0,1],[0,1,0],[0,0,0]], shade:0.8, uvRot:0},
-  {dir:[0,1,0],  corners:[[0,1,1],[1,1,1],[0,1,0],[1,1,0]], shade:1.0, uvRot:0},
-  {dir:[0,-1,0], corners:[[0,0,0],[1,0,0],[0,0,1],[1,0,1]], shade:0.5, uvRot:0},
-  {dir:[0,0,1],  corners:[[1,1,1],[1,0,1],[0,1,1],[0,0,1]], shade:0.7, uvRot:0},
-  {dir:[0,0,-1], corners:[[0,1,0],[0,0,0],[1,1,0],[1,0,0]], shade:0.7, uvRot:0},
+  {dir:[1,0,0],  corners:[[1,1,1],[1,0,1],[1,1,0],[1,0,0]], shade:0.8},
+  {dir:[-1,0,0], corners:[[0,1,0],[0,0,0],[0,1,1],[0,0,1]], shade:0.8},
+  {dir:[0,1,0],  corners:[[0,1,1],[1,1,1],[0,1,0],[1,1,0]], shade:1.0},
+  {dir:[0,-1,0], corners:[[0,0,0],[1,0,0],[0,0,1],[1,0,1]], shade:0.5},
+  {dir:[0,0,1],  corners:[[0,1,1],[0,0,1],[1,1,1],[1,0,1]], shade:0.7},
+  {dir:[0,0,-1], corners:[[1,1,0],[1,0,0],[0,1,0],[0,0,0]], shade:0.7},
 ];
+const glowIds = new Set([GLOW,LAVA,PORTAL]);
 
 function buildChunk(cx,cz){
   const x0=cx*CHUNK, z0=cz*CHUNK;
-  const opa={pos:[],uv:[],col:[],idx:[]}, tra={pos:[],uv:[],col:[],idx:[]};
+  const opa={pos:[],uv:[],col:[],idx:[]}, tra={pos:[],uv:[],col:[],idx:[]}, glo={pos:[],uv:[],col:[],idx:[]};
   for(let x=x0;x<x0+CHUNK;x++) for(let z=z0;z<z0+CHUNK;z++) for(let y=0;y<WY;y++){
     const id = world[idx(x,y,z)];
     if(id===AIR) continue;
-    const target = (id===GLASS||id===WATER) ? tra : opa;
+    const target = (id===GLASS||id===WATER) ? tra : (glowIds.has(id) ? glo : opa);
     for(let f=0;f<6;f++){
       const F=FACES[f];
       const nb = getB(x+F.dir[0], y+F.dir[1], z+F.dir[2]);
       let show;
-      if(id===WATER) show = nb===AIR;
+      if(id===WATER||id===LAVA) show = nb===AIR;
       else if(id===GLASS) show = nb!==GLASS && isTransparent(nb);
+      else if(id===PORTAL) show = nb!==PORTAL && (nb===AIR||nb===WATER);
       else show = isTransparent(nb);
       if(!show) continue;
       const t = TILES[id];
@@ -257,7 +522,7 @@ function buildChunk(cx,cz){
       const base = target.pos.length/3;
       for(const c of F.corners) target.pos.push(x+c[0], y+c[1], z+c[2]);
       target.uv.push(u0,1, u0,0, u1,1, u1,0);
-      const s=F.shade;
+      const s = glowIds.has(id) ? 1.0 : F.shade;
       for(let k=0;k<4;k++) target.col.push(s,s,s);
       target.idx.push(base,base+1,base+2, base+2,base+1,base+3);
     }
@@ -272,71 +537,582 @@ function buildChunk(cx,cz){
     g.computeVertexNormals();
     return new THREE.Mesh(g, mat);
   }
-  return {solid: mk(opa,matOpaque), trans: mk(tra,matTrans)};
+  return {solid: mk(opa,matOpaque), trans: mk(tra,matTrans), glow: mk(glo,matGlow)};
 }
-
 function rebuildChunk(cx,cz){
   const old = chunks[cx*NCZ+cz];
   if(old){
-    for(const m of [old.solid, old.trans]) if(m){ scene.remove(m); m.geometry.dispose(); }
+    for(const m of [old.solid, old.trans, old.glow]) if(m){ scene.remove(m); m.geometry.dispose(); }
   }
   const nc = buildChunk(cx,cz);
-  if(nc.solid) scene.add(nc.solid);
-  if(nc.trans) scene.add(nc.trans);
+  for(const m of [nc.solid, nc.trans, nc.glow]) if(m) scene.add(m);
   chunks[cx*NCZ+cz]=nc;
 }
 function rebuildAll(){ for(let cx=0;cx<NCX;cx++) for(let cz=0;cz<NCZ;cz++) rebuildChunk(cx,cz); }
 
 let dirty=false;
-function setBlock(x,y,z,id){
-  if(!inBounds(x,y,z)) return;
-  if(world[idx(x,y,z)]===BEDROCK && id===AIR) { toast("基岩無法破壞"); return; }
+function setBlockRaw(x,y,z,id){
+  if(!inBounds(x,y,z)) return false;
   world[idx(x,y,z)]=id;
   const key=`${x},${y},${z}`;
   if(genWorld[idx(x,y,z)]===id) diffs.delete(key); else diffs.set(key,id);
-  dirty=true;
-  scheduleSave();
+  return true;
+}
+function markChunks(set,x,z){
   const cx=(x/CHUNK)|0, cz=(z/CHUNK)|0;
-  rebuildChunk(cx,cz);
-  if(x%CHUNK===0 && cx>0) rebuildChunk(cx-1,cz);
-  if(x%CHUNK===CHUNK-1 && cx<NCX-1) rebuildChunk(cx+1,cz);
-  if(z%CHUNK===0 && cz>0) rebuildChunk(cx,cz-1);
-  if(z%CHUNK===CHUNK-1 && cz<NCZ-1) rebuildChunk(cx,cz+1);
+  set.add(cx+','+cz);
+  if(x%CHUNK===0 && cx>0) set.add((cx-1)+','+cz);
+  if(x%CHUNK===CHUNK-1 && cx<NCX-1) set.add((cx+1)+','+cz);
+  if(z%CHUNK===0 && cz>0) set.add(cx+','+(cz-1));
+  if(z%CHUNK===CHUNK-1 && cz<NCZ-1) set.add(cx+','+(cz+1));
+}
+function setBlock(x,y,z,id){
+  if(!inBounds(x,y,z)) return;
+  if(world[idx(x,y,z)]===BEDROCK && id===AIR) { toast("基岩無法破壞"); return; }
+  setBlockRaw(x,y,z,id);
+  dirty=true; scheduleSave();
+  const set=new Set(); markChunks(set,x,z);
+  for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); }
 }
 
-/* ================= 玩家 ================= */
-const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false };
-const P_W=0.3, P_H=1.8, EYE=1.62;
+/* ================= TNT 爆炸 ================= */
+function explode(bx,by,bz){
+  sfx.boom();
+  const R=3.5, set=new Set();
+  const cascade=[];
+  for(let x=Math.floor(bx-R);x<=Math.ceil(bx+R);x++)
+  for(let y=Math.floor(by-R);y<=Math.ceil(by+R);y++)
+  for(let z=Math.floor(bz-R);z<=Math.ceil(bz+R);z++){
+    if(!inBounds(x,y,z)) continue;
+    const d=Math.hypot(x-bx,y-by,z-bz);
+    if(d>R) continue;
+    const id=world[idx(x,y,z)];
+    if(id===AIR||id===BEDROCK||id===OBSID||id===WATER) continue;
+    if(id===TNT && !(x===bx&&y===by&&z===bz)) cascade.push([x,y,z]);
+    setBlockRaw(x,y,z,AIR);
+    markChunks(set,x,z);
+  }
+  dirty=true; scheduleSave();
+  for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); }
+  spawnParticles(bx+0.5,by+0.5,bz+0.5, 24, 0x888888);
+  for(const e of entities()) if(Math.hypot(e.x-bx,e.y-by,e.z-bz)<R+1.5) e.hp=0;
+  for(const c of cascade) setTimeout(()=>{ if(getB(c[0],c[1],c[2])===AIR) explode(c[0],c[1],c[2]); }, 250);
+  const pd=Math.hypot(player.x-bx-0.5, player.y+0.9-by, player.z-bz-0.5);
+  if(pd<R+1) damagePlayer(pd<2?4:2);
+}
 
-function surfaceY(x,z){
+/* ================= 粒子 ================= */
+const particles=[];
+const partGeo = new THREE.BoxGeometry(0.14,0.14,0.14);
+function spawnParticles(x,y,z,n,color){
+  for(let i=0;i<n;i++){
+    const m=new THREE.Mesh(partGeo, new THREE.MeshBasicMaterial({color}));
+    m.position.set(x,y,z);
+    scene.add(m);
+    particles.push({m, vx:(Math.random()-0.5)*7, vy:Math.random()*6+1, vz:(Math.random()-0.5)*7, life:0.9});
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.life-=dt;
+    p.vy-=15*dt;
+    p.m.position.x+=p.vx*dt; p.m.position.y+=p.vy*dt; p.m.position.z+=p.vz*dt;
+    if(p.life<=0){ scene.remove(p.m); p.m.material.dispose(); particles.splice(i,1); }
+  }
+}
+
+/* ================= 玩家 & 背包 ================= */
+const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
+const P_W=0.3, P_H=1.8, EYE=1.62;
+const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0, pork:0, chicken:0, apple:0 };
+const weapons = { wood:false, stone:false, iron:false, diamond:false, chal:false };
+let hasFlint=false;
+let curWeapon='fist';
+const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, diamond:6, chal:8 };
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', diamond:'🗡 鑽石劍', chal:'🗡 玉髓劍✨' };
+const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal' };
+
+function surfaceYo(x,z){
   for(let y=WY-1;y>=0;y--) if(isSolid(getB(x,y,z))) return y;
   return SEA;
 }
+function floorY(x,z){
+  for(let y=2;y<WY-2;y++){
+    if(!isSolid(getB(x,y,z)) && isSolid(getB(x,y-1,z)) && getB(x,y-1,z)!==undefined && getB(x,y,z)!==LAVA && !isSolid(getB(x,y+1,z)))
+      return y;
+  }
+  return -1;
+}
 function spawn(){
   player.x=WX/2+0.5; player.z=WZ/2+0.5;
-  player.y=surfaceY(WX/2,WZ/2)+1.01;
+  player.y=surfaceYo(WX/2,WZ/2)+1.01;
   player.vy=0;
 }
-
-function collide(px,py,pz){
-  const x0=Math.floor(px-P_W), x1=Math.floor(px+P_W);
-  const y0=Math.floor(py), y1=Math.floor(py+P_H);
-  const z0=Math.floor(pz-P_W), z1=Math.floor(pz+P_W);
+function collideBox(px,py,pz,w,h){
+  const x0=Math.floor(px-w), x1=Math.floor(px+w);
+  const y0=Math.floor(py), y1=Math.floor(py+h-0.001);
+  const z0=Math.floor(pz-w), z1=Math.floor(pz+w);
   for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++) for(let z=z0;z<=z1;z++)
     if(isSolid(getB(x,y,z))) return true;
   return false;
 }
-function inWater(){
-  return getB(Math.floor(player.x), Math.floor(player.y+1.0), Math.floor(player.z))===WATER;
+const collide=(px,py,pz)=>collideBox(px,py,pz,P_W,P_H);
+function liquidAt(){
+  return getB(Math.floor(player.x), Math.floor(player.y+1.0), Math.floor(player.z));
+}
+
+let invulnT=0, lavaT=0;
+function damagePlayer(n){
+  if(invulnT>0 || player.hp<=0) return;
+  player.hp=Math.max(0,player.hp-n);
+  invulnT=0.8;
+  sfx.hurt();
+  updateHUD();
+  const f=document.getElementById('hurtFlash');
+  f.style.transition='none'; f.style.opacity=1;
+  requestAnimationFrame(()=>{ f.style.transition='opacity .5s'; f.style.opacity=0; });
+  if(player.hp<=0){
+    sfx.die();
+    document.getElementById('deathOverlay').style.display='flex';
+    paused=true;
+  }
+}
+function heal(n){
+  player.hp=Math.min(10, player.hp+n);
+  updateHUD();
+}
+function eat(kind){
+  if(kind==='pork' && inv.pork>0){ inv.pork--; heal(3); sfx.eat(); toast('🍖 好吃！回復 3 顆心'); }
+  else if(kind==='chicken' && inv.chicken>0){ inv.chicken--; heal(3); sfx.eat(); toast('🍗 好吃！回復 3 顆心'); }
+  else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('🍎 金蘋果！生命全滿'); }
+  updateHUD();
+  scheduleSave();
+}
+function updateHUD(){
+  let s='';
+  for(let i=0;i<10;i++) s += i<player.hp ? '❤️' : '🖤';
+  document.getElementById('hearts').textContent=s;
+  const sb=document.getElementById('statusBar');
+  sb.innerHTML='';
+  const w=document.createElement('span');
+  w.textContent=WEAPON_NAME[curWeapon];
+  sb.appendChild(w);
+  const foods=[['pork','🍖'],['chicken','🍗'],['apple','🍎']];
+  for(const [k,e] of foods){
+    if(inv[k]<=0) continue;
+    const b=document.createElement('span');
+    b.className='food';
+    b.textContent=e+'×'+inv[k];
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();eat(k);},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();eat(k);});
+    sb.appendChild(b);
+  }
+}
+
+/* ================= 生物（殭屍＋動物） ================= */
+const zombies=[], animals=[];
+const MAX_Z=6, MAX_A=6;
+const entities = ()=> zombies.concat(animals);
+
+function makeZombieMesh(){
+  const g=new THREE.Group();
+  const skin=new THREE.MeshLambertMaterial({color:0x55a04a});
+  const shirt=new THREE.MeshLambertMaterial({color:0x1c7a8c});
+  const pants=new THREE.MeshLambertMaterial({color:0x3a4a9c});
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),skin); head.position.y=1.65;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.7,0.26),shirt); body.position.y=1.05;
+  const armG=new THREE.BoxGeometry(0.16,0.16,0.6); armG.translate(0,0,0.3);
+  const armL=new THREE.Mesh(armG,skin); armL.position.set(-0.33,1.3,0);
+  const armR=new THREE.Mesh(armG,skin); armR.position.set(0.33,1.3,0);
+  const legG=new THREE.BoxGeometry(0.2,0.7,0.2); legG.translate(0,-0.35,0);
+  const legL=new THREE.Mesh(legG,pants); legL.position.set(-0.13,0.7,0);
+  const legR=new THREE.Mesh(legG,pants); legR.position.set(0.13,0.7,0);
+  g.add(head,body,armL,armR,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
+function makePigMesh(){
+  const g=new THREE.Group();
+  const pink=new THREE.MeshLambertMaterial({color:0xf0a0a8});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.5,0.55),pink); body.position.y=0.62;
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.42,0.42),pink); head.position.set(0,0.7,0.55);
+  const nose=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.12,0.06),new THREE.MeshLambertMaterial({color:0xd87888})); nose.position.set(0,0.62,0.78);
+  const legG=new THREE.BoxGeometry(0.16,0.4,0.16); legG.translate(0,-0.2,0);
+  const legs=[];
+  for(const [lx,lz] of [[-0.28,0.18],[0.28,0.18],[-0.28,-0.18],[0.28,-0.18]]){
+    const l=new THREE.Mesh(legG,pink); l.position.set(lx,0.4,lz); legs.push(l); g.add(l);
+  }
+  g.add(body,head,nose);
+  g.userData={legL:legs[0],legR:legs[1]};
+  return g;
+}
+function makeChickenMesh(){
+  const g=new THREE.Group();
+  const white=new THREE.MeshLambertMaterial({color:0xf5f5f0});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.5),white); body.position.y=0.45;
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.3,0.25),white); head.position.set(0,0.8,0.22);
+  const beak=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.08,0.1),new THREE.MeshLambertMaterial({color:0xf0a020})); beak.position.set(0,0.78,0.4);
+  const legG=new THREE.BoxGeometry(0.06,0.25,0.06); legG.translate(0,-0.125,0);
+  const legL=new THREE.Mesh(legG,new THREE.MeshLambertMaterial({color:0xf0a020})); legL.position.set(-0.09,0.25,0);
+  const legR=legL.clone(); legR.position.x=0.09;
+  g.add(body,head,beak,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
+
+function trySpawnZombie(){
+  if(zombies.length>=MAX_Z) return;
+  let x,z;
+  if(dim==='over' && Math.random()<0.5){
+    x=Math.floor(graveyard.x+Math.random()*10-1);
+    z=Math.floor(graveyard.z+Math.random()*8-1);
+  } else {
+    const a=Math.random()*Math.PI*2, d=12+Math.random()*10;
+    x=Math.floor(player.x+Math.cos(a)*d); z=Math.floor(player.z+Math.sin(a)*d);
+  }
+  if(x<1||x>=WX-1||z<1||z>=WZ-1) return;
+  const y = dim==='over' ? surfaceYo(x,z)+1 : floorY(x,z);
+  if(y<=0||y>=WY-2) return;
+  if(getB(x,y,z)!==AIR) return;
+  if(Math.hypot(x-player.x,z-player.z)<6) return;
+  const mesh=makeZombieMesh();
+  scene.add(mesh);
+  zombies.push({kind:'z',x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:4,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25,h:1.75});
+  sfx.zGroan();
+}
+function trySpawnAnimal(){
+  if(dim!=='over' || animals.length>=MAX_A) return;
+  const a=Math.random()*Math.PI*2, d=10+Math.random()*12;
+  const x=Math.floor(player.x+Math.cos(a)*d), z=Math.floor(player.z+Math.sin(a)*d);
+  if(x<1||x>=WX-1||z<1||z>=WZ-1) return;
+  const y=surfaceYo(x,z)+1;
+  if(y>=WY-2||getB(x,y,z)!==AIR) return;
+  if(getB(x,y-1,z)!==GRASS) return;
+  const type = Math.random()<0.55 ? 'pig' : 'chicken';
+  const mesh = type==='pig' ? makePigMesh() : makeChickenMesh();
+  scene.add(mesh);
+  animals.push({kind:type, x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:type==='pig'?2:1,hurtT:0,dirT:0,moving:false,animT:0,mesh,w:type==='pig'?0.3:0.2,h:type==='pig'?0.9:0.7});
+}
+function removeEnt(arr,i,poof,color){
+  const e=arr[i];
+  scene.remove(e.mesh);
+  if(poof) spawnParticles(e.x, e.y+0.8, e.z, 10, color||0x999999);
+  arr.splice(i,1);
+}
+function entPhysics(e,mx,mz,dt){
+  let blocked=false;
+  if(!collideBox(e.x+mx,e.y,e.z,e.w,e.h)) e.x+=mx; else blocked=true;
+  if(!collideBox(e.x,e.y,e.z+mz,e.w,e.h)) e.z+=mz; else blocked=true;
+  let onG=false;
+  e.vy-=26*dt;
+  const dy=e.vy*dt;
+  if(!collideBox(e.x,e.y+dy,e.z,e.w,e.h)) e.y+=dy;
+  else { if(e.vy<0) onG=true; e.vy=0; }
+  if(blocked && onG) e.vy=7.5;
+  return onG;
+}
+function updateZombies(dt){
+  const hostileOK = dim==='nether' || isNight;
+  for(let i=zombies.length-1;i>=0;i--){
+    const z=zombies[i];
+    if(z.hp<=0){ removeEnt(zombies,i,true,0x55a04a); continue; }
+    if(dim==='over' && !isNight){ removeEnt(zombies,i,true,0xff8833); continue; }
+    const dx=player.x-z.x, dz=player.z-z.z;
+    const dist=Math.hypot(dx,dz);
+    if(dist>36){ removeEnt(zombies,i,false); continue; }
+    z.hurtT=Math.max(0,z.hurtT-dt);
+    z.atkT=Math.max(0,z.atkT-dt);
+    z.groanT-=dt;
+    if(z.groanT<0 && dist<14){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
+    const sp = z.hurtT>0 ? 0 : 1.4;
+    let mx=0,mz=0;
+    if(dist>0.6){ mx=dx/dist*sp*dt; mz=dz/dist*sp*dt; }
+    z.yaw=Math.atan2(dx,dz);
+    entPhysics(z,mx,mz,dt);
+    if(z.y<-5){ removeEnt(zombies,i,false); continue; }
+    if(dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
+      damagePlayer(1);
+      z.atkT=1.2;
+    }
+    z.animT+=dt*(sp>0?6:0);
+    z.mesh.position.set(z.x,z.y,z.z);
+    z.mesh.rotation.y=z.yaw;
+    z.mesh.userData.legL.rotation.x=Math.sin(z.animT)*0.6;
+    z.mesh.userData.legR.rotation.x=-Math.sin(z.animT)*0.6;
+  }
+}
+function updateAnimals(dt){
+  for(let i=animals.length-1;i>=0;i--){
+    const a=animals[i];
+    if(a.hp<=0){
+      if(a.kind==='pig'){ inv.pork += 1+(Math.random()<0.5?1:0); toast('🍖 獲得豬排！'); }
+      else { inv.chicken += 1; toast('🍗 獲得雞肉！'); }
+      updateHUD(); scheduleSave();
+      removeEnt(animals,i,true,a.kind==='pig'?0xf0a0a8:0xffffff);
+      continue;
+    }
+    if(Math.hypot(a.x-player.x,a.z-player.z)>42){ removeEnt(animals,i,false); continue; }
+    a.hurtT=Math.max(0,a.hurtT-dt);
+    a.dirT-=dt;
+    if(a.dirT<=0){
+      a.yaw=Math.random()*6.28;
+      a.moving=Math.random()<0.65;
+      a.dirT=1.5+Math.random()*3;
+      if(Math.random()<0.15) (a.kind==='pig'?sfx.oink:sfx.cluck)();
+    }
+    const sp = a.hurtT>0 ? 3.2 : (a.moving?0.85:0);
+    const mx=Math.sin(a.yaw)*sp*dt, mz=Math.cos(a.yaw)*sp*dt;
+    entPhysics(a,mx,mz,dt);
+    if(a.y<-5){ removeEnt(animals,i,false); continue; }
+    a.animT+=dt*(sp>0?7:0);
+    a.mesh.position.set(a.x,a.y,a.z);
+    a.mesh.rotation.y=a.yaw;
+    a.mesh.userData.legL.rotation.x=Math.sin(a.animT)*0.7;
+    a.mesh.userData.legR.rotation.x=-Math.sin(a.animT)*0.7;
+  }
+}
+function raycastEntity(maxDist){
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  let best=null, bestT=maxDist;
+  const all=entities();
+  for(let i=0;i<all.length;i++){
+    const e=all[i];
+    const cy = e.y + (e.kind==='z'?1:0.5);
+    const cx=e.x-camera.position.x, cyy=cy-camera.position.y, cz=e.z-camera.position.z;
+    const t=cx*dir.x+cyy*dir.y+cz*dir.z;
+    if(t<0||t>bestT) continue;
+    const px=camera.position.x+dir.x*t, py=camera.position.y+dir.y*t, pz=camera.position.z+dir.z*t;
+    const dd=Math.hypot(px-e.x, py-cy, pz-e.z);
+    if(dd<0.85){ best=e; bestT=t; }
+  }
+  return best;
+}
+
+/* ================= 日夜循環 ================= */
+const DAY_LEN=200;
+let dayT=0.05;
+let isNight=false;
+let zSpawnT=0, aSpawnT=0;
+function dayFactor(t){
+  if(t<0.45) return 1;
+  if(t<0.55) return 1-(t-0.45)/0.1;
+  if(t<0.95) return 0;
+  return (t-0.95)/0.05;
+}
+function updateDay(dt){
+  if(dim==='nether'){
+    isNight=true;
+    zSpawnT-=dt;
+    if(zSpawnT<=0){ trySpawnZombie(); zSpawnT=4+Math.random()*3; }
+    return;
+  }
+  dayT=(dayT+dt/DAY_LEN)%1;
+  const f=dayFactor(dayT);
+  isNight = f<0.3;
+  skyCol.copy(nightCol).lerp(dayCol,f);
+  scene.background=skyCol;
+  scene.fog.color.copy(skyCol);
+  ambient.intensity=0.32+0.45*f;
+  sun.intensity=0.1+0.5*f;
+  document.getElementById('dayIcon').textContent = isNight?'🌙':'☀️';
+  if(isNight){
+    zSpawnT-=dt;
+    if(zSpawnT<=0){ trySpawnZombie(); zSpawnT=3+Math.random()*3; }
+  } else {
+    aSpawnT-=dt;
+    if(aSpawnT<=0){ trySpawnAnimal(); aSpawnT=4+Math.random()*4; }
+  }
+}
+
+/* ================= 合成系統 ================= */
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣玉髓'};
+const RECIPES=[
+  {id:'wood',    kind:'sword', name:'木劍（傷害 2）',    cost:{wood:2}},
+  {id:'stone',   kind:'sword', name:'石劍（傷害 3）',    cost:{wood:1,stone:3}},
+  {id:'iron',    kind:'sword', name:'鐵劍（傷害 4）',    cost:{wood:1,iron:2}},
+  {id:'diamond', kind:'sword', name:'鑽石劍（傷害 6）',  cost:{wood:1,diamond:2}},
+  {id:'chal',    kind:'sword', name:'玉髓劍✨（傷害 8）', cost:{wood:1,chal:3}},
+  {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
+  {id:'apple',   kind:'food',  name:'金蘋果🍎（吃了全滿血）', cost:{gold:2}},
+];
+function canAfford(cost){ for(const k in cost) if((inv[k]||0)<cost[k]) return false; return true; }
+function payCost(cost){ for(const k in cost) inv[k]-=cost[k]; }
+function renderCraft(){
+  const ir=document.getElementById('invRow');
+  ir.innerHTML='<b>📦 我的材料：</b><br>'+Object.keys(MAT_NAME).map(k=>MAT_NAME[k]+'×'+(inv[k]||0)).join('　');
+  const list=document.getElementById('recipeList');
+  list.innerHTML='';
+  for(const r of RECIPES){
+    const row=document.createElement('div'); row.className='recipe';
+    const left=document.createElement('div');
+    left.innerHTML='<div class="rname">'+r.name+'</div><div class="rcost">需要：'+Object.keys(r.cost).map(k=>MAT_NAME[k]+'×'+r.cost[k]).join('、')+'</div>';
+    row.appendChild(left);
+    const btn=document.createElement('button'); btn.className='rbtn';
+    const owned = r.kind==='sword' ? weapons[r.id] : (r.kind==='flint' ? hasFlint : false);
+    if(r.kind==='sword' && owned){
+      btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
+      btn.className = 'rbtn ' + (curWeapon===r.id?'equipped':'equip');
+      btn.addEventListener('click',()=>{ curWeapon=r.id; updateHUD(); renderCraft(); sfx.place(); scheduleSave(); });
+    } else if(r.kind==='flint' && owned){
+      btn.textContent='已擁有'; btn.disabled=true;
+    } else {
+      btn.textContent='合成';
+      btn.disabled=!canAfford(r.cost);
+      btn.addEventListener('click',()=>{
+        if(!canAfford(r.cost)) return;
+        payCost(r.cost);
+        if(r.kind==='sword'){ weapons[r.id]=true; curWeapon=r.id; toast('⚔️ 合成了'+r.name.split('（')[0]+'！'); }
+        else if(r.kind==='flint'){ hasFlint=true; toast('🔥 合成了打火石！去點燃黑曜石門吧'); }
+        else if(r.id==='apple'){ inv.apple++; toast('🍎 合成了金蘋果！'); }
+        sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
+      });
+    }
+    row.appendChild(btn);
+    list.appendChild(row);
+  }
+}
+let craftOpen=false;
+function openCraft(){
+  craftOpen=true; paused=true;
+  renderCraft();
+  document.getElementById('craftOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+}
+function closeCraft(){
+  craftOpen=false; paused=false;
+  document.getElementById('craftOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
+document.getElementById('craftCloseBtn').addEventListener('click',closeCraft);
+
+/* ================= 地獄門 ================= */
+let portalT=0, portalCD=0;
+function tryIgnitePlane(ax,ay,az,axis){
+  /* axis: 'x' 表示門面在 X-Y 平面（z 固定），'z' 表示 Z-Y 平面（x 固定） */
+  const seen=new Set(), region=[];
+  const stack=[[ax,ay,az]];
+  const key=(x,y,z)=>x+','+y+','+z;
+  while(stack.length){
+    const [x,y,z]=stack.pop();
+    const k=key(x,y,z);
+    if(seen.has(k)) continue;
+    seen.add(k);
+    if(getB(x,y,z)!==AIR) continue;
+    region.push([x,y,z]);
+    if(region.length>12) return false;
+    const dirs = axis==='x' ? [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0]] : [[0,0,1],[0,0,-1],[0,1,0],[0,-1,0]];
+    for(const d of dirs) stack.push([x+d[0],y+d[1],z+d[2]]);
+  }
+  if(region.length<2) return false;
+  /* 邊界必須全是黑曜石 */
+  for(const [x,y,z] of region){
+    const dirs = axis==='x' ? [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0]] : [[0,0,1],[0,0,-1],[0,1,0],[0,-1,0]];
+    for(const d of dirs){
+      const nb=getB(x+d[0],y+d[1],z+d[2]);
+      const inR=region.some(c=>c[0]===x+d[0]&&c[1]===y+d[1]&&c[2]===z+d[2]);
+      if(!inR && nb!==OBSID) return false;
+    }
+  }
+  for(const [x,y,z] of region) setBlock(x,y,z,PORTAL);
+  return true;
+}
+function igniteAt(hit){
+  /* 對準門框任何一塊黑曜石都行：檢查它周圍所有空格，自動找出門洞 */
+  const cands=[[hit.x+hit.face[0], hit.y+hit.face[1], hit.z+hit.face[2]]];
+  for(const d of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
+    cands.push([hit.x+d[0], hit.y+d[1], hit.z+d[2]]);
+  for(const [ax,ay,az] of cands){
+    if(!inBounds(ax,ay,az) || getB(ax,ay,az)!==AIR) continue;
+    if(tryIgnitePlane(ax,ay,az,'x') || tryIgnitePlane(ax,ay,az,'z')){
+      sfx.ignite();
+      toast('🔥 地獄門開啟了！走進去吧…');
+      return;
+    }
+  }
+  toast('找不到門洞！檢查：①門中間要留 2×3 的空洞 ②黑曜石要把洞圍滿一圈 ③對準洞旁邊的黑曜石按🔥');
+}
+function buildReturnPortal(px,py,pz){
+  /* 在 (px,py,pz) 附近搭一座已點燃的門 */
+  const bx=Math.max(3,Math.min(WX-5,Math.floor(px)));
+  const bz=Math.max(3,Math.min(WZ-4,Math.floor(pz)));
+  let by=Math.max(2,Math.min(WY-7,Math.floor(py)));
+  for(let x=bx-1;x<=bx+2;x++) for(let y=by-1;y<=by+4;y++) for(let z=bz-1;z<=bz+1;z++){
+    if(!inBounds(x,y,z)) continue;
+    setBlockRaw(x,y,z,AIR);
+  }
+  for(let x=bx-1;x<=bx+2;x++) for(let z=bz-1;z<=bz+1;z++) setBlockRaw(x,by-1,z,OBSID);
+  for(let y=by;y<=by+3;y++){ setBlockRaw(bx-1,y,bz,OBSID); setBlockRaw(bx+2,y,bz,OBSID); }
+  for(let x=bx-1;x<=bx+2;x++){ setBlockRaw(x,by+3,bz,OBSID); if(getB(x,by-1,bz)!==OBSID) setBlockRaw(x,by-1,bz,OBSID); }
+  for(let x=bx;x<=bx+1;x++) for(let y=by;y<=by+2;y++) setBlockRaw(x,y,bz,PORTAL);
+  dirty=true;
+  return {x:bx+0.5, y:by, z:bz+1.6};
+}
+function findPortalNear(px,pz){
+  for(let x=Math.max(0,px-10);x<Math.min(WX,px+10);x++)
+  for(let z=Math.max(0,pz-10);z<Math.min(WZ,pz+10);z++)
+  for(let y=1;y<WY-1;y++)
+    if(world[idx(x,y,z)]===PORTAL) return {x:x+0.5,y,z:z+1.6};
+  return null;
+}
+function switchDim(){
+  portalCD=4;
+  sfx.portal();
+  for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
+  for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
+  dim = dim==='over' ? 'nether' : 'over';
+  ensureDim(dim);
+  world=dims[dim].world; genWorld=dims[dim].gen; diffs=dims[dim].diffs;
+  /* 找降落點 */
+  const px=Math.max(3,Math.min(WX-4,Math.floor(player.x)));
+  const pz=Math.max(3,Math.min(WZ-4,Math.floor(player.z)));
+  let target = findPortalNear(px,pz);
+  if(!target){
+    let y = dim==='over' ? surfaceYo(px,pz)+1 : floorY(px,pz);
+    if(y<=0) y=Math.floor(WY/2);
+    target = buildReturnPortal(px,y,pz);
+  }
+  player.x=target.x; player.y=target.y+0.1; player.z=target.z;
+  player.vy=0;
+  applyDimSky();
+  rebuildAll();
+  toast(dim==='nether' ? '🔥 歡迎來到地獄！小心岩漿和殭屍豬人' : '🌍 回到主世界了');
+  scheduleSave();
+}
+function applyDimSky(){
+  if(dim==='nether'){
+    scene.background=netherCol;
+    scene.fog.color.copy(netherCol);
+    scene.fog.near=25; scene.fog.far=70;
+    ambient.intensity=0.5;
+    sun.intensity=0.15;
+    document.getElementById('dayIcon').textContent='🔥';
+  } else {
+    scene.fog.near=40; scene.fog.far=95;
+    scene.background=skyCol;
+  }
 }
 
 /* ================= 輸入 ================= */
 const keys={};
-let joyVec={x:0,y:0}, jumpHeld=false, started=false;
+let joyVec={x:0,y:0}, jumpHeld=false, downHeld=false, started=false, paused=false;
+let lastSpaceT=0;
 
 addEventListener('keydown',e=>{
   keys[e.code]=true;
-  if(e.code==='Space') e.preventDefault();
+  if(e.code==='Space'){
+    e.preventDefault();
+    const now=performance.now();
+    if(now-lastSpaceT<280) toggleFly();
+    lastSpaceT=now;
+  }
+  if(e.code==='KeyF') toggleFly();
+  if(e.code==='KeyE') doAction();
+  if(e.code==='KeyQ'){ if(inv.pork>0) eat('pork'); else if(inv.chicken>0) eat('chicken'); else if(inv.apple>0) eat('apple'); }
+  if(e.code==='Escape'){
+    if(craftOpen) closeCraft();
+    else if(started && !paused) openPause();
+  }
   if(e.code.startsWith('Digit')){
     const n=+e.code.slice(5);
     if(n>=1&&n<=9) selectSlot(n-1);
@@ -344,10 +1120,9 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>keys[e.code]=false);
 
-/* 桌面滑鼠 */
 if(!isTouch){
   renderer.domElement.addEventListener('click',()=>{
-    if(started && document.pointerLockElement!==renderer.domElement)
+    if(started && !paused && document.pointerLockElement!==renderer.domElement)
       renderer.domElement.requestPointerLock();
   });
   addEventListener('mousemove',e=>{
@@ -365,27 +1140,32 @@ if(!isTouch){
   addEventListener('contextmenu',e=>e.preventDefault());
 }
 
-/* 觸控：搖桿 + 視角 */
 const joyZone=document.getElementById('joyZone'), joyBase=document.getElementById('joyBase'), joyKnob=document.getElementById('joyKnob');
 let joyId=null, lookId=null, lookLast={x:0,y:0};
+function updateJoy(t){
+  const r=joyBase.getBoundingClientRect();
+  const bx=r.left+r.width/2, by=r.top+r.height/2;
+  let dx=t.clientX-bx, dy=t.clientY-by;
+  const len=Math.hypot(dx,dy), max=45;
+  if(len>max){ dx=dx/len*max; dy=dy/len*max; }
+  joyKnob.style.left=(29+dx)+'px'; joyKnob.style.top=(29+dy)+'px';
+  joyVec.x=dx/max; joyVec.y=dy/max;
+}
+function resetJoy(){
+  joyVec={x:0,y:0};
+  joyKnob.style.left='29px'; joyKnob.style.top='29px';
+}
 joyZone.addEventListener('touchstart',e=>{
-  const t=e.changedTouches[0];
   if(joyId!==null) return;
+  const t=e.changedTouches[0];
   joyId=t.identifier;
-  joyBase.style.display='block';
-  joyBase.style.left=(t.clientX-55)+'px';
-  joyBase.style.top=(t.clientY-55)+'px';
+  updateJoy(t);
   e.preventDefault();
 },{passive:false});
 addEventListener('touchmove',e=>{
   for(const t of e.changedTouches){
     if(t.identifier===joyId){
-      const bx=parseFloat(joyBase.style.left)+55, by=parseFloat(joyBase.style.top)+55;
-      let dx=t.clientX-bx, dy=t.clientY-by;
-      const len=Math.hypot(dx,dy), max=45;
-      if(len>max){ dx=dx/len*max; dy=dy/len*max; }
-      joyKnob.style.left=(31+dx)+'px'; joyKnob.style.top=(31+dy)+'px';
-      joyVec.x=dx/max; joyVec.y=dy/max;
+      updateJoy(t);
     } else if(t.identifier===lookId){
       player.yaw -= (t.clientX-lookLast.x)*0.006;
       player.pitch -= (t.clientY-lookLast.y)*0.006;
@@ -393,11 +1173,11 @@ addEventListener('touchmove',e=>{
       lookLast={x:t.clientX,y:t.clientY};
     }
   }
-  e.preventDefault();
+  if(started && !paused) e.preventDefault();
 },{passive:false});
 function endTouch(e){
   for(const t of e.changedTouches){
-    if(t.identifier===joyId){ joyId=null; joyVec={x:0,y:0}; joyBase.style.display='none'; joyKnob.style.left='31px'; joyKnob.style.top='31px'; }
+    if(t.identifier===joyId){ joyId=null; resetJoy(); }
     if(t.identifier===lookId) lookId=null;
   }
 }
@@ -418,13 +1198,48 @@ function bindBtn(id, down, up){
   if(up) el.addEventListener('mouseup',()=>up());
 }
 bindBtn('btnJump',()=>jumpHeld=true,()=>jumpHeld=false);
+bindBtn('btnDown',()=>downHeld=true,()=>downHeld=false);
 bindBtn('btnMine',()=>mine());
 bindBtn('btnPlace',()=>place());
+bindBtn('btnFly',()=>toggleFly());
+bindBtn('btnAct',()=>doAction());
+
+function toggleFly(){
+  player.fly=!player.fly;
+  player.vy=0;
+  sfx.fly();
+  document.getElementById('btnFly').classList.toggle('on',player.fly);
+  document.getElementById('btnDown').style.display=(player.fly&&isTouch)?'flex':'none';
+  toast(player.fly?'🕊 飛行模式 開':'🚶 飛行模式 關');
+}
 
 if(!isTouch){
-  document.getElementById('btnJump').style.display='none';
-  document.getElementById('btnMine').style.display='none';
-  document.getElementById('btnPlace').style.display='none';
+  for(const id of ['btnJump','btnDown','btnMine','btnPlace','btnFly','btnAct'])
+    document.getElementById(id).style.display='none';
+  joyZone.style.display='none';
+}
+
+/* 準心對到的互動：合成台 / 點火 */
+let actMode=null;
+function updateActButton(){
+  const hit=raycast(5);
+  let mode=null;
+  if(hit && hit.id===CRAFT) mode='craft';
+  else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
+  if(mode!==actMode){
+    actMode=mode;
+    const b=document.getElementById('btnAct');
+    if(!isTouch) return;
+    if(mode==='craft'){ b.textContent='🔨'; b.style.display='flex'; }
+    else if(mode==='ignite'){ b.textContent='🔥'; b.style.display='flex'; }
+    else b.style.display='none';
+  }
+}
+function doAction(){
+  const hit=raycast(5);
+  if(!hit) return;
+  if(hit.id===CRAFT) openCraft();
+  else if(hit.id===OBSID && hasFlint) igniteAt(hit);
 }
 
 /* ================= 快捷欄 ================= */
@@ -451,7 +1266,7 @@ function selectSlot(i){
 }
 buildHotbar();
 
-/* ================= 射線 (DDA) ================= */
+/* ================= 射線 ================= */
 function raycast(maxDist){
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   let x=camera.position.x, y=camera.position.y, z=camera.position.z;
@@ -467,39 +1282,67 @@ function raycast(maxDist){
     else if(ty<tz){ iy+=sy; t=ty; ty+=dy; face=[0,-sy,0]; }
     else { iz+=sz; t=tz; tz+=dz; face=[0,0,-sz]; }
     const b=getB(ix,iy,iz);
-    if(b!==AIR && b!==WATER) return {x:ix,y:iy,z:iz,face,id:b};
+    if(b!==AIR && b!==WATER && b!==LAVA && b!==PORTAL) return {x:ix,y:iy,z:iz,face,id:b};
   }
   return null;
 }
 
 function mine(){
+  if(paused) return;
+  const ent=raycastEntity(4);
+  if(ent){
+    const dmg=WEAPON_DMG[curWeapon];
+    ent.hp-=dmg; ent.hurtT=0.4;
+    const dx=ent.x-player.x, dz=ent.z-player.z, d=Math.hypot(dx,dz)||1;
+    ent.x+=dx/d*0.8; ent.z+=dz/d*0.8; ent.vy=4;
+    sfx.zHit();
+    spawnParticles(ent.x, ent.y+1, ent.z, 5, 0xaa2222);
+    return;
+  }
   const hit=raycast(6);
-  if(hit) setBlock(hit.x,hit.y,hit.z,AIR);
+  if(!hit) return;
+  if(hit.id===TNT){ setBlock(hit.x,hit.y,hit.z,AIR); explode(hit.x,hit.y,hit.z); return; }
+  const mat=COLLECT[hit.id];
+  const isOre = hit.id>=COAL && hit.id<=CHAL;
+  setBlock(hit.x,hit.y,hit.z,AIR);
+  if(mat){
+    inv[mat]++;
+    if(isOre){
+      const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb };
+      spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5, 10, oreColors[hit.id]);
+      sfx.ore();
+      toast('⛏ 挖到'+NAMES[hit.id]+'！');
+    }
+    scheduleSave();
+  }
+  sfx.dig();
 }
 function place(){
+  if(paused) return;
   const hit=raycast(6);
   if(!hit) return;
   const px=hit.x+hit.face[0], py=hit.y+hit.face[1], pz=hit.z+hit.face[2];
   if(!inBounds(px,py,pz)) return;
-  if(getB(px,py,pz)!==AIR && getB(px,py,pz)!==WATER) return;
-  // 不能放在自己身上
+  const cur=getB(px,py,pz);
+  if(cur!==AIR && cur!==WATER && cur!==LAVA) return;
   const ox0=Math.floor(player.x-P_W), ox1=Math.floor(player.x+P_W);
   const oy0=Math.floor(player.y), oy1=Math.floor(player.y+P_H);
   const oz0=Math.floor(player.z-P_W), oz1=Math.floor(player.z+P_W);
   if(px>=ox0&&px<=ox1&&py>=oy0&&py<=oy1&&pz>=oz0&&pz<=oz1) return;
   setBlock(px,py,pz,HOTBAR[selSlot]);
+  sfx.place();
 }
 
 /* ================= 存檔 ================= */
 const SAVE_KEY='mcsave_v1';
-
-/* localStorage 安全包裝（在 Claude App 預覽中會被封鎖，故用 try/catch） */
 function lsSet(v){ try{ localStorage.setItem(SAVE_KEY, v); return true; }catch(e){ return false; } }
 function lsGet(){ try{ return localStorage.getItem(SAVE_KEY); }catch(e){ return null; } }
 function lsDel(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 const hasCloud = typeof window.storage !== 'undefined' && window.storage;
+let cloudOK = hasCloud;      /* 連續失敗會自動停用，避免一直報錯 */
+let cloudFails = 0;
+let warnedNoSave = false;
 
-/* 儲存操作佇列：確保同一時間只有一個 storage 呼叫，避免並發衝突 */
 let storageChain = Promise.resolve();
 function queued(fn){
   const p = storageChain.then(fn, fn);
@@ -508,7 +1351,6 @@ function queued(fn){
 }
 function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-/* 有變動就自動存（1.5 秒防抖，連續挖方塊只存最後一次） */
 let saveTimer=null;
 function scheduleSave(){
   clearTimeout(saveTimer);
@@ -520,35 +1362,46 @@ async function saveGame(showMsg){
   if(saving){ if(showMsg) toast('儲存中…'); return; }
   saving=true;
   const data = JSON.stringify({
-    seed,
-    diffs: Object.fromEntries(diffs),
-    player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch},
-    sel: selSlot,
+    v:3, seed, dim,
+    overDiffs: Object.fromEntries(dims.over.diffs),
+    netherDiffs: Object.fromEntries(dims.nether.diffs),
+    player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
+    inv, weapons, hasFlint, curWeapon,
+    sel: selSlot, dayT,
     time: Date.now()
   });
-  /* 1) localStorage：同步、即時 */
   let okLocal = lsSet(data);
-  /* 2) window.storage 雲端備援：非同步、重試 */
   let okCloud=false;
-  if(hasCloud){
-    for(let attempt=0; attempt<3 && !okCloud; attempt++){
+  if(cloudOK){
+    for(let attempt=0; attempt<2 && !okCloud; attempt++){
       try{
         if(attempt>0) await delay(600);
         await queued(()=> window.storage.set(SAVE_KEY, data));
         okCloud=true;
-      }catch(err){ console.error('雲端儲存嘗試 '+(attempt+1)+' 失敗', err); }
+      }catch(err){ /* 靜默重試，不刷錯誤訊息 */ }
+    }
+    if(okCloud) cloudFails=0;
+    else {
+      cloudFails++;
+      if(cloudFails>=2){ cloudOK=false; console.warn('雲端儲存暫不可用，已改用本機儲存'); }
     }
   }
   saving=false;
   if(okLocal || okCloud){
     dirty=false;
     if(showMsg) toast('✅ 已儲存');
-  } else if(showMsg){
-    toast('⚠️ 儲存失敗，稍後會自動重試');
+  } else {
+    if(showMsg) toast('⚠️ 這個預覽視窗無法儲存進度');
+    else if(!warnedNoSave){
+      warnedNoSave=true;
+      toast('⚠️ 預覽環境無法存檔，放到 GitHub Pages 開啟才會儲存');
+    }
   }
 }
+function applyDiffMap(D, obj){
+  for(const [k,v] of Object.entries(obj||{})) D.diffs.set(k,v);
+}
 async function loadGame(){
-  /* 從兩邊讀取，採用時間較新的存檔 */
   let best=null;
   const l = lsGet();
   if(l){ try{ const d=JSON.parse(l); if(d&&d.seed!==undefined) best=d; }catch(e){} }
@@ -559,29 +1412,54 @@ async function loadGame(){
         const d=JSON.parse(res.value);
         if(d && (!best || (d.time||0)>(best.time||0))) best=d;
       }
-    }catch(err){ /* 沒有雲端存檔 */ }
+    }catch(err){}
   }
   if(best){
-    const d = best;
-    seed = d.seed;
-    generate(seed);
-    for(const [k,v] of Object.entries(d.diffs||{})){
-      const [x,y,z]=k.split(',').map(Number);
-      world[idx(x,y,z)]=v;
-      diffs.set(k,v);
+    const d=best;
+    seed=d.seed;
+    if(d.v>=3){
+      applyDiffMap(dims.over, d.overDiffs);
+      applyDiffMap(dims.nether, d.netherDiffs);
+      dim = d.dim==='nether' ? 'nether' : 'over';
+    } else {
+      applyDiffMap(dims.over, d.diffs);  /* 舊版存檔相容 */
+      dim='over';
     }
-    if(d.player){ Object.assign(player, d.player); }
-    if(typeof d.sel==='number'){ selSlot=d.sel; buildHotbar(); }
+    ensureDim('over');
+    if(dim==='nether') ensureDim('nether');
+    world=dims[dim].world; genWorld=dims[dim].gen; diffs=dims[dim].diffs;
+    if(d.player){
+      Object.assign(player, d.player);
+      if(player.hp===undefined||player.hp<=0) player.hp=10;
+    }
+    if(d.inv) Object.assign(inv, d.inv);
+    if(d.weapons) Object.assign(weapons, d.weapons);
+    if(d.hasFlint) hasFlint=true;
+    if(d.curWeapon && WEAPON_DMG[d.curWeapon]) curWeapon=d.curWeapon;
+    if(typeof d.sel==='number' && d.sel<HOTBAR.length){ selSlot=d.sel; buildHotbar(); }
+    if(typeof d.dayT==='number') dayT=d.dayT;
     return d.time;
   }
   return null;
 }
 async function newWorld(){
   seed=(Math.random()*1e9)|0;
-  diffs.clear();
-  generate(seed);
+  dims.over.diffs.clear(); dims.nether.diffs.clear();
+  dims.over.made=false; dims.nether.made=false;
+  for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
+  for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
+  dim='over';
+  ensureDim('over');
+  world=dims.over.world; genWorld=dims.over.gen; diffs=dims.over.diffs;
   rebuildAll();
   spawn();
+  player.hp=10; player.fly=false;
+  for(const k in inv) inv[k]=0;
+  for(const k in weapons) weapons[k]=false;
+  hasFlint=false; curWeapon='fist';
+  updateHUD();
+  dayT=0.05;
+  applyDimSky();
   dirty=true;
   lsDel();
   if(hasCloud){ try{ await queued(()=> window.storage.delete(SAVE_KEY)); }catch(e){} }
@@ -589,20 +1467,59 @@ async function newWorld(){
   toast('🌍 新世界誕生！');
 }
 
+/* ================= 暫停 / 退出 ================= */
+function openPause(){
+  paused=true;
+  document.getElementById('pauseOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+  saveGame(false);
+}
+function closePause(){
+  paused=false;
+  document.getElementById('pauseOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
+document.getElementById('btnMenu').addEventListener('click',()=>{ if(started&&!paused) openPause(); });
+document.getElementById('resumeBtn').addEventListener('click',closePause);
+document.getElementById('pauseSaveBtn').addEventListener('click',()=>saveGame(true));
+document.getElementById('exitBtn').addEventListener('click',async ()=>{
+  await saveGame(false);
+  document.getElementById('pauseOverlay').style.display='none';
+  document.getElementById('saveInfo').textContent='進度已儲存，隨時回來繼續！';
+  document.getElementById('startBtn').textContent='繼續遊戲';
+  document.getElementById('startOverlay').style.display='flex';
+  started=false; paused=false;
+});
 let newConfirm=false, newTimer=null;
-document.getElementById('btnSave').addEventListener('click',()=>saveGame(true));
-document.getElementById('btnNew').addEventListener('click',()=>{
+document.getElementById('newWorldBtn').addEventListener('click',()=>{
+  const btn=document.getElementById('newWorldBtn');
   if(!newConfirm){
     newConfirm=true;
-    document.getElementById('btnNew').textContent='⚠️ 確定重置？';
-    newTimer=setTimeout(()=>{newConfirm=false;document.getElementById('btnNew').textContent='🌍 新世界';},3000);
+    btn.textContent='⚠️ 再按一次確認重置';
+    newTimer=setTimeout(()=>{newConfirm=false;btn.textContent='🌍 建立新世界';},3000);
   } else {
     clearTimeout(newTimer); newConfirm=false;
-    document.getElementById('btnNew').textContent='🌍 新世界';
+    btn.textContent='🌍 建立新世界';
     newWorld();
+    closePause();
   }
 });
-setInterval(()=>{ if(dirty && started) saveGame(false); }, 20000);
+document.getElementById('respawnBtn').addEventListener('click',()=>{
+  player.hp=10;
+  if(dim!=='over'){
+    dim='over';
+    ensureDim('over');
+    world=dims.over.world; genWorld=dims.over.gen; diffs=dims.over.diffs;
+    applyDimSky();
+    rebuildAll();
+  }
+  spawn();
+  updateHUD();
+  document.getElementById('deathOverlay').style.display='none';
+  paused=false;
+});
+setInterval(()=>{ if(dirty && started && !paused) saveGame(false); }, 20000);
+addEventListener('visibilitychange',()=>{ if(document.hidden && dirty) saveGame(false); });
 
 /* ================= UI ================= */
 const toastEl=document.getElementById('toast');
@@ -611,7 +1528,7 @@ function toast(msg){
   toastEl.textContent=msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1400);
+  toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1600);
 }
 
 /* ================= 遊戲迴圈 ================= */
@@ -621,9 +1538,16 @@ function loop(){
   const now=performance.now();
   let dt=Math.min(0.05,(now-lastT)/1000);
   lastT=now;
-  if(!started){ renderer.render(scene,camera); return; }
+  if(!started || paused){ renderer.render(scene,camera); return; }
 
-  // 移動輸入
+  invulnT=Math.max(0,invulnT-dt);
+  portalCD=Math.max(0,portalCD-dt);
+  updateDay(dt);
+  updateParticles(dt);
+  updateZombies(dt);
+  updateAnimals(dt);
+  updateActButton();
+
   let mx=0,mz=0;
   if(keys['KeyW']||keys['ArrowUp']) mz-=1;
   if(keys['KeyS']||keys['ArrowDown']) mz+=1;
@@ -632,40 +1556,59 @@ function loop(){
   mx+=joyVec.x; mz+=joyVec.y;
   const ml=Math.hypot(mx,mz);
   if(ml>1){ mx/=ml; mz/=ml; }
-  const speed=4.5;
+  const liquid=liquidAt();
+  let speed = player.fly ? 8.5 : 4.5;
+  if(liquid===LAVA) speed*=0.45;
   const sin=Math.sin(player.yaw), cos=Math.cos(player.yaw);
-  const dx=(mx*cos - mz*sin)*speed*dt;
-  const dz=(mx*-sin - mz*cos)*speed*dt*-1;
+  const dx=(mx*cos + mz*sin)*speed*dt;
+  const dz=(mz*cos - mx*sin)*speed*dt;
 
-  const water=inWater();
-  // 重力與跳躍
-  if(water){
-    player.vy += -6*dt;
-    player.vy = Math.max(player.vy,-3);
-    if(keys['Space']||jumpHeld) player.vy = 3.2;
+  if(player.fly){
+    player.vy=0;
+    let vy=0;
+    if(keys['Space']||jumpHeld) vy=7;
+    if(keys['ShiftLeft']||keys['ShiftRight']||downHeld) vy=-7;
+    const dy=vy*dt;
+    if(dy!==0 && !collide(player.x,player.y+dy,player.z)) player.y+=dy;
+  } else if(liquid===WATER||liquid===LAVA){
+    const g = liquid===LAVA ? -4 : -6;
+    player.vy += g*dt;
+    player.vy = Math.max(player.vy, liquid===LAVA?-1.6:-3);
+    if(keys['Space']||jumpHeld) player.vy = liquid===LAVA?2.2:3.2;
   } else {
     player.vy += -26*dt;
     if((keys['Space']||jumpHeld) && player.onGround){ player.vy=8.4; player.onGround=false; }
   }
 
-  // X 軸
   if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
-  // Z 軸
   if(!collide(player.x, player.y, player.z+dz)) player.z+=dz;
-  // Y 軸
-  const dy=player.vy*dt;
-  if(!collide(player.x, player.y+dy, player.z)){
-    player.y+=dy; player.onGround=false;
-  } else {
-    if(player.vy<0) player.onGround=true;
-    player.vy=0;
+  if(!player.fly){
+    const dy=player.vy*dt;
+    if(!collide(player.x, player.y+dy, player.z)){
+      player.y+=dy; player.onGround=false;
+    } else {
+      if(player.vy<0) player.onGround=true;
+      player.vy=0;
+    }
   }
-  if(player.y<-10) spawn(); // 掉出世界重生
+  if(player.y<-10) spawn();
+
+  /* 岩漿傷害 */
+  if(liquid===LAVA){
+    lavaT-=dt;
+    if(lavaT<=0){ invulnT=0; damagePlayer(1); lavaT=0.6; }
+  } else lavaT=0;
+
+  /* 地獄門傳送 */
+  const feet=getB(Math.floor(player.x),Math.floor(player.y+0.4),Math.floor(player.z));
+  if(feet===PORTAL && portalCD<=0){
+    portalT+=dt;
+    if(portalT>=1){ portalT=0; switchDim(); }
+  } else portalT=0;
 
   camera.position.set(player.x, player.y+EYE, player.z);
   camera.rotation.set(player.pitch, player.yaw, 0);
 
-  // 目標方塊外框
   const hit=raycast(6);
   if(hit){ hlBox.visible=true; hlBox.position.set(hit.x+0.5,hit.y+0.5,hit.z+0.5); }
   else hlBox.visible=false;
@@ -682,11 +1625,12 @@ addEventListener('resize',()=>{
 /* ================= 啟動 ================= */
 (async function init(){
   document.getElementById('ctrlHint').innerHTML = isTouch
-    ? '左下搖桿移動｜右側滑動轉視角<br>⛏ 挖掘準心方塊｜🧱 放置方塊｜⬆ 跳躍<br>每 20 秒自動存檔'
-    : '滑鼠轉視角（點畫面鎖定）｜WASD 移動｜空白鍵跳躍<br>左鍵挖掘｜右鍵放置｜數字鍵 1-9 切換方塊<br>每 20 秒自動存檔';
+    ? '⛏ 挖方塊會收集材料｜放「合成台」對準它按 🔨 合成武器<br>🗡 合成劍砍殭屍更痛｜白天打🐷🐔獲得食物，點食物圖示回血<br>🔥 挖鐵+煤合成打火石 → 黑曜石搭 4×5 門框 → 對準點火進地獄！<br>🌙 晚上墓地會冒出很多殭屍…進度自動儲存'
+    : 'WASD 移動｜左鍵挖/攻擊｜右鍵放置｜E 互動（合成台/點火）<br>Q 吃東西｜F 飛行｜Esc 暫停<br>⛏ 挖方塊收集材料 → 合成台做武器｜鐵+煤=打火石 → 點燃黑曜石門進地獄！<br>進度自動儲存';
   const t = await loadGame();
   if(t===null){
-    generate(seed);
+    ensureDim('over');
+    world=dims.over.world; genWorld=dims.over.gen; diffs=dims.over.diffs;
     spawn();
     document.getElementById('saveInfo').textContent='沒有找到存檔，將建立全新世界';
   } else {
@@ -695,9 +1639,16 @@ addEventListener('resize',()=>{
       `📂 已讀取存檔（上次儲存：${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}）`;
   }
   rebuildAll();
+  applyDimSky();
+  updateHUD();
+  document.getElementById('btnFly').classList.toggle('on',player.fly);
+  document.getElementById('btnDown').style.display=(player.fly&&isTouch)?'flex':'none';
   document.getElementById('startBtn').addEventListener('click',()=>{
+    initAudio();
+    if(AC && AC.state==='suspended') AC.resume();
     document.getElementById('startOverlay').style.display='none';
-    started=true;
+    started=true; paused=false;
+    lastT=performance.now();
     if(!isTouch) renderer.domElement.requestPointerLock();
   });
   loop();
