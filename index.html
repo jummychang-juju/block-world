@@ -18,7 +18,7 @@
   .slot.sel { border-color:#fff; background:rgba(255,255,255,.18); box-shadow:0 0 0 2px rgba(255,255,255,.35); }
   .slot canvas { width:30px; height:30px; image-rendering:pixelated; }
   .slot .num { position:absolute; top:0; left:3px; font-size:9px; color:rgba(255,255,255,.7); }
-  .btn { position:fixed; z-index:10; border-radius:50%; background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.5); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; }
+  .btn { position:fixed; z-index:12; border-radius:50%; background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.5); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; touch-action:none; }
   .btn:active { background:rgba(255,255,255,.25); }
   #btnJump { right:24px; bottom:96px; width:64px; height:64px; }
   #btnDown { right:104px; bottom:88px; width:52px; height:52px; display:none; }
@@ -133,7 +133,7 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
-  14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"玉髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
+  14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
   25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋"};
 const HOTBAR = [GRASS,DIRT,STONE,SAND,WOOD,LEAF,PLANK,GLASS,BRICK,TNT,GLOW,OBSID,CRAFT,ENDFRAME];
 
@@ -206,7 +206,6 @@ function generateOver(sd, w){
     const r=oreRng();
     if(y<=3 && r<0.13) w[idx(x,y,z)]=LAVA;
     else if(y<9 && r<0.016) w[idx(x,y,z)]=GOLD;
-    else if(y<12 && r<0.028) w[idx(x,y,z)]=CHAL;
     else if(y<14 && r<0.055) w[idx(x,y,z)]=IRON;
     else if(r<0.085) w[idx(x,y,z)]=COAL;
   }
@@ -284,7 +283,12 @@ function generateNether(sd, w){
       w[idx(x,cH,z)]=GLOW;
       if(rng()<0.5 && cH-1>8) w[idx(x,cH-1,z)]=GLOW;
     }
-    for(let y=1;y<=fH;y++) if(w[idx(x,y,z)]===NETHER && rng()<0.02) w[idx(x,y,z)]=GLOW;
+    for(let y=1;y<=fH;y++){
+      if(w[idx(x,y,z)]!==NETHER) continue;
+      const rr=rng();
+      if(rr<0.022) w[idx(x,y,z)]=CHAL;        /* 獄髓礦：只在地獄出現 */
+      else if(rr<0.042) w[idx(x,y,z)]=GLOW;
+    }
   }
 }
 
@@ -698,7 +702,7 @@ let hasFlint=false, hasBow=false, hasBed=false, armor=0;
 let dragonDefeated=false;
 let curWeapon='fist';
 const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, axe:5, diamond:6, chal:8, ender:10 };
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', chal:'🗡 玉髓劍✨', ender:'🗡 終界劍🌌' };
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', chal:'🗡 獄髓劍✨', ender:'🗡 終界劍🌌' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal' };
 
 function surfaceYo(x,z){
@@ -728,6 +732,14 @@ function collideBox(px,py,pz,w,h){
 const collide=(px,py,pz)=>collideBox(px,py,pz,P_W,P_H);
 function liquidAt(){
   return getB(Math.floor(player.x), Math.floor(player.y+1.0), Math.floor(player.z));
+}
+function touchingLava(){
+  const x0=Math.floor(player.x-P_W), x1=Math.floor(player.x+P_W);
+  const y0=Math.floor(player.y-0.05), y1=Math.floor(player.y+P_H);
+  const z0=Math.floor(player.z-P_W), z1=Math.floor(player.z+P_W);
+  for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++) for(let z=z0;z<=z1;z++)
+    if(getB(x,y,z)===LAVA) return true;
+  return false;
 }
 
 let invulnT=0, lavaT=0;
@@ -1303,14 +1315,14 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣玉髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害 2）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害 3）',    cost:{wood:1,stone:3}},
   {id:'iron',    kind:'sword', name:'鐵劍（傷害 4）',    cost:{wood:1,iron:2}},
   {id:'axe',     kind:'sword', name:'戰斧🪓（傷害 5）',  cost:{wood:1,iron:3}},
   {id:'diamond', kind:'sword', name:'鑽石劍（傷害 6）',  cost:{wood:1,diamond:2}},
-  {id:'chal',    kind:'sword', name:'玉髓劍✨（傷害 8）', cost:{wood:1,chal:3}},
+  {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害 8）', cost:{wood:1,chal:3}},
   {id:'ender',   kind:'sword', name:'終界劍🌌（傷害 10）', cost:{pearl:2,diamond:1}},
   {id:'bow',     kind:'bow',   name:'弓🏹（遠距攻擊，傷害 4）', cost:{wood:2,iron:1}},
   {id:'arrows',  kind:'stack', name:'箭×8🏹', cost:{wood:1,stone:1}},
@@ -1645,11 +1657,25 @@ renderer.domElement.addEventListener('touchstart',e=>{
 },{passive:true});
 function bindBtn(id, down, up){
   const el=document.getElementById(id);
-  el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();down();},{passive:false});
-  if(up) el.addEventListener('touchend',e=>{e.preventDefault();up();},{passive:false});
+  let tid=null;
+  el.addEventListener('touchstart',e=>{
+    e.preventDefault(); e.stopPropagation();
+    tid=e.changedTouches[0].identifier;
+    down();
+  },{passive:false});
+  const rel=e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===tid){ tid=null; if(up) up(); }
+    }
+  };
+  el.addEventListener('touchend',e=>{e.preventDefault();rel(e);},{passive:false});
+  el.addEventListener('touchcancel',rel);
   el.addEventListener('mousedown',e=>{e.preventDefault();down();});
   if(up) el.addEventListener('mouseup',()=>up());
 }
+/* 安全網：切換視窗或手勢中斷時，強制放開所有按住的按鈕 */
+addEventListener('visibilitychange',()=>{ jumpHeld=false; downHeld=false; });
+addEventListener('touchcancel',()=>{ jumpHeld=false; downHeld=false; });
 bindBtn('btnJump',()=>jumpHeld=true,()=>jumpHeld=false);
 bindBtn('btnDown',()=>downHeld=true,()=>downHeld=false);
 bindBtn('btnMine',()=>mine());
@@ -2079,7 +2105,7 @@ function loop(){
     if(dim==='end'){ invulnT=0; damagePlayer(10); if(player.hp>0) spawn(); }
     else spawn();
   }
-  if(liquid===LAVA){
+  if(touchingLava()){
     lavaT-=dt;
     if(lavaT<=0){ invulnT=0; damagePlayer(1); lavaT=0.6; }
   } else lavaT=0;
