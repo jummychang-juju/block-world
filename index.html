@@ -85,7 +85,7 @@
 <div id="hearts"></div>
 <div id="statusBar"></div>
 <div id="dayIcon">☀️</div>
-<div id="bossBar"><div class="bt">🐉 終界龍</div><div class="bg"><div class="fill" id="bossFill"></div></div></div>
+<div id="bossBar"><div class="bt" id="bossTitle">🐉 終界龍</div><div class="bg"><div class="fill" id="bossFill"></div></div></div>
 <div id="toast"></div>
 
 <div class="overlay" id="startOverlay">
@@ -664,7 +664,7 @@ function explode(bx,by,bz){
   for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); }
   spawnParticles(bx+0.5,by+0.5,bz+0.5, 24, 0x888888);
   for(const e of entities()) if(Math.hypot(e.x-bx,e.y-by,e.z-bz)<R+1.5) e.hp=0;
-  if(dragon && Math.hypot(dragon.x-bx,dragon.y-by,dragon.z-bz)<R+2) dragon.hp-=6;
+  for(const d of dragons) if(Math.hypot(d.x-bx,d.y-by,d.z-bz)<R+2) d.hp-=6;
   for(const c of cascade) setTimeout(()=>{ if(getB(c[0],c[1],c[2])===AIR) explode(c[0],c[1],c[2]); }, 250);
   const pd=Math.hypot(player.x-bx-0.5, player.y+0.9-by, player.z-bz-0.5);
   if(pd<R+1) damagePlayer(pd<2?4:2);
@@ -695,7 +695,7 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
 const weapons = { wood:false, stone:false, iron:false, axe:false, diamond:false, chal:false, ender:false };
 let hasFlint=false, hasBow=false, hasBed=false, armor=0;
@@ -816,11 +816,11 @@ const zombies=[], animals=[], enders=[];
 const MAX_Z=6, MAX_A=6, MAX_E=5;
 const entities = ()=> zombies.concat(animals, enders);
 
-function makeZombieMesh(){
+function makeZombieMesh(v){
   const g=new THREE.Group();
-  const skin=new THREE.MeshLambertMaterial({color:0x55a04a});
-  const shirt=new THREE.MeshLambertMaterial({color:0x1c7a8c});
-  const pants=new THREE.MeshLambertMaterial({color:0x3a4a9c});
+  const skin=new THREE.MeshLambertMaterial({color:v.skin});
+  const shirt=new THREE.MeshLambertMaterial({color:v.shirt});
+  const pants=new THREE.MeshLambertMaterial({color:v.pants});
   const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),skin); head.position.y=1.65;
   const body=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.7,0.26),shirt); body.position.y=1.05;
   const armG=new THREE.BoxGeometry(0.16,0.16,0.6); armG.translate(0,0,0.3);
@@ -830,14 +830,26 @@ function makeZombieMesh(){
   const legL=new THREE.Mesh(legG,pants); legL.position.set(-0.13,0.7,0);
   const legR=new THREE.Mesh(legG,pants); legR.position.set(0.13,0.7,0);
   g.add(head,body,armL,armR,legL,legR);
+  g.scale.setScalar(v.scale);
   g.userData={legL,legR};
   return g;
 }
+/* 殭屍種類：普通(隨機衣服)/小殭屍(快)/壯殭屍(硬又痛)/地獄殭屍豬人 */
+const SHIRTS=[0x1c7a8c,0x3a5aa0,0x7a3a8c,0x8a4a2a,0x2a7a4a];
+function rollZombieVariant(isNether){
+  if(isNether) return {skin:0xe8a0a0, shirt:0xb08a30, pants:0x6a4a2a, scale:1.0, hp:5, sp:1.4, dmg:1};
+  const r=Math.random();
+  if(r<0.2)  return {skin:0x8ac05a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:0.72, hp:2, sp:2.3, dmg:1};   /* 小殭屍 */
+  if(r<0.4)  return {skin:0x3a6a34, shirt:0x333333, pants:0x222222, scale:1.28, hp:7, sp:1.0, dmg:2};   /* 壯殭屍 */
+  return {skin:0x55a04a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:1.0, hp:4, sp:1.4, dmg:1};
+}
+const ENDER_EYES=[0xd070f0,0xf070a0,0x70c0f0,0x90f070];
 function makeEnderMesh(){
   const g=new THREE.Group();
-  const blk=new THREE.MeshLambertMaterial({color:0x141018});
+  const shade=[0x141018,0x1c1424,0x0e0c14][(Math.random()*3)|0];
+  const blk=new THREE.MeshLambertMaterial({color:shade});
   const head=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.45),blk); head.position.y=2.5;
-  const eyeM=new THREE.MeshBasicMaterial({color:0xd070f0});
+  const eyeM=new THREE.MeshBasicMaterial({color:ENDER_EYES[(Math.random()*ENDER_EYES.length)|0]});
   const eye=new THREE.Mesh(new THREE.BoxGeometry(0.47,0.09,0.47),eyeM); eye.position.y=2.55;
   const body=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.85,0.22),blk); body.position.y=1.85;
   const armG=new THREE.BoxGeometry(0.1,1.1,0.1); armG.translate(0,-0.55,0);
@@ -847,6 +859,7 @@ function makeEnderMesh(){
   const legL=new THREE.Mesh(legG,blk); legL.position.set(-0.12,1.4,0);
   const legR=new THREE.Mesh(legG,blk); legR.position.set(0.12,1.4,0);
   g.add(head,eye,body,armL,armR,legL,legR);
+  g.scale.setScalar(0.9+Math.random()*0.25);
   g.userData={legL,legR};
   return g;
 }
@@ -910,9 +923,10 @@ function trySpawnZombie(){
   if(y<=0||y>=WY-2) return;
   if(getB(x,y,z)!==AIR) return;
   if(Math.hypot(x-player.x,z-player.z)<6) return;
-  const mesh=makeZombieMesh();
+  const v=rollZombieVariant(dim==='nether');
+  const mesh=makeZombieMesh(v);
   scene.add(mesh);
-  zombies.push({kind:'z',fromNether:dim==='nether',x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:4,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25,h:1.75});
+  zombies.push({kind:'z',fromNether:dim==='nether',x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25*v.scale,h:1.75*v.scale});
   sfx.zGroan();
 }
 function trySpawnEnder(){
@@ -974,14 +988,14 @@ function updateZombies(dt){
     z.atkT=Math.max(0,z.atkT-dt);
     z.groanT-=dt;
     if(z.groanT<0 && dist<14){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
-    const sp = z.hurtT>0 ? 0 : 1.4;
+    const sp = z.hurtT>0 ? 0 : (z.sp||1.4);
     let mx=0,mz=0;
     if(dist>0.6){ mx=dx/dist*sp*dt; mz=dz/dist*sp*dt; }
     z.yaw=Math.atan2(dx,dz);
     entPhysics(z,mx,mz,dt);
     if(z.y<-5){ removeEnt(zombies,i,false); continue; }
     if(dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
-      damagePlayer(1);
+      damagePlayer(z.dmg||1);
       z.atkT=1.2;
     }
     z.animT+=dt*(sp>0?6:0);
@@ -1076,7 +1090,7 @@ function updateAnimals(dt){
 }
 function raycastEntity(maxDist){
   const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
-  let best=null, bestT=maxDist, isDragon=false;
+  let best=null, bestT=maxDist;
   const all=entities();
   for(let i=0;i<all.length;i++){
     const e=all[i];
@@ -1086,30 +1100,38 @@ function raycastEntity(maxDist){
     if(t<0||t>bestT) continue;
     const px=camera.position.x+dir.x*t, py=camera.position.y+dir.y*t, pz=camera.position.z+dir.z*t;
     const dd=Math.hypot(px-e.x, py-cy, pz-e.z);
-    if(dd< (e.kind==='e'?1.2:0.85)){ best=e; bestT=t; isDragon=false; }
+    if(dd< (e.kind==='e'?1.2:0.85)){ best=e; bestT=t; }
   }
-  if(dragon){
-    const cx=dragon.x-camera.position.x, cyy=dragon.y-camera.position.y, cz=dragon.z-camera.position.z;
+  for(const d of dragons){
+    const cx=d.x-camera.position.x, cyy=d.y-camera.position.y, cz=d.z-camera.position.z;
     const t=cx*dir.x+cyy*dir.y+cz*dir.z;
     if(t>0 && t<bestT+2){
       const px=camera.position.x+dir.x*t, py=camera.position.y+dir.y*t, pz=camera.position.z+dir.z*t;
-      const dd=Math.hypot(px-dragon.x, py-dragon.y, pz-dragon.z);
-      if(dd<2.2){ best='dragon'; isDragon=true; }
+      const dd=Math.hypot(px-d.x, py-d.y, pz-d.z);
+      if(dd<2.2*d.tier.scale){ best={isDragon:true, drg:d}; }
     }
   }
   return best;
 }
 
-/* ================= 終界龍 ================= */
-let dragon=null;
-function makeDragonMesh(){
+/* ================= 終界龍（三龍系統） ================= */
+let dragons=[];
+const fireballs=[];
+const DR_TIERS=[
+  {name:'幼龍',   body:0x2f7a52, wing:0x4fa878, eye:0x80ffc0, hp:50,  dmg:1, spd:11, diveMin:6,   scale:0.7,  fire:false},
+  {name:'冰龍',   body:0x3a6a9a, wing:0x7ab8e8, eye:0xc0f0ff, hp:70,  dmg:2, spd:14, diveMin:5.5, scale:0.9,  fire:false},
+  {name:'終界龍', body:0x1a1520, wing:0x2a2138, eye:0xe040f0, hp:90,  dmg:2, spd:13, diveMin:5,   scale:1.0,  fire:false},
+  {name:'雷龍',   body:0x8a7a1a, wing:0xd8c040, eye:0xffff80, hp:110, dmg:2, spd:15, diveMin:4.5, scale:1.1,  fire:true,  ball:0xffe040, ballSpd:13},
+  {name:'龍王',   body:0x6a1212, wing:0x9a2828, eye:0xffd040, hp:150, dmg:3, spd:16, diveMin:4,   scale:1.35, fire:true,  ball:0xff8020, ballSpd:10},
+];
+function makeDragonMesh(tier){
   const g=new THREE.Group();
-  const dark=new THREE.MeshLambertMaterial({color:0x1a1520});
-  const wingM=new THREE.MeshLambertMaterial({color:0x2a2138, side:THREE.DoubleSide});
+  const dark=new THREE.MeshLambertMaterial({color:tier.body});
+  const wingM=new THREE.MeshLambertMaterial({color:tier.wing, side:THREE.DoubleSide});
   const body=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.9,3.0),dark);
   const head=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.7,1.0),dark); head.position.set(0,0.2,1.9);
-  const eyeM=new THREE.MeshBasicMaterial({color:0xe040f0});
-  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.12),eyeM); eL.position.set(-0.25,0.4,2.3);
+  const eyeM=new THREE.MeshBasicMaterial({color:tier.eye});
+  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.14,0.14),eyeM); eL.position.set(-0.25,0.4,2.3);
   const eR=eL.clone(); eR.position.x=0.25;
   const wG=new THREE.BoxGeometry(3.2,0.08,1.5); wG.translate(1.6,0,0);
   const wL=new THREE.Mesh(wG,wingM); wL.position.set(0.5,0.4,0);
@@ -1118,20 +1140,42 @@ function makeDragonMesh(){
   const tail1=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,1.4),dark); tail1.position.set(0,0.1,-2.0);
   const tail2=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.25,1.2),dark); tail2.position.set(0,0.15,-3.1);
   g.add(body,head,eL,eR,wL,wR,tail1,tail2);
+  g.scale.setScalar(tier.scale);
   g.userData={wL,wR};
   return g;
 }
-function spawnDragon(){
-  if(dragonDefeated || dragon) return;
-  const mesh=makeDragonMesh();
-  scene.add(mesh);
-  dragon={x:END_C.x,y:24,z:END_C.z,hp:60,maxHp:60,angle:0,state:'circle',diveT:6,healT:2,animT:0,hurtT:0,tx:0,ty:0,tz:0,mesh};
+function spawnDragons(){
+  if(dragonDefeated || dragons.length) return;
+  DR_TIERS.forEach((tier,i)=>{
+    const mesh=makeDragonMesh(tier);
+    scene.add(mesh);
+    dragons.push({tier, x:END_C.x, y:20+i*2.2, z:END_C.z, hp:tier.hp, maxHp:tier.hp,
+      angle:i*1.26, r:7.5+i*1.6, state:'circle', diveT:tier.diveMin+i*1.5, healT:2,
+      fireT:5+i*2, animT:Math.random()*6, hurtT:0, tx:0,ty:0,tz:0, mesh});
+  });
   document.getElementById('bossBar').style.display='block';
+  updateBossBar();
   sfx.roar();
-  toast('🐉 終界龍出現了！打破柱子上的水晶阻止牠回血！');
+  toast('🐉 五隻龍同時出現了！雷龍和龍王會噴火球，先打破水晶！');
 }
-function despawnDragon(){
-  if(dragon){ scene.remove(dragon.mesh); dragon=null; }
+function reviveDragons(){
+  if(dim!=='end'||!dragonDefeated) return;
+  if(inv.crystal<4){ toast('💠 需要 4 顆終界水晶（現在只有 '+inv.crystal+' 顆）'); return; }
+  inv.crystal-=4;
+  /* 柱頂水晶重新出現 */
+  for(const [x,y,z] of crystalPos) if(getB(x,y,z)!==ENDCRYSTAL) setBlock(x,y,z,ENDCRYSTAL);
+  dragonDefeated=false;
+  spawnDragons();
+  sfx.portal(); sfx.roar();
+  spawnParticles(END_C.x,16,END_C.z,25,0x80f0ff);
+  toast('💠⚡ 群龍復活了！第二輪挑戰開始！');
+  updateHUD();
+  scheduleSave();
+}
+function despawnDragons(){
+  for(const d of dragons) scene.remove(d.mesh);
+  dragons=[];
+  for(let i=fireballs.length-1;i>=0;i--){ scene.remove(fireballs[i].mesh); fireballs.splice(i,1); }
   document.getElementById('bossBar').style.display='none';
 }
 function crystalsLeft(){
@@ -1139,13 +1183,17 @@ function crystalsLeft(){
   for(const [x,y,z] of crystalPos) if(getB(x,y,z)===ENDCRYSTAL) n++;
   return n;
 }
-function dragonDeath(){
-  spawnParticles(dragon.x,dragon.y,dragon.z,40,0xe040f0);
-  spawnParticles(dragon.x,dragon.y,dragon.z,30,0xffffff);
+function updateBossBar(){
+  let hp=0,max=0;
+  for(const d of dragons){ hp+=Math.max(0,d.hp); max+=d.maxHp; }
+  document.getElementById('bossTitle').textContent='🐉 終界龍 ×'+dragons.length;
+  document.getElementById('bossFill').style.width=(max>0?hp/max*100:0)+'%';
+}
+function allDragonsDead(){
+  spawnParticles(END_C.x,20,END_C.z,40,0xe040f0);
   sfx.boom(); sfx.roar();
-  despawnDragon();
+  despawnDragons();
   dragonDefeated=true;
-  /* 回家傳送門 + 龍蛋 */
   const cy=topSolid(world,END_C.x,END_C.z);
   for(let dx=-1;dx<=1;dx++) for(let dz=-1;dz<=1;dz++){
     if(dx===0&&dz===0) continue;
@@ -1159,56 +1207,96 @@ function dragonDeath(){
   paused=true;
   scheduleSave();
 }
-function updateDragon(dt){
-  if(!dragon) return;
-  const d=dragon;
-  if(d.hp<=0){ dragonDeath(); return; }
-  d.hurtT=Math.max(0,d.hurtT-dt);
-  d.animT+=dt*6;
-  /* 水晶回血 */
-  d.healT-=dt;
-  if(d.healT<=0){
-    d.healT=2;
-    if(crystalsLeft()>0 && d.hp<d.maxHp){
-      d.hp=Math.min(d.maxHp,d.hp+1);
-      spawnParticles(d.x,d.y,d.z,4,0xff70ff);
+function shootFireball(d){
+  const dx=player.x-d.x, dy=(player.y+1)-d.y, dz=player.z-d.z;
+  const len=Math.hypot(dx,dy,dz)||1;
+  const col=d.tier.ball||0xff8020, spd=d.tier.ballSpd||10;
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.3,6,6), new THREE.MeshBasicMaterial({color:col}));
+  m.position.set(d.x,d.y,d.z);
+  scene.add(m);
+  fireballs.push({x:d.x,y:d.y,z:d.z, vx:dx/len*spd, vy:dy/len*spd, vz:dz/len*spd, life:6, col, mesh:m});
+  tone(200,0.3,'sawtooth',0.1,80);
+}
+function updateFireballs(dt){
+  for(let i=fireballs.length-1;i>=0;i--){
+    const f=fireballs[i];
+    f.life-=dt;
+    f.x+=f.vx*dt; f.y+=f.vy*dt; f.z+=f.vz*dt;
+    f.mesh.position.set(f.x,f.y,f.z);
+    let boomHit=false;
+    if(isSolid(getB(Math.floor(f.x),Math.floor(f.y),Math.floor(f.z)))) boomHit=true;
+    const pd=Math.hypot(player.x-f.x,(player.y+1)-f.y,player.z-f.z);
+    if(pd<1.2){ damagePlayer(2); boomHit=true; }
+    if(boomHit||f.life<=0){
+      if(boomHit){ spawnParticles(f.x,f.y,f.z,10,f.col||0xff8020); noiseBurst(0.25,0.2,500); }
+      scene.remove(f.mesh); f.mesh.material.dispose();
+      fireballs.splice(i,1);
     }
   }
-  if(d.state==='circle'){
-    d.angle+=0.4*dt;
-    const r=10;
-    d.x=END_C.x+Math.cos(d.angle)*r;
-    d.z=END_C.z+Math.sin(d.angle)*r;
-    d.y=21+Math.sin(d.angle*2)*2.5;
-    d.mesh.rotation.y=-d.angle+Math.PI;
-    d.diveT-=dt;
-    if(d.diveT<=0){
-      d.state='dive';
-      d.tx=player.x; d.ty=player.y+1; d.tz=player.z;
+}
+function updateDragons(dt){
+  if(!dragons.length) return;
+  for(let i=dragons.length-1;i>=0;i--){
+    const d=dragons[i];
+    if(d.hp<=0){
+      spawnParticles(d.x,d.y,d.z,30,d.tier.eye);
       sfx.roar();
+      scene.remove(d.mesh);
+      dragons.splice(i,1);
+      toast('⚔️ 打倒了'+d.tier.name+'！還剩 '+dragons.length+' 隻');
+      updateBossBar();
+      if(dragons.length===0){ allDragonsDead(); return; }
+      continue;
     }
-  } else if(d.state==='dive'){
-    const vx=d.tx-d.x, vy=d.ty-d.y, vz=d.tz-d.z;
-    const len=Math.hypot(vx,vy,vz);
-    if(len<1.5){
-      d.state='climb';
+    d.hurtT=Math.max(0,d.hurtT-dt);
+    d.animT+=dt*6;
+    d.healT-=dt;
+    if(d.healT<=0){
+      d.healT=2;
+      if(crystalsLeft()>0 && d.hp<d.maxHp){
+        d.hp=Math.min(d.maxHp,d.hp+1);
+        spawnParticles(d.x,d.y,d.z,4,0xff70ff);
+      }
+    }
+    if(d.tier.fire){
+      d.fireT-=dt;
+      if(d.fireT<=0 && d.state==='circle'){ shootFireball(d); d.fireT=4+Math.random()*3; }
+    }
+    if(d.state==='circle'){
+      d.angle+=0.4*dt;
+      d.x=END_C.x+Math.cos(d.angle)*d.r;
+      d.z=END_C.z+Math.sin(d.angle)*d.r;
+      d.y=20+Math.sin(d.angle*2)*2.5 + (d.r-8.5);
+      d.mesh.rotation.y=-d.angle+Math.PI;
+      d.diveT-=dt;
+      if(d.diveT<=0){
+        d.state='dive';
+        d.tx=player.x; d.ty=player.y+1; d.tz=player.z;
+        sfx.roar();
+      }
+    } else if(d.state==='dive'){
+      const vx=d.tx-d.x, vy=d.ty-d.y, vz=d.tz-d.z;
+      const len=Math.hypot(vx,vy,vz);
+      if(len<1.5){
+        d.state='climb';
+      } else {
+        const sp=d.tier.spd*dt;
+        d.x+=vx/len*sp; d.y+=vy/len*sp; d.z+=vz/len*sp;
+        d.mesh.rotation.y=Math.atan2(vx,vz);
+      }
+      const pd=Math.hypot(player.x-d.x,(player.y+1)-d.y,player.z-d.z);
+      if(pd<2.2*d.tier.scale){ damagePlayer(d.tier.dmg); d.state='climb'; }
     } else {
-      const sp=13*dt;
-      d.x+=vx/len*sp; d.y+=vy/len*sp; d.z+=vz/len*sp;
-      d.mesh.rotation.y=Math.atan2(vx,vz);
+      d.y+=9*dt;
+      if(d.y>=20+(d.r-8.5)){ d.state='circle'; d.diveT=d.tier.diveMin+Math.random()*4; }
     }
-    const pd=Math.hypot(player.x-d.x,(player.y+1)-d.y,player.z-d.z);
-    if(pd<2.2){ damagePlayer(2); d.state='climb'; }
-  } else { /* climb */
-    d.y+=9*dt;
-    if(d.y>=21){ d.state='circle'; d.diveT=5+Math.random()*4; }
+    d.mesh.position.set(d.x,d.y,d.z);
+    const flap=Math.sin(d.animT)*0.55;
+    d.mesh.userData.wL.rotation.z=flap;
+    d.mesh.userData.wR.rotation.z=-flap;
+    d.mesh.children.forEach(c=>{ if(c.material&&c.material.emissive) c.material.emissive.setHex(d.hurtT>0?0x660022:0x000000); });
   }
-  d.mesh.position.set(d.x,d.y,d.z);
-  const flap=Math.sin(d.animT)*0.55;
-  d.mesh.userData.wL.rotation.z=flap;
-  d.mesh.userData.wR.rotation.z=-flap;
-  d.mesh.children.forEach(c=>{ if(c.material&&c.material.emissive) c.material.emissive.setHex(d.hurtT>0?0x660022:0x000000); });
-  document.getElementById('bossFill').style.width=(d.hp/d.maxHp*100)+'%';
+  updateBossBar();
 }
 
 /* ================= 弓箭 ================= */
@@ -1253,12 +1341,14 @@ function updateArrows(dt){
         }
       }
     }
-    if(!hit && dragon){
-      if(Math.hypot(a.x-dragon.x,a.y-dragon.y,a.z-dragon.z)<2.2){
-        dragon.hp-=4; dragon.hurtT=0.4;
-        spawnParticles(dragon.x,dragon.y,dragon.z,6,0xe040f0);
-        sfx.zHit();
-        hit=true;
+    if(!hit){
+      for(const d of dragons){
+        if(Math.hypot(a.x-d.x,a.y-d.y,a.z-d.z)<2.2*d.tier.scale){
+          d.hp-=4; d.hurtT=0.4;
+          spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
+          sfx.zHit();
+          hit=true; break;
+        }
       }
     }
     if(hit||a.life<=0){
@@ -1315,7 +1405,7 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害 2）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害 3）',    cost:{wood:1,stone:3}},
@@ -1331,6 +1421,7 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'bed',     kind:'bed',   name:'床🛏（晚上一鍵睡到天亮）', cost:{wood:3}},
+  {id:'crystal', kind:'stack', name:'終界水晶💠（集滿4顆可復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
   {id:'apple',   kind:'stack', name:'金蘋果✨🍎（吃了全滿血）', cost:{gold:2}},
 ];
 function canAfford(cost){ for(const k in cost) if((inv[k]||0)<cost[k]) return false; return true; }
@@ -1371,6 +1462,7 @@ function renderCraft(){
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
+        else if(r.id==='crystal'){ inv.crystal++; toast('💠 合成了終界水晶！（'+inv.crystal+'/4）集滿4顆到終界對準龍蛋復活群龍'); }
         else if(r.id==='apple'){ inv.apple++; toast('✨🍎 合成了金蘋果！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
@@ -1507,7 +1599,7 @@ function goDim(target){
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
-  despawnDragon();
+  despawnDragons();
   for(let i=arrows.length-1;i>=0;i--){ scene.remove(arrows[i].mesh); arrows.splice(i,1); }
   dim=target;
   ensureDim(dim);
@@ -1516,7 +1608,7 @@ function goDim(target){
   if(dim==='end'){
     player.x=16.5; player.z=32.5;
     player.y=13.1;
-    if(!dragonDefeated) spawnDragon();
+    if(!dragonDefeated) spawnDragons();
     toast('🌌 歡迎來到終界！');
   } else if(dim==='nether'){
     const px=Math.max(3,Math.min(WX-4,Math.floor(player.x)));
@@ -1703,6 +1795,7 @@ function updateActButton(){
   if(hit && hit.id===CRAFT) mode='craft';
   else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
   else if(hit && hit.id===ENDFRAME && inv.eye>0) mode='eye';
+  else if(hit && (hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated && inv.crystal>0) mode='revive';
   if(mode!==actMode){
     actMode=mode;
     const b=document.getElementById('btnAct');
@@ -1710,6 +1803,7 @@ function updateActButton(){
     if(mode==='craft'){ b.textContent='🔨'; b.style.display='flex'; }
     else if(mode==='ignite'){ b.textContent='🔥'; b.style.display='flex'; }
     else if(mode==='eye'){ b.textContent='👁'; b.style.display='flex'; }
+    else if(mode==='revive'){ b.textContent='💠'; b.style.display='flex'; }
     else b.style.display='none';
   }
 }
@@ -1719,6 +1813,7 @@ function doAction(){
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===OBSID && hasFlint) igniteAt(hit);
   else if(hit.id===ENDFRAME) insertEye(hit);
+  else if((hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated) reviveDragons();
 }
 
 /* ================= 快捷欄 ================= */
@@ -1768,10 +1863,11 @@ function raycast(maxDist){
 function mine(){
   if(paused) return;
   const ent=raycastEntity(4);
-  if(ent==='dragon'){
+  if(ent && ent.isDragon){
+    const d=ent.drg;
     const dmg=WEAPON_DMG[curWeapon];
-    dragon.hp-=dmg; dragon.hurtT=0.4;
-    spawnParticles(dragon.x,dragon.y,dragon.z,6,0xe040f0);
+    d.hp-=dmg; d.hurtT=0.4;
+    spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
     sfx.zHit();
     return;
   }
@@ -1948,7 +2044,7 @@ async function newWorld(){
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
-  despawnDragon();
+  despawnDragons();
   dim='over';
   ensureDim('over');
   world=dims.over.world; genWorld=dims.over.gen; diffs=dims.over.diffs;
@@ -2009,7 +2105,7 @@ document.getElementById('newWorldBtn').addEventListener('click',()=>{
 document.getElementById('respawnBtn').addEventListener('click',()=>{
   player.hp=10;
   if(dim!=='over'){
-    despawnDragon();
+    despawnDragons();
     dim='over';
     ensureDim('over');
     world=dims.over.world; genWorld=dims.over.gen; diffs=dims.over.diffs;
@@ -2054,7 +2150,8 @@ function loop(){
   updateZombies(dt);
   updateEnders(dt);
   updateAnimals(dt);
-  updateDragon(dt);
+  updateDragons(dt);
+  updateFireballs(dt);
   updateArrows(dt);
   updateActButton();
 
@@ -2154,7 +2251,7 @@ addEventListener('resize',()=>{
   }
   rebuildAll();
   applyDimSky();
-  if(dim==='end' && !dragonDefeated) spawnDragon();
+  if(dim==='end' && !dragonDefeated) spawnDragons();
   updateHUD();
   document.getElementById('btnFly').classList.toggle('on',player.fly);
   document.getElementById('btnDown').style.display=(player.fly&&isTouch)?'flex':'none';
