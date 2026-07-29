@@ -695,7 +695,7 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0,
+              pearl:0, blaze:0, eye:0, arrow:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
 const weapons = { wood:false, stone:false, iron:false, axe:false, diamond:false, chal:false, ender:false };
 let hasFlint=false, hasBow=false, hasBed=false, armor=0;
@@ -1158,20 +1158,6 @@ function spawnDragons(){
   sfx.roar();
   toast('🐉 五隻龍同時出現了！雷龍和龍王會噴火球，先打破水晶！');
 }
-function reviveDragons(){
-  if(dim!=='end'||!dragonDefeated) return;
-  if(inv.crystal<4){ toast('💠 需要 4 顆終界水晶（現在只有 '+inv.crystal+' 顆）'); return; }
-  inv.crystal-=4;
-  /* 柱頂水晶重新出現 */
-  for(const [x,y,z] of crystalPos) if(getB(x,y,z)!==ENDCRYSTAL) setBlock(x,y,z,ENDCRYSTAL);
-  dragonDefeated=false;
-  spawnDragons();
-  sfx.portal(); sfx.roar();
-  spawnParticles(END_C.x,16,END_C.z,25,0x80f0ff);
-  toast('💠⚡ 群龍復活了！第二輪挑戰開始！');
-  updateHUD();
-  scheduleSave();
-}
 function despawnDragons(){
   for(const d of dragons) scene.remove(d.mesh);
   dragons=[];
@@ -1405,7 +1391,7 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害 2）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害 3）',    cost:{wood:1,stone:3}},
@@ -1421,7 +1407,6 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'bed',     kind:'bed',   name:'床🛏（晚上一鍵睡到天亮）', cost:{wood:3}},
-  {id:'crystal', kind:'stack', name:'終界水晶💠（集滿4顆可復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
   {id:'apple',   kind:'stack', name:'金蘋果✨🍎（吃了全滿血）', cost:{gold:2}},
 ];
 function canAfford(cost){ for(const k in cost) if((inv[k]||0)<cost[k]) return false; return true; }
@@ -1462,7 +1447,6 @@ function renderCraft(){
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
-        else if(r.id==='crystal'){ inv.crystal++; toast('💠 合成了終界水晶！（'+inv.crystal+'/4）集滿4顆到終界對準龍蛋復活群龍'); }
         else if(r.id==='apple'){ inv.apple++; toast('✨🍎 合成了金蘋果！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
@@ -1795,7 +1779,6 @@ function updateActButton(){
   if(hit && hit.id===CRAFT) mode='craft';
   else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
   else if(hit && hit.id===ENDFRAME && inv.eye>0) mode='eye';
-  else if(hit && (hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated && inv.crystal>0) mode='revive';
   if(mode!==actMode){
     actMode=mode;
     const b=document.getElementById('btnAct');
@@ -1803,7 +1786,6 @@ function updateActButton(){
     if(mode==='craft'){ b.textContent='🔨'; b.style.display='flex'; }
     else if(mode==='ignite'){ b.textContent='🔥'; b.style.display='flex'; }
     else if(mode==='eye'){ b.textContent='👁'; b.style.display='flex'; }
-    else if(mode==='revive'){ b.textContent='💠'; b.style.display='flex'; }
     else b.style.display='none';
   }
 }
@@ -1813,7 +1795,6 @@ function doAction(){
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===OBSID && hasFlint) igniteAt(hit);
   else if(hit.id===ENDFRAME) insertEye(hit);
-  else if((hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated) reviveDragons();
 }
 
 /* ================= 快捷欄 ================= */
