@@ -812,9 +812,9 @@ function updateHUD(){
 }
 
 /* ================= 生物 ================= */
-const zombies=[], animals=[], enders=[];
-const MAX_Z=6, MAX_A=6, MAX_E=5;
-const entities = ()=> zombies.concat(animals, enders);
+const zombies=[], animals=[], enders=[], blazes=[];
+const MAX_Z=6, MAX_A=6, MAX_E=5, MAX_B=3;
+const entities = ()=> zombies.concat(animals, enders, blazes);
 
 function makeZombieMesh(v){
   const g=new THREE.Group();
@@ -834,10 +834,30 @@ function makeZombieMesh(v){
   g.userData={legL,legR};
   return g;
 }
-/* 殭屍種類：普通(隨機衣服)/小殭屍(快)/壯殭屍(硬又痛)/地獄殭屍豬人 */
+function makePiglinMesh(){
+  const g=new THREE.Group();
+  const skin=new THREE.MeshLambertMaterial({color:0xf0a8a0});
+  const vest=new THREE.MeshLambertMaterial({color:0xd8b030});
+  const pants=new THREE.MeshLambertMaterial({color:0x6a4a2a});
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.48,0.5),skin); head.position.y=1.65;
+  const snout=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.1),new THREE.MeshLambertMaterial({color:0xd88080})); snout.position.set(0,1.58,0.3);
+  const earG=new THREE.BoxGeometry(0.1,0.16,0.06);
+  const earL=new THREE.Mesh(earG,skin); earL.position.set(-0.31,1.75,0);
+  const earR=new THREE.Mesh(earG,skin); earR.position.set(0.31,1.75,0);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.7,0.26),vest); body.position.y=1.05;
+  const armG=new THREE.BoxGeometry(0.16,0.16,0.6); armG.translate(0,0,0.3);
+  const armL=new THREE.Mesh(armG,skin); armL.position.set(-0.33,1.3,0);
+  const armR=new THREE.Mesh(armG,skin); armR.position.set(0.33,1.3,0);
+  const legG=new THREE.BoxGeometry(0.2,0.7,0.2); legG.translate(0,-0.35,0);
+  const legL=new THREE.Mesh(legG,pants); legL.position.set(-0.13,0.7,0);
+  const legR=new THREE.Mesh(legG,pants); legR.position.set(0.13,0.7,0);
+  g.add(head,snout,earL,earR,body,armL,armR,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
+/* 殭屍種類：普通(隨機衣服)/小殭屍(快)/壯殭屍(硬又痛)；地獄改為豬布林 */
 const SHIRTS=[0x1c7a8c,0x3a5aa0,0x7a3a8c,0x8a4a2a,0x2a7a4a];
 function rollZombieVariant(isNether){
-  if(isNether) return {skin:0xe8a0a0, shirt:0xb08a30, pants:0x6a4a2a, scale:1.0, hp:5, sp:1.4, dmg:1};
   const r=Math.random();
   if(r<0.2)  return {skin:0x8ac05a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:0.72, hp:2, sp:2.3, dmg:1};   /* 小殭屍 */
   if(r<0.4)  return {skin:0x3a6a34, shirt:0x333333, pants:0x222222, scale:1.28, hp:7, sp:1.0, dmg:2};   /* 壯殭屍 */
@@ -923,10 +943,11 @@ function trySpawnZombie(){
   if(y<=0||y>=WY-2) return;
   if(getB(x,y,z)!==AIR) return;
   if(Math.hypot(x-player.x,z-player.z)<6) return;
-  const v=rollZombieVariant(dim==='nether');
-  const mesh=makeZombieMesh(v);
+  const isN=dim==='nether';
+  const v=isN? {scale:1.0,hp:5,sp:1.5,dmg:1} : rollZombieVariant(false);
+  const mesh=isN? makePiglinMesh() : makeZombieMesh(v);
   scene.add(mesh);
-  zombies.push({kind:'z',fromNether:dim==='nether',x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25*v.scale,h:1.75*v.scale});
+  zombies.push({kind:'z',fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25*v.scale,h:1.75*v.scale});
   sfx.zGroan();
 }
 function trySpawnEnder(){
@@ -940,6 +961,73 @@ function trySpawnEnder(){
   const mesh=makeEnderMesh();
   scene.add(mesh);
   enders.push({kind:'e',x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:5,hurtT:0,atkT:0,aggro:false,dirT:0,moving:false,animT:0,mesh,w:0.25,h:2.7});
+}
+function makeBlazeMesh(){
+  const g=new THREE.Group();
+  const core=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.45), new THREE.MeshBasicMaterial({color:0xffd040}));
+  core.position.y=1.2;
+  const eye=new THREE.Mesh(new THREE.BoxGeometry(0.47,0.08,0.47), new THREE.MeshBasicMaterial({color:0x402000})); eye.position.y=1.26;
+  const rods=[];
+  const rodM=new THREE.MeshLambertMaterial({color:0x6a4210});
+  for(let i=0;i<4;i++){
+    const rod=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.7,0.13), rodM);
+    const a=i*Math.PI/2;
+    rod.position.set(Math.cos(a)*0.45, 0.55, Math.sin(a)*0.45);
+    rods.push(rod); g.add(rod);
+  }
+  g.add(core,eye);
+  g.userData={rods};
+  return g;
+}
+function trySpawnBlaze(){
+  if(dim!=='nether' || blazes.length>=MAX_B) return;
+  const a=Math.random()*Math.PI*2, d=10+Math.random()*10;
+  const x=Math.floor(player.x+Math.cos(a)*d), z=Math.floor(player.z+Math.sin(a)*d);
+  if(x<2||x>=WX-2||z<2||z>=WZ-2) return;
+  const y=floorY(x,z);
+  if(y<=0||y+3>=WY) return;
+  const mesh=makeBlazeMesh();
+  scene.add(mesh);
+  blazes.push({kind:'b',x:x+0.5,y:y+1,z:z+0.5,vy:0,baseY:y+1,yaw:0,hp:4,hurtT:0,atkT:0,fireT:2+Math.random()*3,animT:Math.random()*6,mesh,w:0.3,h:1.6});
+}
+function updateBlazes(dt){
+  for(let i=blazes.length-1;i>=0;i--){
+    const b=blazes[i];
+    if(b.hp<=0){
+      if(Math.random()<0.8){ inv.blaze++; toast('🔥 烈焰人掉了烈焰粉！'); updateHUD(); scheduleSave(); }
+      removeEnt(blazes,i,true,0xffb020);
+      continue;
+    }
+    const dx=player.x-b.x, dz=player.z-b.z;
+    const dist=Math.hypot(dx,dz);
+    if(dist>40){ removeEnt(blazes,i,false); continue; }
+    b.hurtT=Math.max(0,b.hurtT-dt);
+    b.atkT=Math.max(0,b.atkT-dt);
+    b.animT+=dt;
+    let sp=0;
+    if(dist>7) sp=1.3; else if(dist<3) sp=-1.0;
+    if(b.hurtT>0) sp=0;
+    b.x+=dx/Math.max(dist,0.01)*sp*dt;
+    b.z+=dz/Math.max(dist,0.01)*sp*dt;
+    b.y=b.baseY+1.2+Math.sin(b.animT*1.5)*0.5;
+    b.fireT-=dt;
+    if(b.fireT<=0 && dist<15){
+      const dy=(player.y+1)-b.y;
+      const len=Math.hypot(dx,dy,dz)||1;
+      const m=new THREE.Mesh(new THREE.SphereGeometry(0.2,6,6), new THREE.MeshBasicMaterial({color:0xffb020}));
+      m.position.set(b.x,b.y,b.z);
+      scene.add(m);
+      fireballs.push({x:b.x,y:b.y,z:b.z, vx:dx/len*8, vy:dy/len*8, vz:dz/len*8, life:5, col:0xffb020, mesh:m});
+      tone(300,0.2,'sawtooth',0.08,120);
+      b.fireT=3.5+Math.random()*2.5;
+    }
+    if(dist<1.3 && Math.abs(player.y+1-b.y)<2 && b.atkT<=0){ damagePlayer(1); b.atkT=1.2; }
+    b.mesh.position.set(b.x,b.y-1.2,b.z);
+    for(let k=0;k<4;k++){
+      const a=b.animT*2 + k*Math.PI/2;
+      b.mesh.userData.rods[k].position.set(Math.cos(a)*0.45, 0.55+Math.sin(b.animT*3+k)*0.1, Math.sin(a)*0.45);
+    }
+  }
 }
 function trySpawnAnimal(){
   if(dim!=='over' || animals.length>=MAX_A) return;
@@ -977,8 +1065,8 @@ function updateZombies(dt){
   for(let i=zombies.length-1;i>=0;i--){
     const z=zombies[i];
     if(z.hp<=0){
-      if(z.fromNether && Math.random()<0.6){ inv.blaze++; toast('🔥 獲得烈焰粉！'); updateHUD(); scheduleSave(); }
-      removeEnt(zombies,i,true,0x55a04a); continue;
+      if(z.fromNether && Math.random()<0.6){ inv.gold++; toast('🥇 豬布林掉了金塊！'); updateHUD(); scheduleSave(); }
+      removeEnt(zombies,i,true,z.fromNether?0xf0a8a0:0x55a04a); continue;
     }
     if(dim==='over' && !isNight){ removeEnt(zombies,i,true,0xff8833); continue; }
     const dx=player.x-z.x, dz=player.z-z.z;
@@ -1158,18 +1246,37 @@ function spawnDragons(){
   sfx.roar();
   toast('🐉 五隻龍同時出現了！雷龍和龍王會噴火球，先打破水晶！');
 }
-function reviveDragons(){
-  if(dim!=='end'||!dragonDefeated) return;
-  if(inv.crystal<4){ toast('💠 需要 4 顆終界水晶（現在只有 '+inv.crystal+' 顆）'); return; }
-  inv.crystal-=4;
-  /* 柱頂水晶重新出現 */
-  for(const [x,y,z] of crystalPos) if(getB(x,y,z)!==ENDCRYSTAL) setBlock(x,y,z,ENDCRYSTAL);
-  dragonDefeated=false;
-  spawnDragons();
-  sfx.portal(); sfx.roar();
-  spawnParticles(END_C.x,16,END_C.z,25,0x80f0ff);
-  toast('💠⚡ 群龍復活了！第二輪挑戰開始！');
+/* 祭壇 = 島中央傳送門周圍（半徑3.5格）。玩家把水晶一顆顆親手放上去 */
+function altarCrystals(){
+  const list=[];
+  for(let x=END_C.x-4;x<=END_C.x+4;x++)
+  for(let z=END_C.z-4;z<=END_C.z+4;z++){
+    if(Math.hypot(x-END_C.x,z-END_C.z)>4.2) continue;
+    for(let y=1;y<WY-1;y++) if(getB(x,y,z)===ENDCRYSTAL) list.push([x,y,z]);
+  }
+  return list;
+}
+function placeAltarCrystal(hit){
+  if(inv.crystal<=0) return;
+  const px=hit.x+hit.face[0], py=hit.y+hit.face[1], pz=hit.z+hit.face[2];
+  if(!inBounds(px,py,pz) || getB(px,py,pz)!==AIR){ toast('這裡放不下，換個位置'); return; }
+  setBlock(px,py,pz,ENDCRYSTAL);
+  inv.crystal--;
+  sfx.eye();
   updateHUD();
+  const n=altarCrystals().length;
+  if(n>=4){
+    /* 儀式啟動：祭壇水晶飛向柱頂 */
+    for(const [x,y,z] of altarCrystals()) setBlock(x,y,z,AIR);
+    for(const [x,y,z] of crystalPos) if(getB(x,y,z)!==ENDCRYSTAL) setBlock(x,y,z,ENDCRYSTAL);
+    dragonDefeated=false;
+    spawnDragons();
+    sfx.portal(); sfx.roar();
+    spawnParticles(END_C.x,16,END_C.z,30,0x80f0ff);
+    toast('💠⚡ 祭壇啟動！水晶飛回柱頂，群龍復活了！');
+  } else {
+    toast('💠 祭壇已放置 '+n+'/4 顆終界水晶');
+  }
   scheduleSave();
 }
 function despawnDragons(){
@@ -1362,7 +1469,7 @@ function updateArrows(dt){
 const DAY_LEN=200;
 let dayT=0.05;
 let isNight=false;
-let zSpawnT=0, aSpawnT=0, eSpawnT=0;
+let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0;
 function dayFactor(t){
   if(t<0.45) return 1;
   if(t<0.55) return 1-(t-0.45)/0.1;
@@ -1374,6 +1481,8 @@ function updateDay(dt){
     isNight=true;
     zSpawnT-=dt;
     if(zSpawnT<=0){ trySpawnZombie(); zSpawnT=4+Math.random()*3; }
+    bSpawnT-=dt;
+    if(bSpawnT<=0){ trySpawnBlaze(); bSpawnT=5+Math.random()*4; }
     return;
   }
   if(dim==='end'){
@@ -1421,7 +1530,7 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'bed',     kind:'bed',   name:'床🛏（晚上一鍵睡到天亮）', cost:{wood:3}},
-  {id:'crystal', kind:'stack', name:'終界水晶💠（集滿4顆可復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
+  {id:'crystal', kind:'stack', name:'終界水晶💠（放4顆上祭壇復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
   {id:'apple',   kind:'stack', name:'金蘋果✨🍎（吃了全滿血）', cost:{gold:2}},
 ];
 function canAfford(cost){ for(const k in cost) if((inv[k]||0)<cost[k]) return false; return true; }
@@ -1462,7 +1571,7 @@ function renderCraft(){
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
-        else if(r.id==='crystal'){ inv.crystal++; toast('💠 合成了終界水晶！（'+inv.crystal+'/4）集滿4顆到終界對準龍蛋復活群龍'); }
+        else if(r.id==='crystal'){ inv.crystal++; toast('💠 合成了終界水晶！（'+inv.crystal+'/4）到終界中央祭壇一顆顆放上去'); }
         else if(r.id==='apple'){ inv.apple++; toast('✨🍎 合成了金蘋果！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
@@ -1599,6 +1708,7 @@ function goDim(target){
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
+  for(let i=blazes.length-1;i>=0;i--) removeEnt(blazes,i,false);
   despawnDragons();
   for(let i=arrows.length-1;i>=0;i--){ scene.remove(arrows[i].mesh); arrows.splice(i,1); }
   dim=target;
@@ -1795,7 +1905,7 @@ function updateActButton(){
   if(hit && hit.id===CRAFT) mode='craft';
   else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
   else if(hit && hit.id===ENDFRAME && inv.eye>0) mode='eye';
-  else if(hit && (hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated && inv.crystal>0) mode='revive';
+  else if(hit && dim==='end' && dragonDefeated && inv.crystal>0 && Math.hypot(hit.x-END_C.x,hit.z-END_C.z)<=3.5) mode='revive';
   if(mode!==actMode){
     actMode=mode;
     const b=document.getElementById('btnAct');
@@ -1813,7 +1923,7 @@ function doAction(){
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===OBSID && hasFlint) igniteAt(hit);
   else if(hit.id===ENDFRAME) insertEye(hit);
-  else if((hit.id===DRAGONEGG||(hit.id===BEDROCK&&dim==='end')) && dragonDefeated) reviveDragons();
+  else if(dim==='end' && dragonDefeated && Math.hypot(hit.x-END_C.x,hit.z-END_C.z)<=3.5) placeAltarCrystal(hit);
 }
 
 /* ================= 快捷欄 ================= */
@@ -2044,6 +2154,7 @@ async function newWorld(){
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
+  for(let i=blazes.length-1;i>=0;i--) removeEnt(blazes,i,false);
   despawnDragons();
   dim='over';
   ensureDim('over');
@@ -2148,6 +2259,7 @@ function loop(){
   updateDay(dt);
   updateParticles(dt);
   updateZombies(dt);
+  updateBlazes(dt);
   updateEnders(dt);
   updateAnimals(dt);
   updateDragons(dt);
@@ -2236,8 +2348,8 @@ addEventListener('resize',()=>{
 /* ================= 啟動 ================= */
 (async function init(){
   document.getElementById('ctrlHint').innerHTML = isTouch
-    ? '🌌 新內容：終界！晚上打安德人拿珍珠、地獄殭屍掉烈焰粉<br>珍珠+烈焰粉=終界之眼 → 用「終界門框」在地上圍一圈 → 👁 鑲眼開門<br>🏹 弓箭遠攻｜🪓 戰斧｜🛡 盔甲｜🛏 床一鍵睡到天亮｜🥩 牛<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
-    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜Q 吃東西｜B 睡覺｜F 飛行<br>🌌 打安德人拿珍珠+地獄拿烈焰粉=終界之眼 → 終界門框圍圈鑲眼 → 挑戰終界龍！<br>進度自動儲存';
+    ? '🌌 新內容：終界！晚上打安德人拿珍珠、地獄烈焰人掉烈焰粉<br>珍珠+烈焰粉=終界之眼 → 用「終界門框」在地上圍一圈 → 👁 鑲眼開門<br>🏹 弓箭遠攻｜🪓 戰斧｜🛡 盔甲｜🛏 床一鍵睡到天亮｜🥩 牛<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
+    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜Q 吃東西｜B 睡覺｜F 飛行<br>🌌 打安德人拿珍珠+地獄烈焰人掉烈焰粉=終界之眼 → 終界門框圍圈鑲眼 → 挑戰終界龍！<br>進度自動儲存';
   const t = await loadGame();
   if(t===null){
     ensureDim('over');
