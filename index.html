@@ -20,14 +20,14 @@
   .slot .num { position:absolute; top:0; left:3px; font-size:9px; color:rgba(255,255,255,.7); }
   .btn { position:fixed; z-index:12; border-radius:50%; background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.5); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; user-select:none; -webkit-user-select:none; touch-action:none; }
   .btn:active { background:rgba(255,255,255,.25); }
-  #btnJump { right:22px; bottom:84px; width:68px; height:68px; }
-  #btnDown { right:106px; bottom:80px; width:56px; height:56px; display:none; }
-  #btnMine { right:110px; bottom:210px; width:58px; height:58px; background:rgba(160,50,40,.5); border-color:rgba(255,160,140,.7); }
-  #btnPlace { right:26px; bottom:222px; width:58px; height:58px; background:rgba(40,90,160,.5); border-color:rgba(140,190,255,.7); }
-  #btnBow { right:192px; bottom:222px; width:52px; height:52px; display:none; }
-  #btnFly { right:52px; bottom:308px; width:44px; height:44px; font-size:18px; }
+  #btnJump { right:20px; bottom:84px; width:68px; height:68px; }
+  #btnDown { right:102px; bottom:80px; width:56px; height:56px; display:none; }
+  #btnMine { right:104px; bottom:190px; width:58px; height:58px; background:rgba(160,50,40,.5); border-color:rgba(255,160,140,.7); }
+  #btnPlace { right:22px; bottom:200px; width:58px; height:58px; background:rgba(40,90,160,.5); border-color:rgba(140,190,255,.7); }
+  #btnBow { right:184px; bottom:194px; width:52px; height:52px; display:none; }
+  #btnFly { right:36px; bottom:272px; width:44px; height:44px; font-size:18px; }
   #btnFly.on { background:rgba(120,200,255,.45); border-color:#9df; }
-  #btnAct { right:126px; bottom:296px; width:52px; height:52px; display:none; background:rgba(80,160,60,.5); }
+  #btnAct { right:104px; bottom:262px; width:52px; height:52px; display:none; background:rgba(80,160,60,.5); }
   #btnMenu { position:fixed; top:10px; left:10px; z-index:10; border-radius:10px; padding:8px 14px; background:rgba(0,0,0,.5); color:#fff; font-size:18px; border:1px solid rgba(255,255,255,.4); }
   #hearts { position:fixed; top:12px; left:64px; z-index:10; font-size:15px; letter-spacing:1px; text-shadow:0 1px 2px #000; pointer-events:none; white-space:nowrap; }
   #statusBar { position:fixed; top:38px; left:64px; z-index:10; font-size:14px; color:#fff; text-shadow:0 1px 2px #000; display:flex; gap:8px; align-items:center; flex-wrap:wrap; max-width:75vw; }
@@ -70,7 +70,7 @@
 <div id="hotbar"></div>
 <div id="hurtFlash"></div>
 <div id="joyZone" style="position:fixed;left:0;bottom:0;width:45%;height:55%;z-index:8;">
-  <div id="joyBase" style="position:absolute;left:26px;bottom:110px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);">
+  <div id="joyBase" style="position:absolute;left:26px;bottom:112px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);">
     <div id="joyKnob" style="position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.8);left:29px;top:29px;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>
   </div>
 </div>
@@ -90,6 +90,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V7</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -98,6 +99,8 @@
   <h2>⏸ 遊戲暫停</h2>
   <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
   <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
+  <button class="obtn gray" id="exportBtn">📤 備份存檔</button>
+  <button class="obtn gray" id="importBtn">📥 匯入存檔</button>
   <button class="obtn gray" id="newWorldBtn">🌍 建立新世界</button>
   <button class="obtn red" id="exitBtn">🚪 退出遊戲</button>
 </div>
@@ -110,6 +113,16 @@
   <h2>🏆 你打敗了終界龍！</h2>
   <p>恭喜勇者！島中央出現了回家的傳送門，<br>還有一顆龍蛋當作你的戰利品 🥚</p>
   <button class="obtn" id="winBtn">🎉 太棒了！</button>
+</div>
+<div class="overlay" id="ioOverlay" style="display:none;z-index:34;">
+  <h2 id="ioTitle">存檔備份</h2>
+  <textarea id="ioText" style="width:min(480px,90vw);height:150px;background:#101810;color:#9f9;border:1px solid #555;border-radius:8px;padding:8px;font-size:11px;"></textarea>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+    <button class="obtn" id="ioCopyBtn" style="min-width:130px;">📋 全選拷貝</button>
+    <button class="obtn" id="ioImportBtn" style="min-width:130px;">📥 匯入並重啟</button>
+  </div>
+  <button class="obtn gray" id="ioGiftBtn">🎁 領取補償禮包</button>
+  <button class="obtn gray" id="ioCloseBtn">返回</button>
 </div>
 <div class="overlay" id="craftOverlay">
   <h2>🔨 合成台</h2>
@@ -655,7 +668,7 @@ function explode(bx,by,bz){
     const d=Math.hypot(x-bx,y-by,z-bz);
     if(d>R) continue;
     const id=world[idx(x,y,z)];
-    if(id===AIR||id===BEDROCK||id===OBSID||id===WATER||id===ENDFRAME||id===ENDFRAMEEYE) continue;
+    if(id===AIR||id===BEDROCK||id===OBSID||id===WATER||id===ENDFRAME||id===ENDFRAMEEYE||id===ENDCRYSTAL) continue;
     if(id===TNT && !(x===bx&&y===by&&z===bz)) cascade.push([x,y,z]);
     setBlockRaw(x,y,z,AIR);
     markChunks(set,x,z);
@@ -702,6 +715,7 @@ let hasFlint=false, hasBow=false, hasBed=false, armor=0;
 let dragonDefeated=false;
 let curWeapon='fist';
 const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, axe:5, diamond:6, chal:8, ender:10 };
+const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, axe:6, diamond:7, chal:8, ender:10 };
 const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', chal:'🗡 獄髓劍✨', ender:'🗡 終界劍🌌' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal' };
 
@@ -1285,6 +1299,14 @@ function despawnDragons(){
   for(let i=fireballs.length-1;i>=0;i--){ scene.remove(fireballs[i].mesh); fireballs.splice(i,1); }
   document.getElementById('bossBar').style.display='none';
 }
+function breakCrystalAt(x,y,z){
+  setBlock(x,y,z,AIR);
+  spawnParticles(x+0.5,y+0.5,z+0.5,16,0xff70ff);
+  sfx.boom();
+  const pd=Math.hypot(player.x-x-0.5,player.y+1-y,player.z-z-0.5);
+  if(pd<3) damagePlayer(2);
+  toast('💥 打破了終界水晶！剩 '+crystalsLeft()+' 顆');
+}
 function crystalsLeft(){
   let n=0;
   for(const [x,y,z] of crystalPos) if(getB(x,y,z)===ENDCRYSTAL) n++;
@@ -1433,8 +1455,11 @@ function updateArrows(dt){
     a.mesh.position.set(a.x,a.y,a.z);
     a.mesh.lookAt(a.x+a.vx,a.y+a.vy,a.z+a.vz);
     let hit=false;
-    /* 打到方塊 */
-    if(isSolid(getB(Math.floor(a.x),Math.floor(a.y),Math.floor(a.z)))) hit=true;
+    /* 打到方塊（終界水晶會被射爆！） */
+    const bx=Math.floor(a.x), by=Math.floor(a.y), bz=Math.floor(a.z);
+    const bid=getB(bx,by,bz);
+    if(bid===ENDCRYSTAL){ breakCrystalAt(bx,by,bz); hit=true; }
+    else if(isSolid(bid)) hit=true;
     /* 打到生物 */
     if(!hit){
       for(const e of entities()){
@@ -1516,13 +1541,13 @@ function updateDay(dt){
 /* ================= 合成系統 ================= */
 const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶'};
 const RECIPES=[
-  {id:'wood',    kind:'sword', name:'木劍（傷害 2）',    cost:{wood:2}},
-  {id:'stone',   kind:'sword', name:'石劍（傷害 3）',    cost:{wood:1,stone:3}},
-  {id:'iron',    kind:'sword', name:'鐵劍（傷害 4）',    cost:{wood:1,iron:2}},
-  {id:'axe',     kind:'sword', name:'戰斧🪓（傷害 5）',  cost:{wood:1,iron:3}},
-  {id:'diamond', kind:'sword', name:'鑽石劍（傷害 6）',  cost:{wood:1,diamond:2}},
-  {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害 8）', cost:{wood:1,chal:3}},
-  {id:'ender',   kind:'sword', name:'終界劍🌌（傷害 10）', cost:{pearl:2,diamond:1}},
+  {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
+  {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
+  {id:'iron',    kind:'sword', name:'鐵劍（傷害4・距離6）',    cost:{wood:1,iron:2}},
+  {id:'axe',     kind:'sword', name:'戰斧🪓（傷害5・距離6）',  cost:{wood:1,iron:3}},
+  {id:'diamond', kind:'sword', name:'鑽石劍（傷害6・距離7）',  cost:{wood:1,diamond:2}},
+  {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害8・距離8）', cost:{wood:1,chal:3}},
+  {id:'ender',   kind:'sword', name:'終界劍🌌（傷害10・距離10）', cost:{pearl:2,diamond:1}},
   {id:'bow',     kind:'bow',   name:'弓🏹（遠距攻擊，傷害 4）', cost:{wood:2,iron:1}},
   {id:'arrows',  kind:'stack', name:'箭×8🏹', cost:{wood:1,stone:1}},
   {id:'armor1',  kind:'armor', lvl:1, name:'鐵甲🛡（受傷 -1）', cost:{iron:4}},
@@ -1972,7 +1997,7 @@ function raycast(maxDist){
 }
 function mine(){
   if(paused) return;
-  const ent=raycastEntity(4);
+  const ent=raycastEntity(WEAPON_REACH[curWeapon]||3);
   if(ent && ent.isDragon){
     const d=ent.drg;
     const dmg=WEAPON_DMG[curWeapon];
@@ -1995,12 +2020,7 @@ function mine(){
   if(!hit) return;
   if(hit.id===TNT){ setBlock(hit.x,hit.y,hit.z,AIR); explode(hit.x,hit.y,hit.z); return; }
   if(hit.id===ENDCRYSTAL){
-    setBlock(hit.x,hit.y,hit.z,AIR);
-    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,16,0xff70ff);
-    sfx.boom();
-    const pd=Math.hypot(player.x-hit.x-0.5,player.y+1-hit.y,player.z-hit.z-0.5);
-    if(pd<3) damagePlayer(2);
-    toast('💥 打破了終界水晶！剩 '+crystalsLeft()+' 顆');
+    breakCrystalAt(hit.x,hit.y,hit.z);
     return;
   }
   const mat=COLLECT[hit.id];
@@ -2198,6 +2218,57 @@ document.getElementById('exitBtn').addEventListener('click',async ()=>{
   document.getElementById('startBtn').textContent='繼續遊戲';
   document.getElementById('startOverlay').style.display='flex';
   started=false; paused=false;
+});
+const ioOv=document.getElementById('ioOverlay'), ioText=document.getElementById('ioText');
+let ioMode='export';
+function openIO(mode){
+  ioMode=mode;
+  document.getElementById('pauseOverlay').style.display='none';
+  ioOv.style.display='flex';
+  document.getElementById('ioCopyBtn').style.display = mode==='export'?'inline-block':'none';
+  document.getElementById('ioImportBtn').style.display = mode==='import'?'inline-block':'none';
+  if(mode==='export'){
+    document.getElementById('ioTitle').textContent='📤 備份存檔';
+    ioText.value='讀取中…';
+    saveGame(false).then(()=>{ ioText.value=lsGet()||'（目前沒有存檔）'; });
+  } else {
+    document.getElementById('ioTitle').textContent='📥 匯入存檔（貼上備份文字）';
+    ioText.value='';
+  }
+}
+document.getElementById('exportBtn').addEventListener('click',()=>openIO('export'));
+document.getElementById('importBtn').addEventListener('click',()=>openIO('import'));
+document.getElementById('ioCloseBtn').addEventListener('click',()=>{
+  ioOv.style.display='none';
+  document.getElementById('pauseOverlay').style.display='flex';
+});
+document.getElementById('ioCopyBtn').addEventListener('click',()=>{
+  ioText.focus(); ioText.select(); ioText.setSelectionRange(0,9999999);
+  const done=()=>toast('📋 已拷貝！貼到備忘錄保存起來');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ioText.value).then(done,()=>{ document.execCommand('copy'); done(); });
+  } else { document.execCommand('copy'); done(); }
+});
+document.getElementById('ioImportBtn').addEventListener('click',()=>{
+  const t=ioText.value.trim();
+  let d=null;
+  try{ d=JSON.parse(t); }catch(e){}
+  if(!d || d.seed===undefined){ toast('⚠️ 這段文字不是有效的存檔'); return; }
+  lsSet(t);
+  if(hasCloud){ try{ queued(()=> window.storage.set(SAVE_KEY, t)); }catch(e){} }
+  toast('✅ 匯入成功，重新載入…');
+  setTimeout(()=>location.reload(), 800);
+});
+document.getElementById('ioGiftBtn').addEventListener('click',()=>{
+  const gift={v:4, seed:20260730, dim:'over', overDiffs:{}, netherDiffs:{}, endDiffs:{},
+    inv:{wood:60,stone:60,coal:20,iron:30,gold:20,diamond:20,chal:12,pearl:8,blaze:8,eye:0,arrow:48,crystal:0,pork:5,chicken:5,beef:5,redapple:5,apple:3},
+    weapons:{wood:true,stone:true,iron:true,axe:true,diamond:true,chal:false,ender:false},
+    hasFlint:true, hasBow:true, hasBed:true, armor:1, dragonDefeated:false,
+    curWeapon:'diamond', sel:0, dayT:0.08, time:Date.now()};
+  lsSet(JSON.stringify(gift));
+  if(hasCloud){ try{ queued(()=> window.storage.set(SAVE_KEY, JSON.stringify(gift))); }catch(e){} }
+  toast('🎁 禮包已載入，重新開始冒險！');
+  setTimeout(()=>location.reload(), 800);
 });
 let newConfirm=false, newTimer=null;
 document.getElementById('newWorldBtn').addEventListener('click',()=>{
