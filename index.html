@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V7-4</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V10</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -127,7 +127,7 @@
 </div>
 <div class="overlay" id="winOverlay">
   <h2>🏆 你打敗了終界龍！</h2>
-  <p>恭喜勇者！島中央出現了回家的傳送門，<br>還有一顆龍蛋當作你的戰利品 🥚</p>
+  <p>島中央出現回家傳送門與龍蛋🥚<br>旁邊還開啟了紫色的「終界折躍門」——<br>走進去尋找傳說中的鞘翅🪂！</p>
   <button class="obtn" id="winBtn">🎉 太棒了！</button>
 </div>
 <div class="overlay" id="ioOverlay" style="display:none;z-index:34;">
@@ -153,17 +153,17 @@
 "use strict";
 
 /* ================= 基本設定 ================= */
-const WX=64, WY=40, WZ=64;
+const WX=192, WY=40, WZ=192;
 const CHUNK=16;
 const SEA=9;
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
 const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8, BEDROCK=9, WATER=10, BRICK=11, TNT=12, GLOW=13,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
-      ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30;
+      ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅"};
 const HOTBAR = [GRASS,DIRT,STONE,SAND,WOOD,LEAF,PLANK,GLASS,BRICK,TNT,GLOW,OBSID,CRAFT,ENDFRAME];
 
 /* ================= 亂數 ================= */
@@ -201,7 +201,8 @@ const getB = (x,y,z)=> inBounds(x,y,z) ? world[idx(x,y,z)] : AIR;
 
 let graveyard={x:20,z:20};
 let crystalPos=[];   /* 終界水晶座標，由 generateEnd 決定 */
-const END_C={x:32,z:32};
+const END_C={x:(WX/2)|0,z:(WZ/2)|0};
+const TRE={x:16,z:WZ-16};   /* 鞘翅寶藏島 */
 
 function topSolid(w,x,z){
   for(let y=WY-1;y>=0;y--){ const b=w[idx(x,y,z)]; if(b!==AIR&&b!==WATER&&b!==LAVA) return y; }
@@ -257,7 +258,7 @@ function generateOver(sd, w){
     }
   }
   const lRng = mulberry32(sd^0xfeed);
-  for(let p=0;p<2;p++){
+  for(let p=0;p<9;p++){
     const lx=6+((lRng()*(WX-12))|0), lz=6+((lRng()*(WZ-12))|0);
     const h=topSolid(w,lx,lz);
     if(h<=SEA) continue;
@@ -265,7 +266,10 @@ function generateOver(sd, w){
       const d=Math.hypot(dx,dz);
       const x=lx+dx, z=lz+dz;
       if(!inBounds(x,h,z)) continue;
-      if(d<=1.6) w[idx(x,h,z)]=LAVA;
+      if(d<=1.6){
+        w[idx(x,h,z)]=LAVA;
+        if(h-1>0) w[idx(x,h-1,z)] = lRng()<0.55 ? GOLD : DIAMOND;   /* 岩漿池底藏寶！ */
+      }
       else if(d<=2.6) w[idx(x,h,z)]=OBSID;
     }
   }
@@ -315,8 +319,8 @@ function generateNether(sd, w){
     for(let y=1;y<=fH;y++){
       if(w[idx(x,y,z)]!==NETHER) continue;
       const rr=rng();
-      if(rr<0.022) w[idx(x,y,z)]=CHAL;        /* 獄髓礦：只在地獄出現 */
-      else if(rr<0.042) w[idx(x,y,z)]=GLOW;
+      if(y<=5 && rr<0.010) w[idx(x,y,z)]=CHAL;   /* 獄髓礦：地獄深處岩漿層附近，稀有 */
+      else if(rr<0.030) w[idx(x,y,z)]=GLOW;
     }
   }
 }
@@ -352,10 +356,21 @@ function generateEnd(sd, w){
   }
   /* 抵達平台 */
   const py=12;
+  const ax=END_C.x-16, az=END_C.z;
   for(let dx=-1;dx<=1;dx++) for(let dz=-1;dz<=1;dz++){
-    w[idx(16+dx,py-1,32+dz)]=OBSID;
-    for(let y=py;y<py+3;y++) w[idx(16+dx,y,32+dz)]=AIR;
+    w[idx(ax+dx,py-1,az+dz)]=OBSID;
+    for(let y=py;y<py+3;y++) w[idx(ax+dx,y,az+dz)]=AIR;
   }
+  /* 鞘翅寶藏島（終界折躍門才能抵達） */
+  const TY=12;
+  for(let dx=-4;dx<=4;dx++) for(let dz=-4;dz<=4;dz++){
+    const d=Math.hypot(dx,dz);
+    if(d>4.4) continue;
+    for(let y=TY-2;y<=TY;y++) w[idx(TRE.x+dx,y,TRE.z+dz)]=ENDSTONE;
+  }
+  w[idx(TRE.x,TY+1,TRE.z)]=OBSID;
+  w[idx(TRE.x,TY+2,TRE.z)]=ELYTRAB;       /* 鞘翅在台座上 */
+  w[idx(TRE.x+3,TY+1,TRE.z)]=GATEWAY;     /* 回程折躍門 */
 }
 
 function ensureDim(d){
@@ -381,7 +396,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=33;
+const TILE=16, NTILES=35;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -483,6 +498,19 @@ drawTile(31,[240,120,255],10,(x,y)=>{
 });
 /* 龍蛋 (32) */
 drawTile(32,[35,20,45],8,(x,y,r)=> r()<0.15?[90,50,120,255]:[35,20,45,255]);
+/* 終界折躍門 (33)：黑底紫環 */
+drawTile(33,[6,6,14],4,(x,y,r)=>{
+  const d=Math.hypot(x-7.5,y-7.5);
+  if(d>4.2&&d<5.8) return [190,120,255,255];
+  return r()<0.06?[255,255,255,255]:[6,6,14,255];
+});
+/* 鞘翅 (34)：紫底灰翅 */
+drawTile(34,[60,30,80],6,(x,y)=>{
+  const lx=Math.abs(x-7.5);
+  if(y>=3&&y<=12 && lx>1 && lx<2+(y-3)*0.55) return [210,210,215,255];
+  if(y>=3&&y<=12 && lx<=1) return [140,90,60,255];
+  return [60,30,80,255];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -503,10 +531,11 @@ const TILES = {
   [CRAFT]:{top:25,side:26,bot:8},
   [ENDSTONE]:{top:27,side:27,bot:27}, [ENDFRAME]:{top:28,side:28,bot:28},
   [ENDFRAMEEYE]:{top:29,side:29,bot:29}, [ENDPORTAL]:{top:30,side:30,bot:30},
-  [ENDCRYSTAL]:{top:31,side:31,bot:31}, [DRAGONEGG]:{top:32,side:32,bot:32}
+  [ENDCRYSTAL]:{top:31,side:31,bot:31}, [DRAGONEGG]:{top:32,side:32,bot:32},
+  [GATEWAY]:{top:33,side:33,bot:33}, [ELYTRAB]:{top:34,side:34,bot:34}
 };
-const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL;
-const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL;
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY;
+const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY;
 
 /* ================= 音效 ================= */
 let AC=null;
@@ -594,7 +623,7 @@ const FACES = [
   {dir:[0,0,1],  corners:[[0,1,1],[0,0,1],[1,1,1],[1,0,1]], shade:0.7},
   {dir:[0,0,-1], corners:[[1,1,0],[1,0,0],[0,1,0],[0,0,0]], shade:0.7},
 ];
-const glowIds = new Set([GLOW,LAVA,PORTAL,ENDPORTAL,ENDCRYSTAL]);
+const glowIds = new Set([GLOW,LAVA,PORTAL,ENDPORTAL,ENDCRYSTAL,GATEWAY]);
 
 function buildChunk(cx,cz){
   const x0=cx*CHUNK, z0=cz*CHUNK;
@@ -611,6 +640,7 @@ function buildChunk(cx,cz){
       else if(id===GLASS) show = nb!==GLASS && isTransparent(nb);
       else if(id===PORTAL) show = nb!==PORTAL && (nb===AIR||nb===WATER);
       else if(id===ENDPORTAL) show = nb!==ENDPORTAL && (nb===AIR||nb===WATER);
+      else if(id===GATEWAY) show = nb!==GATEWAY && (nb===AIR||nb===WATER);
       else show = isTransparent(nb);
       if(!show) continue;
       const t = TILES[id];
@@ -684,7 +714,7 @@ function explode(bx,by,bz){
     const d=Math.hypot(x-bx,y-by,z-bz);
     if(d>R) continue;
     const id=world[idx(x,y,z)];
-    if(id===AIR||id===BEDROCK||id===OBSID||id===WATER||id===ENDFRAME||id===ENDFRAMEEYE||id===ENDCRYSTAL) continue;
+    if(id===AIR||id===BEDROCK||id===OBSID||id===WATER||id===ENDFRAME||id===ENDFRAMEEYE||id===ENDCRYSTAL||id===GATEWAY||id===ELYTRAB||id===PORTAL||id===ENDPORTAL) continue;
     if(id===TNT && !(x===bx&&y===by&&z===bz)) cascade.push([x,y,z]);
     setBlockRaw(x,y,z,AIR);
     markChunks(set,x,z);
@@ -724,10 +754,10 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
 const weapons = { wood:false, stone:false, iron:false, axe:false, diamond:false, chal:false, ender:false };
-let hasFlint=false, hasBow=false, hasBed=false, armor=0;
+let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, armor=0;
 let dragonDefeated=false;
 let curWeapon='fist';
 const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, axe:5, diamond:6, chal:8, ender:10 };
@@ -818,7 +848,7 @@ function updateHUD(){
   const sb=document.getElementById('statusBar');
   sb.innerHTML='';
   const w=document.createElement('span');
-  w.textContent=WEAPON_NAME[curWeapon] + (armor>0?('　🛡×'+armor):'');
+  w.textContent=WEAPON_NAME[curWeapon] + (armor>0?('　🛡×'+armor):'') + (hasElytra?'　🪂':'');
   sb.appendChild(w);
   const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['redapple','🍎'],['apple','✨🍎']];
   for(const [k,e] of foods){
@@ -843,7 +873,7 @@ function updateHUD(){
 
 /* ================= 生物 ================= */
 const zombies=[], animals=[], enders=[], blazes=[];
-const MAX_Z=6, MAX_A=6, MAX_E=5, MAX_B=3;
+const MAX_Z=8, MAX_A=8, MAX_E=5, MAX_B=4;
 const entities = ()=> zombies.concat(animals, enders, blazes);
 
 function makeZombieMesh(v){
@@ -882,6 +912,44 @@ function makePiglinMesh(){
   const legL=new THREE.Mesh(legG,pants); legL.position.set(-0.13,0.7,0);
   const legR=new THREE.Mesh(legG,pants); legR.position.set(0.13,0.7,0);
   g.add(head,snout,earL,earR,body,armL,armR,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
+function makeSpiderMesh(){
+  const g=new THREE.Group();
+  const blk=new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.35,0.9),blk); body.position.y=0.45;
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.3,0.35),blk); head.position.set(0,0.45,0.6);
+  const eyeM=new THREE.MeshBasicMaterial({color:0xff3030});
+  const e1=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.02),eyeM); e1.position.set(-0.1,0.5,0.78);
+  const e2=e1.clone(); e2.position.x=0.1;
+  const legG=new THREE.BoxGeometry(0.7,0.06,0.08);
+  const legs=[];
+  for(let k=0;k<4;k++){
+    const zz=-0.3+k*0.2;
+    const lL=new THREE.Mesh(legG,blk); lL.position.set(-0.55,0.4,zz); lL.rotation.z=0.4; g.add(lL);
+    const lR=new THREE.Mesh(legG,blk); lR.position.set(0.55,0.4,zz); lR.rotation.z=-0.4; g.add(lR);
+    legs.push(lL,lR);
+  }
+  g.add(body,head,e1,e2);
+  g.userData={legL:legs[0],legR:legs[1]};
+  return g;
+}
+function makeCreeperMesh(){
+  const g=new THREE.Group();
+  const grn=new THREE.MeshLambertMaterial({color:0x4aa04a});
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),grn); head.position.y=1.45;
+  const faceM=new THREE.MeshBasicMaterial({color:0x143014});
+  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.02),faceM); eL.position.set(-0.12,1.55,0.26);
+  const eR=eL.clone(); eR.position.x=0.12;
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.2,0.02),faceM); mouth.position.set(0,1.32,0.26);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.75,0.26),grn); body.position.y=0.85;
+  const legG=new THREE.BoxGeometry(0.18,0.35,0.22); legG.translate(0,-0.175,0);
+  const legL=new THREE.Mesh(legG,grn); legL.position.set(-0.11,0.45,0.15);
+  const legR=new THREE.Mesh(legG,grn); legR.position.set(0.11,0.45,-0.15);
+  const legL2=new THREE.Mesh(legG,grn); legL2.position.set(-0.11,0.45,-0.15);
+  const legR2=new THREE.Mesh(legG,grn); legR2.position.set(0.11,0.45,0.15);
+  g.add(head,eL,eR,mouth,body,legL,legR,legL2,legR2);
   g.userData={legL,legR};
   return g;
 }
@@ -974,11 +1042,18 @@ function trySpawnZombie(){
   if(getB(x,y,z)!==AIR) return;
   if(Math.hypot(x-player.x,z-player.z)<6) return;
   const isN=dim==='nether';
-  const v=isN? {scale:1.0,hp:5,sp:1.5,dmg:1} : rollZombieVariant(false);
-  const mesh=isN? makePiglinMesh() : makeZombieMesh(v);
+  let v, mesh;
+  if(isN){ v={type:'piglin',scale:1.0,hp:5,sp:1.5,dmg:1}; mesh=makePiglinMesh(); }
+  else {
+    const r=Math.random();
+    if(r<0.45){ v=rollZombieVariant(false); v.type='zombie'; mesh=makeZombieMesh(v); }
+    else if(r<0.65){ v={type:'skel',skin:0xdcdcd2,shirt:0xb8b8b0,pants:0x94948c,scale:0.95,hp:3,sp:1.3,dmg:0}; mesh=makeZombieMesh(v); }
+    else if(r<0.85){ v={type:'spider',scale:1.0,hp:3,sp:2.2,dmg:1}; mesh=makeSpiderMesh(); }
+    else { v={type:'creeper',scale:1.0,hp:3,sp:1.3,dmg:0}; mesh=makeCreeperMesh(); }
+  }
   scene.add(mesh);
-  zombies.push({kind:'z',fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:0.25*v.scale,h:1.75*v.scale});
-  sfx.zGroan();
+  zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:v.type==='spider'?0.42:0.25*v.scale,h:v.type==='spider'?0.85:1.75*v.scale});
+  if(v.type!=='skel') sfx.zGroan();
 }
 function trySpawnEnder(){
   if(enders.length>=MAX_E) return;
@@ -1096,7 +1171,11 @@ function updateZombies(dt){
     const z=zombies[i];
     if(z.hp<=0){
       if(z.fromNether && Math.random()<0.6){ inv.gold++; toast('🥇 豬布林掉了金塊！'); updateHUD(); scheduleSave(); }
-      removeEnt(zombies,i,true,z.fromNether?0xf0a8a0:0x55a04a); continue;
+      else if(z.type==='skel'){ inv.arrow+=3; toast('🏹 骷髏掉了 3 支箭！'); updateHUD(); scheduleSave(); }
+      else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛掉了煤炭'); updateHUD(); scheduleSave(); }
+      else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕掉了鐵'); updateHUD(); scheduleSave(); }
+      const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : (z.fromNether?0xf0a8a0:0x55a04a);
+      removeEnt(zombies,i,true,col); continue;
     }
     if(dim==='over' && !isNight){ removeEnt(zombies,i,true,0xff8833); continue; }
     const dx=player.x-z.x, dz=player.z-z.z;
@@ -1105,14 +1184,55 @@ function updateZombies(dt){
     z.hurtT=Math.max(0,z.hurtT-dt);
     z.atkT=Math.max(0,z.atkT-dt);
     z.groanT-=dt;
-    if(z.groanT<0 && dist<14){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
-    const sp = z.hurtT>0 ? 0 : (z.sp||1.4);
-    let mx=0,mz=0;
-    if(dist>0.6){ mx=dx/dist*sp*dt; mz=dz/dist*sp*dt; }
+    if(z.groanT<0 && dist<14 && z.type!=='skel' && z.type!=='creeper'){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
+    /* 苦力怕：接近後嘶嘶引爆 */
+    if(z.type==='creeper' && z.fuseT>=0){
+      z.fuseT-=dt;
+      const flash=(Math.sin(z.fuseT*25)>0);
+      z.mesh.children.forEach(c=>{ if(c.material&&c.material.emissive) c.material.emissive.setHex(flash?0x888888:0x000000); });
+      if(dist>5){
+        z.fuseT=-1;
+        z.mesh.children.forEach(c=>{ if(c.material&&c.material.emissive) c.material.emissive.setHex(0x000000); });
+      } else if(z.fuseT<=0){
+        const bx=Math.floor(z.x), by=Math.floor(z.y+0.5), bz=Math.floor(z.z);
+        removeEnt(zombies,i,false);
+        explode(bx,by,bz);
+        continue;
+      }
+      z.mesh.position.set(z.x,z.y,z.z);
+      z.mesh.rotation.y=Math.atan2(dx,dz);
+      continue;
+    }
+    let sp = z.hurtT>0 ? 0 : (z.sp||1.4);
+    let dirX=dx/Math.max(dist,0.01), dirZ=dz/Math.max(dist,0.01);
+    /* 骷髏弓箭手：保持距離放箭 */
+    if(z.type==='skel'){
+      if(dist<6){ dirX=-dirX; dirZ=-dirZ; }
+      else if(dist<12) sp=0;
+      z.fireT-=dt;
+      if(z.fireT<=0 && dist<15){
+        const dy=(player.y+1.2)-(z.y+1.4);
+        const len=Math.hypot(dx,dy,dz)||1;
+        const m=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.5), new THREE.MeshBasicMaterial({color:0xe8e0d0}));
+        m.position.set(z.x,z.y+1.4,z.z);
+        m.lookAt(player.x,player.y+1.2,player.z);
+        scene.add(m);
+        fireballs.push({x:z.x,y:z.y+1.4,z:z.z, vx:dx/len*12, vy:dy/len*12, vz:dz/len*12, life:4, col:0xd8d0c0, mesh:m});
+        sfx.bow();
+        z.fireT=2.5+Math.random()*1.5;
+      }
+    }
+    /* 苦力怕：貼近就開始引爆 */
+    if(z.type==='creeper' && dist<2 && Math.abs(player.y-z.y)<2 && z.fuseT<0){
+      z.fuseT=1.2;
+      noiseBurst(0.7,0.22,3500);
+      sp=0;
+    }
+    const mx=dirX*sp*dt, mz=dirZ*sp*dt;
     z.yaw=Math.atan2(dx,dz);
     entPhysics(z,mx,mz,dt);
     if(z.y<-5){ removeEnt(zombies,i,false); continue; }
-    if(dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
+    if(z.dmg>0 && dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
       damagePlayer(z.dmg||1);
       z.atkT=1.2;
     }
@@ -1309,6 +1429,28 @@ function placeAltarCrystal(hit){
   }
   scheduleSave();
 }
+function healEndStructures(){
+  if(dim!=='end'||!dragonDefeated) return;
+  /* 找中心基岩錨點；沒有就重建 */
+  let cy=-1;
+  for(let y=WY-2;y>=2;y--) if(world[idx(END_C.x,y,END_C.z)]===BEDROCK){ cy=y; break; }
+  if(cy<0){
+    cy=topSolid(world,END_C.x,END_C.z)+1;
+    setBlockRaw(END_C.x,cy,END_C.z,BEDROCK);
+  }
+  for(let dx=-1;dx<=1;dx++) for(let dz=-1;dz<=1;dz++){
+    if(dx===0&&dz===0) continue;
+    if(world[idx(END_C.x+dx,cy,END_C.z+dz)]!==ENDPORTAL) setBlockRaw(END_C.x+dx,cy,END_C.z+dz,ENDPORTAL);
+  }
+  const gwx=END_C.x+4, gwz=END_C.z+4;
+  let hasGw=false;
+  for(let y=2;y<WY-1;y++) if(world[idx(gwx,y,gwz)]===GATEWAY){ hasGw=true; break; }
+  if(!hasGw){
+    const gy=topSolid(world,gwx,gwz);
+    setBlockRaw(gwx,gy+1,gwz,GATEWAY);
+  }
+  dirty=true;
+}
 function despawnDragons(){
   for(const d of dragons) scene.remove(d.mesh);
   dragons=[];
@@ -1346,6 +1488,10 @@ function allDragonsDead(){
   }
   setBlockRaw(END_C.x,cy+1,END_C.z,BEDROCK);
   setBlockRaw(END_C.x,cy+2,END_C.z,DRAGONEGG);
+  /* 終界折躍門：通往鞘翅寶藏島 */
+  const gwx=END_C.x+4, gwz=END_C.z+4;
+  const gwy=topSolid(world,gwx,gwz);
+  setBlockRaw(gwx,gwy+1,gwz,GATEWAY);
   dirty=true;
   rebuildAll();
   document.getElementById('winOverlay').style.display='flex';
@@ -1444,6 +1590,41 @@ function updateDragons(dt){
   updateBossBar();
 }
 
+/* ================= 寵物小龍 ================= */
+let pet=null, petAtkT=0;
+function spawnPet(){
+  if(!hasPet || pet) return;
+  pet=makeDragonMesh(DR_TIERS[0]);
+  pet.scale.setScalar(0.28);
+  scene.add(pet);
+}
+function updatePet(dt){
+  if(!hasPet) return;
+  if(!pet) spawnPet();
+  const t=performance.now()/1000;
+  const px=player.x+Math.cos(t*0.9)*1.6, pz=player.z+Math.sin(t*0.9)*1.6;
+  const py=player.y+2.1+Math.sin(t*2.2)*0.15;
+  pet.position.set(px,py,pz);
+  pet.rotation.y=-(t*0.9)+Math.PI;
+  const flap=Math.sin(t*9)*0.55;
+  pet.userData.wL.rotation.z=flap;
+  pet.userData.wR.rotation.z=-flap;
+  petAtkT-=dt;
+  if(petAtkT<=0){
+    let best=null, bd=7;
+    const foes=zombies.concat(blazes, enders.filter(e=>e.aggro));
+    for(const e of foes){
+      const d=Math.hypot(e.x-player.x,e.z-player.z);
+      if(d<bd){ bd=d; best=e; }
+    }
+    if(best){
+      best.hp-=2; best.hurtT=0.3;
+      spawnParticles(best.x,best.y+1,best.z,6,0x80ffc0);
+      sfx.zHit();
+      petAtkT=2.5;
+    } else petAtkT=0.5;
+  }
+}
 /* ================= 弓箭 ================= */
 const arrows=[];
 const arrowGeo=new THREE.BoxGeometry(0.07,0.07,0.5);
@@ -1467,20 +1648,17 @@ function updateArrows(dt){
     const a=arrows[i];
     a.life-=dt;
     a.vy-=12*dt;
-    a.x+=a.vx*dt; a.y+=a.vy*dt; a.z+=a.vz*dt;
-    a.mesh.position.set(a.x,a.y,a.z);
-    a.mesh.lookAt(a.x+a.vx,a.y+a.vy,a.z+a.vz);
     let hit=false;
-    /* 打到方塊（終界水晶會被射爆！） */
-    const bx=Math.floor(a.x), by=Math.floor(a.y), bz=Math.floor(a.z);
-    const bid=getB(bx,by,bz);
-    if(bid===ENDCRYSTAL){ breakCrystalAt(bx,by,bz); hit=true; }
-    else if(isSolid(bid)) hit=true;
-    /* 打到生物 */
-    if(!hit){
+    const STEPS=4;
+    for(let st=0; st<STEPS && !hit; st++){
+      a.x+=a.vx*dt/STEPS; a.y+=a.vy*dt/STEPS; a.z+=a.vz*dt/STEPS;
+      const bx=Math.floor(a.x), by=Math.floor(a.y), bz=Math.floor(a.z);
+      const bid=getB(bx,by,bz);
+      if(bid===ENDCRYSTAL){ breakCrystalAt(bx,by,bz); hit=true; break; }
+      if(isSolid(bid)){ hit=true; break; }
       for(const e of entities()){
         const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:0.5));
-        if(Math.hypot(a.x-e.x,a.y-cy,a.z-e.z)<0.8){
+        if(Math.hypot(a.x-e.x,a.y-cy,a.z-e.z)<0.9){
           e.hp-=4; e.hurtT=0.4;
           if(e.kind==='e'&&e.hp>0){ teleportEnder(e); e.aggro=true; }
           spawnParticles(e.x,cy,e.z,5,0xaa2222);
@@ -1488,8 +1666,7 @@ function updateArrows(dt){
           hit=true; break;
         }
       }
-    }
-    if(!hit){
+      if(hit) break;
       for(const d of dragons){
         if(Math.hypot(a.x-d.x,a.y-d.y,a.z-d.z)<2.2*d.tier.scale){
           d.hp-=4; d.hurtT=0.4;
@@ -1499,6 +1676,8 @@ function updateArrows(dt){
         }
       }
     }
+    a.mesh.position.set(a.x,a.y,a.z);
+    a.mesh.lookAt(a.x+a.vx,a.y+a.vy,a.z+a.vz);
     if(hit||a.life<=0){
       scene.remove(a.mesh); a.mesh.material.dispose();
       arrows.splice(i,1);
@@ -1555,7 +1734,7 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -1570,6 +1749,7 @@ const RECIPES=[
   {id:'armor2',  kind:'armor', lvl:2, name:'鑽石甲🛡🛡（受傷 -2）', cost:{diamond:4}},
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
+  {id:'pet',     kind:'pet',   name:'孵化龍蛋🐣（寵物小龍會幫你打怪）', cost:{egg:1,gold:3}},
   {id:'bed',     kind:'bed',   name:'床🛏（晚上一鍵睡到天亮）', cost:{wood:3}},
   {id:'crystal', kind:'stack', name:'終界水晶💠（放4顆上祭壇復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
   {id:'apple',   kind:'stack', name:'金蘋果✨🍎（吃了全滿血）', cost:{gold:2}},
@@ -1592,6 +1772,7 @@ function renderCraft(){
     else if(r.kind==='flint') owned=hasFlint;
     else if(r.kind==='bow') owned=hasBow;
     else if(r.kind==='bed') owned=hasBed;
+    else if(r.kind==='pet') owned=hasPet;
     else if(r.kind==='armor') owned=armor>=r.lvl;
     if(r.kind==='sword' && owned){
       btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
@@ -1609,6 +1790,7 @@ function renderCraft(){
         else if(r.kind==='flint'){ hasFlint=true; toast('🔥 合成了打火石！'); }
         else if(r.kind==='bow'){ hasBow=true; toast('🏹 合成了弓！記得也要合成箭'); }
         else if(r.kind==='bed'){ hasBed=true; toast('🛏 有床了！晚上左上角會出現睡覺按鈕'); }
+        else if(r.kind==='pet'){ hasPet=true; spawnPet(); toast('🐣 龍蛋孵化了！寵物小龍會跟著你、幫你攻擊怪物'); }
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
@@ -1757,9 +1939,10 @@ function goDim(target){
   if(dim==='end'){ const tmp=new Uint8Array(N); generateEnd(seed,tmp); } /* 重算 crystalPos */
   world=dims[dim].world; genWorld=dims[dim].gen; diffs=dims[dim].diffs;
   if(dim==='end'){
-    player.x=16.5; player.z=32.5;
+    player.x=END_C.x-15.5; player.z=END_C.z+0.5;
     player.y=13.1;
     if(!dragonDefeated) spawnDragons();
+    healEndStructures();
     toast('🌌 歡迎來到終界！');
   } else if(dim==='nether'){
     const px=Math.max(3,Math.min(WX-4,Math.floor(player.x)));
@@ -2007,7 +2190,7 @@ function raycast(maxDist){
     else if(ty<tz){ iy+=sy; t=ty; ty+=dy; face=[0,-sy,0]; }
     else { iz+=sz; t=tz; tz+=dz; face=[0,0,-sz]; }
     const b=getB(ix,iy,iz);
-    if(b!==AIR && b!==WATER && b!==LAVA && b!==PORTAL && b!==ENDPORTAL) return {x:ix,y:iy,z:iz,face,id:b};
+    if(b!==AIR && b!==WATER && b!==LAVA && b!==PORTAL && b!==ENDPORTAL && b!==GATEWAY) return {x:ix,y:iy,z:iz,face,id:b};
   }
   return null;
 }
@@ -2037,6 +2220,24 @@ function mine(){
   if(hit.id===TNT){ setBlock(hit.x,hit.y,hit.z,AIR); explode(hit.x,hit.y,hit.z); return; }
   if(hit.id===ENDCRYSTAL){
     breakCrystalAt(hit.x,hit.y,hit.z);
+    return;
+  }
+  if(hit.id===DRAGONEGG){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    inv.egg=(inv.egg||0)+1;
+    sfx.craft();
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,12,0xc060e0);
+    toast('🥚 撿起龍蛋！到合成台孵化成寵物小龍');
+    updateHUD(); scheduleSave();
+    return;
+  }
+  if(hit.id===ELYTRAB){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    hasElytra=true;
+    sfx.craft(); sfx.eye();
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,15,0xd0d0ff);
+    toast('🪂 獲得鞘翅！空中按住 ⬆ 就能滑翔');
+    updateHUD(); scheduleSave();
     return;
   }
   const mat=COLLECT[hit.id];
@@ -2107,7 +2308,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasBed, armor, dragonDefeated, curWeapon,
+    inv, weapons, hasFlint, hasBow, hasBed, hasElytra, hasPet, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -2175,6 +2376,8 @@ async function loadGame(){
     if(d.hasFlint) hasFlint=true;
     if(d.hasBow) hasBow=true;
     if(d.hasBed) hasBed=true;
+    if(d.hasElytra) hasElytra=true;
+    if(d.hasPet) hasPet=true;
     if(typeof d.armor==='number') armor=d.armor;
     if(d.dragonDefeated) dragonDefeated=true;
     if(d.curWeapon && WEAPON_DMG[d.curWeapon]) curWeapon=d.curWeapon;
@@ -2200,7 +2403,9 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
-  hasFlint=false; hasBow=false; hasBed=false; armor=0; dragonDefeated=false;
+  hasFlint=false; hasBow=false; hasBed=false; hasElytra=false; armor=0; dragonDefeated=false;
+  hasPet=false;
+  if(pet){ scene.remove(pet); pet=null; }
   curWeapon='fist';
   updateHUD();
   dayT=0.05;
@@ -2351,6 +2556,7 @@ function loop(){
   updateAnimals(dt);
   updateDragons(dt);
   updateFireballs(dt);
+  updatePet(dt);
   updateArrows(dt);
   updateActButton();
 
@@ -2383,7 +2589,19 @@ function loop(){
     player.vy = Math.max(player.vy, liquid===LAVA?-1.6:-3);
     if(keys['Space']||jumpHeld) player.vy = liquid===LAVA?2.2:3.2;
   } else {
-    player.vy += -26*dt;
+    let elytraFly=false;
+    if(hasElytra && (keys['Space']||jumpHeld) && !player.onGround){
+      elytraFly=true;
+      player.vy=0;
+      const evx=-Math.sin(player.yaw)*Math.cos(player.pitch);
+      const evy= Math.sin(player.pitch);
+      const evz=-Math.cos(player.yaw)*Math.cos(player.pitch);
+      const es=10*dt;
+      if(!collide(player.x+evx*es,player.y,player.z)) player.x+=evx*es;
+      if(!collide(player.x,player.y,player.z+evz*es)) player.z+=evz*es;
+      if(!collide(player.x,player.y+evy*es,player.z)) player.y+=evy*es;
+    }
+    if(!elytraFly) player.vy += -26*dt;
     if((keys['Space']||jumpHeld) && player.onGround){ player.vy=8.4; player.onGround=false; }
   }
   if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
@@ -2416,6 +2634,21 @@ function loop(){
     } else if(feet===ENDPORTAL || under===ENDPORTAL){
       portalT+=dt;
       if(portalT>=1){ portalT=0; goDim(dim==='end'?'over':'end'); }
+    } else if(feet===GATEWAY){
+      portalT+=dt;
+      if(portalT>=0.6){
+        portalT=0; portalCD=2.5;
+        sfx.portal();
+        spawnParticles(player.x,player.y+1,player.z,12,0xc080ff);
+        if(Math.hypot(player.x-TRE.x,player.z-TRE.z)<15){
+          player.x=END_C.x-15.5; player.y=13.1; player.z=END_C.z+0.5;
+          toast('🌀 折躍回主島');
+        } else {
+          player.x=TRE.x+0.5; player.y=13.1; player.z=TRE.z+0.5;
+          toast('🌀 抵達神秘小島…台座上放著鞘翅！');
+        }
+        player.vy=0;
+      }
     } else portalT=0;
   }
 
@@ -2443,7 +2676,7 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
 /* ================= 啟動 ================= */
 (async function init(){
   document.getElementById('ctrlHint').innerHTML = isTouch
-    ? '🌌 新內容：終界！晚上打安德人拿珍珠、地獄烈焰人掉烈焰粉<br>珍珠+烈焰粉=終界之眼 → 用「終界門框」在地上圍一圈 → 👁 鑲眼開門<br>🏹 弓箭遠攻｜🪓 戰斧｜🛡 盔甲｜🛏 床一鍵睡到天亮｜🥩 牛<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
+    ? '🌌 新內容：終界！晚上打安德人拿珍珠、地獄烈焰人掉烈焰粉<br>珍珠+烈焰粉=終界之眼 → 用「終界門框」在地上圍一圈 → 👁 鑲眼開門<br>🏹 弓箭遠攻｜🛡 盔甲｜🛏 床｜夜晚新怪：💀骷髏弓手、🕷蜘蛛、💣苦力怕<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
     : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜Q 吃東西｜B 睡覺｜F 飛行<br>🌌 打安德人拿珍珠+地獄烈焰人掉烈焰粉=終界之眼 → 終界門框圍圈鑲眼 → 挑戰終界龍！<br>進度自動儲存';
   const t = await loadGame();
   if(t===null){
@@ -2456,6 +2689,7 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
     document.getElementById('saveInfo').textContent=
       `📂 已讀取存檔（上次儲存：${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}）`;
   }
+  if(dim==='end') healEndStructures();
   rebuildAll();
   applyDimSky();
   if(dim==='end' && !dragonDefeated) spawnDragons();
