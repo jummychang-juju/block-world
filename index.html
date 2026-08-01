@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-1</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-2</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -3374,8 +3374,11 @@ function loop(){
   const ml=Math.hypot(mx,mz);
   if(ml>1){ mx/=ml; mz/=ml; }
   const liquid=liquidAt();
-  const feetLq=getB(Math.floor(player.x),Math.floor(player.y-0.2),Math.floor(player.z));
-  boating = hasBoat && !player.fly && (liquid===WATER||liquid===LAVA||feetLq===WATER||feetLq===LAVA);
+  const fx=Math.floor(player.x), fz=Math.floor(player.z);
+  const feetLq=getB(fx,Math.floor(player.y-0.2),fz);
+  const underLq=getB(fx,Math.floor(player.y-1.0),fz);
+  const isLq=v=>v===WATER||v===LAVA;
+  boating = hasBoat && !player.fly && (isLq(liquid)||isLq(feetLq)||isLq(underLq));
   if(boating && !boatMesh){ boatMesh=makeBoatMesh(); scene.add(boatMesh); }
   if(!boating && boatMesh){ scene.remove(boatMesh); boatMesh=null; }
   if(speedT>0){ speedT-=dt; if(speedT<=0) toast('⚡ 速度藥水效果結束'); }
@@ -3396,8 +3399,10 @@ function loop(){
     const dy=vy*dt;
     if(dy!==0 && !collide(player.x,player.y+dy,player.z)) player.y+=dy;
   } else if(boating){
-    /* 船：自動浮上液面 */
-    if(liquid===WATER||liquid===LAVA) player.vy=3.2;
+    /* 船：分層浮力，穩定漂在液面 */
+    if(isLq(liquid)) player.vy=3.2;          /* 身體泡在液體裡→快速上浮 */
+    else if(isLq(feetLq)) player.vy=0.8;     /* 腳碰液面→微微上浮 */
+    else if(isLq(underLq)) player.vy=0;      /* 漂浮在液面上→穩定 */
     else player.vy=Math.max(player.vy-20*dt, -2);
     if(keys['Space']||jumpHeld) player.vy=6.5;   /* 跳出船上岸 */
   } else if(liquid===WATER||liquid===LAVA){
