@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V10</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V12</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -140,6 +140,12 @@
   <button class="obtn gray" id="ioGiftBtn">🎁 領取補償禮包</button>
   <button class="obtn gray" id="ioCloseBtn">返回</button>
 </div>
+<div class="overlay" id="tradeOverlay" style="display:none;z-index:33;background:rgba(12,26,14,.95);justify-content:flex-start;padding-top:30px;overflow-y:auto;">
+  <h2 style="color:#7de08a;">💱 村民交易</h2>
+  <div id="tradeInv" style="font-size:14px;background:rgba(255,255,255,.08);border-radius:10px;padding:8px 14px;line-height:1.9;max-width:480px;"></div>
+  <div id="tradeList" style="display:flex;flex-direction:column;gap:7px;"></div>
+  <button class="obtn gray" id="tradeCloseBtn" style="margin-top:6px;">關閉</button>
+</div>
 <div class="overlay" id="craftOverlay">
   <h2>🔨 合成台</h2>
   <div id="invRow"></div>
@@ -160,10 +166,10 @@ const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
 const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8, BEDROCK=9, WATER=10, BRICK=11, TNT=12, GLOW=13,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
-      ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32;
+      ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦"};
 const HOTBAR = [GRASS,DIRT,STONE,SAND,WOOD,LEAF,PLANK,GLASS,BRICK,TNT,GLOW,OBSID,CRAFT,ENDFRAME];
 
 /* ================= 亂數 ================= */
@@ -236,6 +242,7 @@ function generateOver(sd, w){
     const r=oreRng();
     if(y<=3 && r<0.13) w[idx(x,y,z)]=LAVA;
     else if(y<9 && r<0.016) w[idx(x,y,z)]=GOLD;
+    else if(y<10 && r<0.024) w[idx(x,y,z)]=EMERALD;
     else if(y<14 && r<0.055) w[idx(x,y,z)]=IRON;
     else if(r<0.085) w[idx(x,y,z)]=COAL;
   }
@@ -396,7 +403,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=35;
+const TILE=16, NTILES=36;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -511,6 +518,7 @@ drawTile(34,[60,30,80],6,(x,y)=>{
   if(y>=3&&y<=12 && lx<=1) return [140,90,60,255];
   return [60,30,80,255];
 });
+oreTile(35,[80,225,130]);   /* 綠寶石礦 */
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -532,7 +540,8 @@ const TILES = {
   [ENDSTONE]:{top:27,side:27,bot:27}, [ENDFRAME]:{top:28,side:28,bot:28},
   [ENDFRAMEEYE]:{top:29,side:29,bot:29}, [ENDPORTAL]:{top:30,side:30,bot:30},
   [ENDCRYSTAL]:{top:31,side:31,bot:31}, [DRAGONEGG]:{top:32,side:32,bot:32},
-  [GATEWAY]:{top:33,side:33,bot:33}, [ELYTRAB]:{top:34,side:34,bot:34}
+  [GATEWAY]:{top:33,side:33,bot:33}, [ELYTRAB]:{top:34,side:34,bot:34},
+  [EMERALD]:{top:35,side:35,bot:35}
 };
 const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY;
 const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY;
@@ -707,6 +716,7 @@ function explode(bx,by,bz){
   sfx.boom();
   const R=3.5, set=new Set();
   const cascade=[];
+  const loot={};
   for(let x=Math.floor(bx-R);x<=Math.ceil(bx+R);x++)
   for(let y=Math.floor(by-R);y<=Math.ceil(by+R);y++)
   for(let z=Math.floor(bz-R);z<=Math.ceil(bz+R);z++){
@@ -716,12 +726,20 @@ function explode(bx,by,bz){
     const id=world[idx(x,y,z)];
     if(id===AIR||id===BEDROCK||id===OBSID||id===WATER||id===ENDFRAME||id===ENDFRAMEEYE||id===ENDCRYSTAL||id===GATEWAY||id===ELYTRAB||id===PORTAL||id===ENDPORTAL) continue;
     if(id===TNT && !(x===bx&&y===by&&z===bz)) cascade.push([x,y,z]);
+    const lm=COLLECT[id];
+    if(lm) loot[lm]=(loot[lm]||0)+1;
     setBlockRaw(x,y,z,AIR);
     markChunks(set,x,z);
   }
   dirty=true; scheduleSave();
   for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); }
   spawnParticles(bx+0.5,by+0.5,bz+0.5, 24, 0x888888);
+  const lk=Object.keys(loot);
+  if(lk.length){
+    for(const k of lk) inv[k]+=loot[k];
+    toast('💥 爆炸收穫：'+lk.map(k=>MAT_NAME[k]+'×'+loot[k]).join('　'));
+    updateHUD(); scheduleSave();
+  }
   for(const e of entities()) if(Math.hypot(e.x-bx,e.y-by,e.z-bz)<R+1.5) e.hp=0;
   for(const d of dragons) if(Math.hypot(d.x-bx,d.y-by,d.z-bz)<R+2) d.hp-=6;
   for(const c of cascade) setTimeout(()=>{ if(getB(c[0],c[1],c[2])===AIR) explode(c[0],c[1],c[2]); }, 250);
@@ -754,16 +772,18 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
-const weapons = { wood:false, stone:false, iron:false, axe:false, diamond:false, chal:false, ender:false };
+const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, chal:false, emsword:false, hammer:false, ender:false, wblade:false };
+let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, armor=0;
 let dragonDefeated=false;
 let curWeapon='fist';
-const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, axe:5, diamond:6, chal:8, ender:10 };
-const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, axe:6, diamond:7, chal:8, ender:10 };
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', chal:'🗡 獄髓劍✨', ender:'🗡 終界劍🌌' };
-const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal' };
+const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, chal:8, emsword:8, hammer:9, ender:10, wblade:12 };
+const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, chal:8, emsword:9, hammer:6, ender:10, wblade:8 };
+const WEAPON_KB = { hammer:2.4 };
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤' };
+const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
 
 function surfaceYo(x,z){
   for(let y=WY-1;y>=0;y--) if(isSolid(getB(x,y,z))) return y;
@@ -873,7 +893,7 @@ function updateHUD(){
 
 /* ================= 生物 ================= */
 const zombies=[], animals=[], enders=[], blazes=[];
-const MAX_Z=8, MAX_A=8, MAX_E=5, MAX_B=4;
+const MAX_Z=10, MAX_A=8, MAX_E=5, MAX_B=6;
 const entities = ()=> zombies.concat(animals, enders, blazes);
 
 function makeZombieMesh(v){
@@ -915,9 +935,37 @@ function makePiglinMesh(){
   g.userData={legL,legR};
   return g;
 }
-function makeSpiderMesh(){
+function makeWitchMesh(){
   const g=new THREE.Group();
-  const blk=new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const skin=new THREE.MeshLambertMaterial({color:0xc8b090});
+  const robe=new THREE.MeshLambertMaterial({color:0x4a2a6a});
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),skin); head.position.y=1.65;
+  const nose=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.18,0.1),new THREE.MeshLambertMaterial({color:0x8aa060})); nose.position.set(0,1.58,0.3);
+  const hat1=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6),new THREE.MeshLambertMaterial({color:0x1a1a2a})); hat1.position.y=1.95;
+  const hat2=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.3,0.35),hat1.material); hat2.position.y=2.15;
+  const hat3=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.25,0.18),hat1.material); hat3.position.y=2.4;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.75,0.3),robe); body.position.y=1.0;
+  const legG=new THREE.BoxGeometry(0.22,0.65,0.22); legG.translate(0,-0.325,0);
+  const legL=new THREE.Mesh(legG,robe); legL.position.set(-0.14,0.65,0);
+  const legR=new THREE.Mesh(legG,robe); legR.position.set(0.14,0.65,0);
+  g.add(head,nose,hat1,hat2,hat3,body,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
+function makeSlimeMesh(col){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.7,0.85), new THREE.MeshLambertMaterial({color:col, transparent:true, opacity:0.85}));
+  body.position.y=0.35;
+  const eyeM=new THREE.MeshBasicMaterial({color:0x222222});
+  const e1=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.03),eyeM); e1.position.set(-0.18,0.45,0.44);
+  const e2=e1.clone(); e2.position.x=0.18;
+  g.add(body,e1,e2);
+  g.userData={legL:e1,legR:e2,body};
+  return g;
+}
+function makeSpiderMesh(col,scl){
+  const g=new THREE.Group();
+  const blk=new THREE.MeshLambertMaterial({color:col||0x1c1c1c});
   const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.35,0.9),blk); body.position.y=0.45;
   const head=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.3,0.35),blk); head.position.set(0,0.45,0.6);
   const eyeM=new THREE.MeshBasicMaterial({color:0xff3030});
@@ -932,6 +980,7 @@ function makeSpiderMesh(){
     legs.push(lL,lR);
   }
   g.add(body,head,e1,e2);
+  g.scale.setScalar(scl||1);
   g.userData={legL:legs[0],legR:legs[1]};
   return g;
 }
@@ -957,8 +1006,9 @@ function makeCreeperMesh(){
 const SHIRTS=[0x1c7a8c,0x3a5aa0,0x7a3a8c,0x8a4a2a,0x2a7a4a];
 function rollZombieVariant(isNether){
   const r=Math.random();
-  if(r<0.2)  return {skin:0x8ac05a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:0.72, hp:2, sp:2.3, dmg:1};   /* 小殭屍 */
-  if(r<0.4)  return {skin:0x3a6a34, shirt:0x333333, pants:0x222222, scale:1.28, hp:7, sp:1.0, dmg:2};   /* 壯殭屍 */
+  if(r<0.18) return {skin:0x8ac05a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:0.72, hp:2, sp:2.3, dmg:1};   /* 小殭屍 */
+  if(r<0.36) return {skin:0x3a6a34, shirt:0x333333, pants:0x222222, scale:1.28, hp:7, sp:1.0, dmg:2};   /* 壯殭屍 */
+  if(r<0.52) return {skin:0x4a9a8a, shirt:0x2a6a7a, pants:0x1a4a5a, scale:1.0, hp:5, sp:1.5, dmg:1};    /* 溺屍 */
   return {skin:0x55a04a, shirt:SHIRTS[(Math.random()*SHIRTS.length)|0], pants:0x3a4a9c, scale:1.0, hp:4, sp:1.4, dmg:1};
 }
 const ENDER_EYES=[0xd070f0,0xf070a0,0x70c0f0,0x90f070];
@@ -1012,6 +1062,22 @@ function makeCowMesh(){
   g.userData={legL:legs[0],legR:legs[1]};
   return g;
 }
+function makeVillagerMesh(){
+  const g=new THREE.Group();
+  const skin=new THREE.MeshLambertMaterial({color:0xc8a078});
+  const robe=new THREE.MeshLambertMaterial({color:0x7a5a3a});
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.55,0.5),skin); head.position.y=1.68;
+  const nose=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.26,0.12),skin); nose.position.set(0,1.55,0.3);
+  const brow=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.1,0.06),new THREE.MeshLambertMaterial({color:0x6a4a2a})); brow.position.set(0,1.85,0.24);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.8,0.3),robe); body.position.y=1.0;
+  const arms=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.16,0.2),robe); arms.position.set(0,1.25,0.06);
+  const legG=new THREE.BoxGeometry(0.2,0.6,0.2); legG.translate(0,-0.3,0);
+  const legL=new THREE.Mesh(legG,robe); legL.position.set(-0.13,0.6,0);
+  const legR=new THREE.Mesh(legG,robe); legR.position.set(0.13,0.6,0);
+  g.add(head,nose,brow,body,arms,legL,legR);
+  g.userData={legL,legR};
+  return g;
+}
 function makeChickenMesh(){
   const g=new THREE.Group();
   const white=new THREE.MeshLambertMaterial({color:0xf5f5f0});
@@ -1043,16 +1109,26 @@ function trySpawnZombie(){
   if(Math.hypot(x-player.x,z-player.z)<6) return;
   const isN=dim==='nether';
   let v, mesh;
-  if(isN){ v={type:'piglin',scale:1.0,hp:5,sp:1.5,dmg:1}; mesh=makePiglinMesh(); }
+  if(isN){
+    const r=Math.random();
+    if(r<0.5){ v={type:'piglin',scale:1.0,hp:5,sp:1.5,dmg:1}; mesh=makePiglinMesh(); }
+    else if(r<0.8){ v={type:'wither',skin:0x2a2a2a,shirt:0x161616,pants:0x0e0e0e,scale:1.08,hp:6,sp:1.5,dmg:2}; mesh=makeZombieMesh(v); }
+    else { v={type:'magma',scale:1.0,hp:4,sp:1.7,dmg:2}; mesh=makeSlimeMesh(0xd85820); }
+  }
   else {
     const r=Math.random();
-    if(r<0.45){ v=rollZombieVariant(false); v.type='zombie'; mesh=makeZombieMesh(v); }
-    else if(r<0.65){ v={type:'skel',skin:0xdcdcd2,shirt:0xb8b8b0,pants:0x94948c,scale:0.95,hp:3,sp:1.3,dmg:0}; mesh=makeZombieMesh(v); }
-    else if(r<0.85){ v={type:'spider',scale:1.0,hp:3,sp:2.2,dmg:1}; mesh=makeSpiderMesh(); }
-    else { v={type:'creeper',scale:1.0,hp:3,sp:1.3,dmg:0}; mesh=makeCreeperMesh(); }
+    if(r<0.35){ v=rollZombieVariant(false); v.type='zombie'; mesh=makeZombieMesh(v); }
+    else if(r<0.55){ v={type:'skel',skin:0xdcdcd2,shirt:0xb8b8b0,pants:0x94948c,scale:0.95,hp:3,sp:1.3,dmg:0}; mesh=makeZombieMesh(v); }
+    else if(r<0.70){
+      if(Math.random()<0.4){ v={type:'spider',scale:0.75,hp:2,sp:2.7,dmg:1}; mesh=makeSpiderMesh(0x1a3a6a,0.75); }  /* 洞穴蜘蛛 */
+      else { v={type:'spider',scale:1.0,hp:3,sp:2.2,dmg:1}; mesh=makeSpiderMesh(); }
+    }
+    else if(r<0.82){ v={type:'creeper',scale:1.0,hp:3,sp:1.3,dmg:0}; mesh=makeCreeperMesh(); }
+    else if(r<0.92){ v={type:'slime',scale:1.0,hp:3,sp:1.6,dmg:1}; mesh=makeSlimeMesh(0x58c048); }
+    else { v={type:'witch',scale:1.0,hp:5,sp:1.1,dmg:0}; mesh=makeWitchMesh(); }
   }
   scene.add(mesh);
-  zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:v.type==='spider'?0.42:0.25*v.scale,h:v.type==='spider'?0.85:1.75*v.scale});
+  zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:(v.type==='spider'||v.type==='slime'||v.type==='magma')?0.42:0.25*v.scale,h:v.type==='spider'?0.85:(v.type==='slime'||v.type==='magma')?0.72:1.75*v.scale});
   if(v.type!=='skel') sfx.zGroan();
 }
 function trySpawnEnder(){
@@ -1066,6 +1142,24 @@ function trySpawnEnder(){
   const mesh=makeEnderMesh();
   scene.add(mesh);
   enders.push({kind:'e',x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:5,hurtT:0,atkT:0,aggro:false,dirT:0,moving:false,animT:0,mesh,w:0.25,h:2.7});
+}
+function makeGhastMesh(){
+  const g=new THREE.Group();
+  const white=new THREE.MeshLambertMaterial({color:0xeeeeea});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(1.3,1.3,1.3),white); body.position.y=1.6;
+  const eyeM=new THREE.MeshBasicMaterial({color:0x882222});
+  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.22,0.03),eyeM); eL.position.set(-0.3,1.75,0.67);
+  const eR=eL.clone(); eR.position.x=0.3;
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.16,0.03),eyeM); mouth.position.set(0,1.3,0.67);
+  const tG=new THREE.BoxGeometry(0.16,0.6,0.16); tG.translate(0,-0.3,0);
+  for(let i=0;i<9;i++){
+    const t=new THREE.Mesh(tG,white);
+    t.position.set(-0.45+(i%3)*0.45, 0.95, -0.45+((i/3)|0)*0.45);
+    g.add(t);
+  }
+  g.add(body,eL,eR,mouth);
+  g.userData={rods:[]};
+  return g;
 }
 function makeBlazeMesh(){
   const g=new THREE.Group();
@@ -1090,17 +1184,21 @@ function trySpawnBlaze(){
   const x=Math.floor(player.x+Math.cos(a)*d), z=Math.floor(player.z+Math.sin(a)*d);
   if(x<2||x>=WX-2||z<2||z>=WZ-2) return;
   const y=floorY(x,z);
-  if(y<=0||y+3>=WY) return;
-  const mesh=makeBlazeMesh();
+  if(y<=0||y+4>=WY) return;
+  const isGhast = Math.random()<0.35;
+  const mesh = isGhast ? makeGhastMesh() : makeBlazeMesh();
   scene.add(mesh);
-  blazes.push({kind:'b',x:x+0.5,y:y+1,z:z+0.5,vy:0,baseY:y+1,yaw:0,hp:4,hurtT:0,atkT:0,fireT:2+Math.random()*3,animT:Math.random()*6,mesh,w:0.3,h:1.6});
+  blazes.push({kind:'b',type:isGhast?'ghast':'blaze',x:x+0.5,y:y+1,z:z+0.5,vy:0,baseY:y+1,yaw:0,
+    hp:isGhast?5:4,hurtT:0,atkT:0,fireT:2+Math.random()*3,animT:Math.random()*6,mesh,w:isGhast?0.6:0.3,h:isGhast?2.4:1.6});
 }
 function updateBlazes(dt){
   for(let i=blazes.length-1;i>=0;i--){
     const b=blazes[i];
     if(b.hp<=0){
-      if(Math.random()<0.8){ inv.blaze++; toast('🔥 烈焰人掉了烈焰粉！'); updateHUD(); scheduleSave(); }
-      removeEnt(blazes,i,true,0xffb020);
+      if(b.type==='ghast'){
+        if(Math.random()<0.6){ inv.gold++; toast('🥇 幽靈掉了金塊！'); updateHUD(); scheduleSave(); }
+      } else if(Math.random()<0.8){ inv.blaze++; toast('🔥 烈焰人掉了烈焰粉！'); updateHUD(); scheduleSave(); }
+      removeEnt(blazes,i,true,b.type==='ghast'?0xeeeeea:0xffb020);
       continue;
     }
     const dx=player.x-b.x, dz=player.z-b.z;
@@ -1109,26 +1207,30 @@ function updateBlazes(dt){
     b.hurtT=Math.max(0,b.hurtT-dt);
     b.atkT=Math.max(0,b.atkT-dt);
     b.animT+=dt;
+    const isGh=b.type==='ghast';
     let sp=0;
-    if(dist>7) sp=1.3; else if(dist<3) sp=-1.0;
+    if(isGh){ if(dist>13) sp=1.0; else if(dist<8) sp=-1.0; }
+    else { if(dist>7) sp=1.3; else if(dist<3) sp=-1.0; }
     if(b.hurtT>0) sp=0;
     b.x+=dx/Math.max(dist,0.01)*sp*dt;
     b.z+=dz/Math.max(dist,0.01)*sp*dt;
-    b.y=b.baseY+1.2+Math.sin(b.animT*1.5)*0.5;
+    b.y=b.baseY+(isGh?2.8:1.2)+Math.sin(b.animT*1.5)*0.5;
     b.fireT-=dt;
-    if(b.fireT<=0 && dist<15){
+    if(b.fireT<=0 && dist<(isGh?20:15)){
       const dy=(player.y+1)-b.y;
       const len=Math.hypot(dx,dy,dz)||1;
-      const m=new THREE.Mesh(new THREE.SphereGeometry(0.2,6,6), new THREE.MeshBasicMaterial({color:0xffb020}));
+      const bsz=isGh?0.34:0.2, bsp=isGh?6.5:8, bcol=isGh?0xff7030:0xffb020;
+      const m=new THREE.Mesh(new THREE.SphereGeometry(bsz,6,6), new THREE.MeshBasicMaterial({color:bcol}));
       m.position.set(b.x,b.y,b.z);
       scene.add(m);
-      fireballs.push({x:b.x,y:b.y,z:b.z, vx:dx/len*8, vy:dy/len*8, vz:dz/len*8, life:5, col:0xffb020, mesh:m});
-      tone(300,0.2,'sawtooth',0.08,120);
-      b.fireT=3.5+Math.random()*2.5;
+      fireballs.push({x:b.x,y:b.y,z:b.z, vx:dx/len*bsp, vy:dy/len*bsp, vz:dz/len*bsp, life:6, col:bcol, mesh:m});
+      if(isGh) tone(180,0.5,'sine',0.1,90); else tone(300,0.2,'sawtooth',0.08,120);
+      b.fireT=(isGh?4.5:3.5)+Math.random()*2.5;
     }
     if(dist<1.3 && Math.abs(player.y+1-b.y)<2 && b.atkT<=0){ damagePlayer(1); b.atkT=1.2; }
-    b.mesh.position.set(b.x,b.y-1.2,b.z);
-    for(let k=0;k<4;k++){
+    b.mesh.position.set(b.x,b.y-(isGh?1.6:1.2),b.z);
+    b.mesh.rotation.y=Math.atan2(dx,dz);
+    if(!isGh) for(let k=0;k<4;k++){
       const a=b.animT*2 + k*Math.PI/2;
       b.mesh.userData.rods[k].position.set(Math.cos(a)*0.45, 0.55+Math.sin(b.animT*3+k)*0.1, Math.sin(a)*0.45);
     }
@@ -1143,10 +1245,10 @@ function trySpawnAnimal(){
   if(y>=WY-2||getB(x,y,z)!==AIR) return;
   if(getB(x,y-1,z)!==GRASS) return;
   const r=Math.random();
-  const type = r<0.4 ? 'pig' : (r<0.7 ? 'chicken' : 'cow');
-  const mesh = type==='pig' ? makePigMesh() : (type==='cow' ? makeCowMesh() : makeChickenMesh());
+  const type = r<0.32 ? 'pig' : (r<0.56 ? 'chicken' : (r<0.8 ? 'cow' : 'vil'));
+  const mesh = type==='pig' ? makePigMesh() : (type==='cow' ? makeCowMesh() : (type==='vil' ? makeVillagerMesh() : makeChickenMesh()));
   scene.add(mesh);
-  animals.push({kind:type, x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:type==='chicken'?1:(type==='pig'?2:3),hurtT:0,dirT:0,moving:false,animT:0,mesh,w:type==='chicken'?0.2:0.32,h:type==='chicken'?0.7:1.0});
+  animals.push({kind:type, x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:type==='chicken'?1:(type==='pig'?2:(type==='vil'?5:3)),hurtT:0,dirT:0,moving:false,animT:0,mesh,w:type==='vil'?0.25:(type==='chicken'?0.2:0.32),h:type==='vil'?1.8:(type==='chicken'?0.7:1.0)});
 }
 function removeEnt(arr,i,poof,color){
   const e=arr[i];
@@ -1170,11 +1272,14 @@ function updateZombies(dt){
   for(let i=zombies.length-1;i>=0;i--){
     const z=zombies[i];
     if(z.hp<=0){
-      if(z.fromNether && Math.random()<0.6){ inv.gold++; toast('🥇 豬布林掉了金塊！'); updateHUD(); scheduleSave(); }
+      if(z.type==='piglin' && Math.random()<0.6){ inv.gold++; toast('🥇 豬布林掉了金塊！'); updateHUD(); scheduleSave(); }
+      else if(z.type==='wither' && Math.random()<0.5){ inv.blaze++; toast('🔥 凋靈骷髏掉了烈焰粉！'); updateHUD(); scheduleSave(); }
+      else if(z.type==='magma' && Math.random()<0.4){ inv.blaze++; toast('🔥 岩漿怪掉了烈焰粉！'); updateHUD(); scheduleSave(); }
+      else if(z.type==='witch' && Math.random()<0.6){ inv.gold++; toast('🥇 女巫掉了金塊！'); updateHUD(); scheduleSave(); }
       else if(z.type==='skel'){ inv.arrow+=3; toast('🏹 骷髏掉了 3 支箭！'); updateHUD(); scheduleSave(); }
       else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛掉了煤炭'); updateHUD(); scheduleSave(); }
       else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕掉了鐵'); updateHUD(); scheduleSave(); }
-      const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : (z.fromNether?0xf0a8a0:0x55a04a);
+      const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : z.type==='slime'?0x58c048 : z.type==='magma'?0xd85820 : z.type==='witch'?0x4a2a6a : (z.fromNether?0xf0a8a0:0x55a04a);
       removeEnt(zombies,i,true,col); continue;
     }
     if(dim==='over' && !isNight){ removeEnt(zombies,i,true,0xff8833); continue; }
@@ -1184,7 +1289,7 @@ function updateZombies(dt){
     z.hurtT=Math.max(0,z.hurtT-dt);
     z.atkT=Math.max(0,z.atkT-dt);
     z.groanT-=dt;
-    if(z.groanT<0 && dist<14 && z.type!=='skel' && z.type!=='creeper'){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
+    if(z.groanT<0 && dist<14 && z.type!=='skel' && z.type!=='creeper' && z.type!=='witch'){ sfx.zGroan(); z.groanT=4+Math.random()*4; }
     /* 苦力怕：接近後嘶嘶引爆 */
     if(z.type==='creeper' && z.fuseT>=0){
       z.fuseT-=dt;
@@ -1206,20 +1311,28 @@ function updateZombies(dt){
     let sp = z.hurtT>0 ? 0 : (z.sp||1.4);
     let dirX=dx/Math.max(dist,0.01), dirZ=dz/Math.max(dist,0.01);
     /* 骷髏弓箭手：保持距離放箭 */
-    if(z.type==='skel'){
-      if(dist<6){ dirX=-dirX; dirZ=-dirZ; }
+    if(z.type==='skel'||z.type==='witch'){
+      const keep=z.type==='witch'?7:6;
+      if(dist<keep){ dirX=-dirX; dirZ=-dirZ; }
       else if(dist<12) sp=0;
       z.fireT-=dt;
       if(z.fireT<=0 && dist<15){
         const dy=(player.y+1.2)-(z.y+1.4);
         const len=Math.hypot(dx,dy,dz)||1;
-        const m=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.5), new THREE.MeshBasicMaterial({color:0xe8e0d0}));
+        let m, spd, col;
+        if(z.type==='witch'){
+          spd=9; col=0xc040e0;
+          m=new THREE.Mesh(new THREE.SphereGeometry(0.16,6,6), new THREE.MeshBasicMaterial({color:col}));
+        } else {
+          spd=12; col=0xd8d0c0;
+          m=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.5), new THREE.MeshBasicMaterial({color:0xe8e0d0}));
+          m.lookAt(player.x,player.y+1.2,player.z);
+        }
         m.position.set(z.x,z.y+1.4,z.z);
-        m.lookAt(player.x,player.y+1.2,player.z);
         scene.add(m);
-        fireballs.push({x:z.x,y:z.y+1.4,z:z.z, vx:dx/len*12, vy:dy/len*12, vz:dz/len*12, life:4, col:0xd8d0c0, mesh:m});
-        sfx.bow();
-        z.fireT=2.5+Math.random()*1.5;
+        fireballs.push({x:z.x,y:z.y+1.4,z:z.z, vx:dx/len*spd, vy:dy/len*spd, vz:dz/len*spd, life:4, col, mesh:m});
+        if(z.type==='witch') tone(500,0.25,'sine',0.08,250); else sfx.bow();
+        z.fireT=(z.type==='witch'?3:2.5)+Math.random()*1.5;
       }
     }
     /* 苦力怕：貼近就開始引爆 */
@@ -1239,8 +1352,14 @@ function updateZombies(dt){
     z.animT+=dt*(sp>0?6:0);
     z.mesh.position.set(z.x,z.y,z.z);
     z.mesh.rotation.y=z.yaw;
-    z.mesh.userData.legL.rotation.x=Math.sin(z.animT)*0.6;
-    z.mesh.userData.legR.rotation.x=-Math.sin(z.animT)*0.6;
+    if(z.type==='slime'||z.type==='magma'){
+      const sq=1+Math.sin(z.animT*1.6)*0.15;
+      z.mesh.scale.y=sq;
+      z.mesh.scale.x=z.mesh.scale.z=1+(1-sq)*0.5;
+    } else {
+      z.mesh.userData.legL.rotation.x=Math.sin(z.animT)*0.6;
+      z.mesh.userData.legR.rotation.x=-Math.sin(z.animT)*0.6;
+    }
   }
 }
 function teleportEnder(e){
@@ -1301,6 +1420,7 @@ function updateAnimals(dt){
     if(a.hp<=0){
       if(a.kind==='pig'){ inv.pork += 1+(Math.random()<0.5?1:0); toast('🍖 獲得豬排！'); }
       else if(a.kind==='cow'){ inv.beef += 1+(Math.random()<0.5?1:0); toast('🥩 獲得牛排！'); }
+      else if(a.kind==='vil'){ toast('😢 村民倒下了…（村民是好人，別打他們啦）'); }
       else { inv.chicken += 1; toast('🍗 獲得雞肉！'); }
       updateHUD(); scheduleSave();
       removeEnt(animals,i,true,a.kind==='pig'?0xf0a0a8:(a.kind==='cow'?0x6b4a33:0xffffff));
@@ -1313,7 +1433,7 @@ function updateAnimals(dt){
       a.yaw=Math.random()*6.28;
       a.moving=Math.random()<0.65;
       a.dirT=1.5+Math.random()*3;
-      if(Math.random()<0.15) (a.kind==='pig'?sfx.oink:(a.kind==='cow'?sfx.moo:sfx.cluck))();
+      if(Math.random()<0.15 && a.kind!=='vil') (a.kind==='pig'?sfx.oink:(a.kind==='cow'?sfx.moo:sfx.cluck))();
     }
     const sp = a.hurtT>0 ? 3.2 : (a.moving?0.85:0);
     const mx=Math.sin(a.yaw)*sp*dt, mz=Math.cos(a.yaw)*sp*dt;
@@ -1332,7 +1452,7 @@ function raycastEntity(maxDist){
   const all=entities();
   for(let i=0;i<all.length;i++){
     const e=all[i];
-    const cy = e.y + (e.kind==='z'?1:(e.kind==='e'?1.5:0.5));
+    const cy = e.y + (e.kind==='z'||e.kind==='vil'?1:(e.kind==='e'?1.5:0.5));
     const cx=e.x-camera.position.x, cyy=cy-camera.position.y, cz=e.z-camera.position.z;
     const t=cx*dir.x+cyy*dir.y+cz*dir.z;
     if(t<0||t>bestT) continue;
@@ -1638,8 +1758,9 @@ function shootBow(){
   m.position.copy(camera.position);
   m.rotation.copy(camera.rotation);
   scene.add(m);
+  const asp=hasXbow?27:22;
   arrows.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
-    vx:dir.x*22,vy:dir.y*22,vz:dir.z*22,life:3,mesh:m});
+    vx:dir.x*asp,vy:dir.y*asp,vz:dir.z*asp,life:3,dmg:hasXbow?7:4,mesh:m});
   sfx.bow();
   scheduleSave();
 }
@@ -1659,7 +1780,7 @@ function updateArrows(dt){
       for(const e of entities()){
         const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:0.5));
         if(Math.hypot(a.x-e.x,a.y-cy,a.z-e.z)<0.9){
-          e.hp-=4; e.hurtT=0.4;
+          e.hp-=(a.dmg||4); e.hurtT=0.4;
           if(e.kind==='e'&&e.hp>0){ teleportEnder(e); e.aggro=true; }
           spawnParticles(e.x,cy,e.z,5,0xaa2222);
           sfx.zHit();
@@ -1669,7 +1790,7 @@ function updateArrows(dt){
       if(hit) break;
       for(const d of dragons){
         if(Math.hypot(a.x-d.x,a.y-d.y,a.z-d.z)<2.2*d.tier.scale){
-          d.hp-=4; d.hurtT=0.4;
+          d.hp-=(a.dmg||4); d.hurtT=0.4;
           spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
           sfx.zHit();
           hit=true; break;
@@ -1700,9 +1821,9 @@ function updateDay(dt){
   if(dim==='nether'){
     isNight=true;
     zSpawnT-=dt;
-    if(zSpawnT<=0){ trySpawnZombie(); zSpawnT=4+Math.random()*3; }
+    if(zSpawnT<=0){ trySpawnZombie(); trySpawnZombie(); zSpawnT=1.8+Math.random()*1.5; }
     bSpawnT-=dt;
-    if(bSpawnT<=0){ trySpawnBlaze(); bSpawnT=5+Math.random()*4; }
+    if(bSpawnT<=0){ trySpawnBlaze(); trySpawnBlaze(); bSpawnT=2.5+Math.random()*2; }
     return;
   }
   if(dim==='end'){
@@ -1734,17 +1855,24 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
   {id:'iron',    kind:'sword', name:'鐵劍（傷害4・距離6）',    cost:{wood:1,iron:2}},
   {id:'axe',     kind:'sword', name:'戰斧🪓（傷害5・距離6）',  cost:{wood:1,iron:3}},
   {id:'diamond', kind:'sword', name:'鑽石劍（傷害6・距離7）',  cost:{wood:1,diamond:2}},
+  {id:'trident', kind:'sword', name:'三叉戟🔱（傷害7・距離9）', cost:{iron:5,diamond:1}},
+  {id:'flame',   kind:'sword', name:'烈焰劍🔥（傷害7・距離7）', cost:{blaze:3,iron:2}},
   {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害8・距離8）', cost:{wood:1,chal:3}},
+  {id:'hammer',  kind:'sword', name:'巨錘💥（傷害9・超大擊退）', cost:{iron:6,gold:2}},
+  {id:'dagger',  kind:'sword', name:'吸血匕首🩸（傷害5・打中回1顆心）', cost:{gold:3,diamond:1}},
+  {id:'emsword', kind:'sword', name:'綠寶石劍💚（傷害8・距離9）', cost:{emerald:6,wood:1}},
   {id:'ender',   kind:'sword', name:'終界劍🌌（傷害10・距離10）', cost:{pearl:2,diamond:1}},
+  {id:'wblade',  kind:'sword', name:'凋靈之刃🖤（傷害12・最強！）', cost:{chal:2,blaze:5,diamond:2}},
   {id:'bow',     kind:'bow',   name:'弓🏹（遠距攻擊，傷害 4）', cost:{wood:2,iron:1}},
   {id:'arrows',  kind:'stack', name:'箭×8🏹', cost:{wood:1,stone:1}},
+  {id:'xbow',    kind:'xbow',  name:'弩⚡（箭傷害4→7、射更快）', cost:{wood:2,iron:3}},
   {id:'armor1',  kind:'armor', lvl:1, name:'鐵甲🛡（受傷 -1）', cost:{iron:4}},
   {id:'armor2',  kind:'armor', lvl:2, name:'鑽石甲🛡🛡（受傷 -2）', cost:{diamond:4}},
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
@@ -1773,6 +1901,7 @@ function renderCraft(){
     else if(r.kind==='bow') owned=hasBow;
     else if(r.kind==='bed') owned=hasBed;
     else if(r.kind==='pet') owned=hasPet;
+    else if(r.kind==='xbow') owned=hasXbow;
     else if(r.kind==='armor') owned=armor>=r.lvl;
     if(r.kind==='sword' && owned){
       btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
@@ -1791,6 +1920,7 @@ function renderCraft(){
         else if(r.kind==='bow'){ hasBow=true; toast('🏹 合成了弓！記得也要合成箭'); }
         else if(r.kind==='bed'){ hasBed=true; toast('🛏 有床了！晚上左上角會出現睡覺按鈕'); }
         else if(r.kind==='pet'){ hasPet=true; spawnPet(); toast('🐣 龍蛋孵化了！寵物小龍會跟著你、幫你攻擊怪物'); }
+        else if(r.kind==='xbow'){ hasXbow=true; toast('⚡ 升級成弩！箭的傷害 4→7，射速更快'); }
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
@@ -1803,6 +1933,55 @@ function renderCraft(){
     list.appendChild(row);
   }
 }
+const TRADES=[
+  {give:{emerald:2}, get:{arrow:10},  name:'🏹 箭×10'},
+  {give:{emerald:3}, get:{redapple:3},name:'🍎 蘋果×3'},
+  {give:{emerald:3}, get:{iron:3},    name:'🔩 鐵×3'},
+  {give:{emerald:5}, get:{gold:3},    name:'🥇 金×3'},
+  {give:{emerald:4}, get:{blaze:2},   name:'🔥 烈焰粉×2'},
+  {give:{emerald:6}, get:{pearl:1},   name:'🔮 終界珍珠×1'},
+  {give:{emerald:8}, get:{diamond:2}, name:'💎 鑽石×2'},
+  {give:{emerald:10},get:{apple:1},   name:'✨🍎 金蘋果×1'},
+  {give:{iron:5},    get:{emerald:2}, name:'💚 綠寶石×2（賣出鐵×5）'},
+  {give:{diamond:2}, get:{emerald:6}, name:'💚 綠寶石×6（賣出鑽石×2）'},
+];
+let tradeOpen=false;
+function renderTrade(){
+  document.getElementById('tradeInv').innerHTML='<b>📦 我的材料：</b><br>'+Object.keys(MAT_NAME).map(k=>MAT_NAME[k]+'×'+(inv[k]||0)).join('　');
+  const list=document.getElementById('tradeList');
+  list.innerHTML='';
+  for(const t of TRADES){
+    const row=document.createElement('div'); row.className='recipe';
+    const left=document.createElement('div');
+    left.innerHTML='<div class="rname">'+t.name+'</div><div class="rcost">支付：'+Object.keys(t.give).map(k=>MAT_NAME[k]+'×'+t.give[k]).join('、')+'</div>';
+    row.appendChild(left);
+    const btn=document.createElement('button'); btn.className='rbtn';
+    btn.textContent='交易';
+    btn.disabled=!canAfford(t.give);
+    btn.addEventListener('click',()=>{
+      if(!canAfford(t.give)) return;
+      payCost(t.give);
+      for(const k in t.get) inv[k]+=t.get[k];
+      sfx.craft();
+      toast('💱 交易成功！');
+      renderTrade(); updateHUD(); scheduleSave();
+    });
+    row.appendChild(btn);
+    list.appendChild(row);
+  }
+}
+function openTrade(){
+  tradeOpen=true; paused=true;
+  renderTrade();
+  document.getElementById('tradeOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+}
+function closeTrade(){
+  tradeOpen=false; paused=false;
+  document.getElementById('tradeOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
+document.getElementById('tradeCloseBtn').addEventListener('click',closeTrade);
 let craftOpen=false;
 function openCraft(){
   craftOpen=true; paused=true;
@@ -2004,7 +2183,8 @@ addEventListener('keydown',e=>{
     for(const k of ['pork','chicken','beef','redapple','apple']) if(inv[k]>0){ eat(k); break; }
   }
   if(e.code==='Escape'){
-    if(craftOpen) closeCraft();
+    if(tradeOpen) closeTrade();
+    else if(craftOpen) closeCraft();
     else if(started && !paused) openPause();
   }
   if(e.code.startsWith('Digit')){
@@ -2124,11 +2304,19 @@ if(!isTouch){
 }
 let actMode=null;
 function updateActButton(){
+  const tent=raycastEntity(5);
+  if(tent && tent.kind==='vil'){
+    if(actMode!=='trade'){
+      actMode='trade';
+      if(isTouch){ const b=document.getElementById('btnAct'); b.textContent='💱'; b.style.display='flex'; }
+    }
+    return;
+  }
   const hit=raycast(5);
   let mode=null;
   if(hit && hit.id===CRAFT) mode='craft';
   else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
-  else if(hit && hit.id===ENDFRAME && inv.eye>0) mode='eye';
+  else if(hit && (hit.id===ENDFRAME && inv.eye>0 || hit.id===ENDFRAMEEYE)) mode='eye';
   else if(hit && dim==='end' && dragonDefeated && inv.crystal>0 && Math.hypot(hit.x-END_C.x,hit.z-END_C.z)<=3.5) mode='revive';
   if(mode!==actMode){
     actMode=mode;
@@ -2142,11 +2330,14 @@ function updateActButton(){
   }
 }
 function doAction(){
+  const tent=raycastEntity(5);
+  if(tent && tent.kind==='vil'){ openTrade(); return; }
   const hit=raycast(5);
   if(!hit) return;
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===OBSID && hasFlint) igniteAt(hit);
   else if(hit.id===ENDFRAME) insertEye(hit);
+  else if(hit.id===ENDFRAMEEYE){ toast('🔍 重新檢查門框…'); checkEndPortal(hit.x,hit.y,hit.z); }
   else if(dim==='end' && dragonDefeated && Math.hypot(hit.x-END_C.x,hit.z-END_C.z)<=3.5) placeAltarCrystal(hit);
 }
 
@@ -2200,6 +2391,7 @@ function mine(){
   if(ent && ent.isDragon){
     const d=ent.drg;
     const dmg=WEAPON_DMG[curWeapon];
+    if(curWeapon==='dagger') heal(1);
     d.hp-=dmg; d.hurtT=0.4;
     spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
     sfx.zHit();
@@ -2207,9 +2399,11 @@ function mine(){
   }
   if(ent){
     const dmg=WEAPON_DMG[curWeapon];
+    if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
     ent.hp-=dmg; ent.hurtT=0.4;
+    const kb=WEAPON_KB[curWeapon]||0.8;
     const dx=ent.x-player.x, dz=ent.z-player.z, d=Math.hypot(dx,dz)||1;
-    ent.x+=dx/d*0.8; ent.z+=dz/d*0.8; ent.vy=4;
+    ent.x+=dx/d*kb; ent.z+=dz/d*kb; ent.vy=4+(kb>1?2:0);
     if(ent.kind==='e'&&ent.hp>0){ teleportEnder(ent); ent.aggro=true; }
     sfx.zHit();
     spawnParticles(ent.x, ent.y+1, ent.z, 5, 0xaa2222);
@@ -2241,13 +2435,20 @@ function mine(){
     return;
   }
   const mat=COLLECT[hit.id];
-  const isOre = hit.id>=COAL && hit.id<=CHAL;
+  const isOre = (hit.id>=COAL && hit.id<=CHAL) || hit.id===EMERALD;
   const wasLeaf = hit.id===LEAF;
   setBlock(hit.x,hit.y,hit.z,AIR);
+  /* 挖空後若鄰近有鑲眼門框，自動重新檢查開門 */
+  for(const d of [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]){
+    if(getB(hit.x+d[0],hit.y,hit.z+d[2])===ENDFRAMEEYE){
+      checkEndPortal(hit.x+d[0],hit.y,hit.z+d[2]);
+      break;
+    }
+  }
   if(mat){
     inv[mat]++;
     if(isOre){
-      const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb };
+      const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb, [EMERALD]:0x50dc78 };
       spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5, 10, oreColors[hit.id]);
       sfx.ore();
       toast('⛏ 挖到'+NAMES[hit.id]+'！');
@@ -2308,7 +2509,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasBed, hasElytra, hasPet, armor, dragonDefeated, curWeapon,
+    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -2378,6 +2579,7 @@ async function loadGame(){
     if(d.hasBed) hasBed=true;
     if(d.hasElytra) hasElytra=true;
     if(d.hasPet) hasPet=true;
+    if(d.hasXbow) hasXbow=true;
     if(typeof d.armor==='number') armor=d.armor;
     if(d.dragonDefeated) dragonDefeated=true;
     if(d.curWeapon && WEAPON_DMG[d.curWeapon]) curWeapon=d.curWeapon;
@@ -2403,7 +2605,7 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
-  hasFlint=false; hasBow=false; hasBed=false; hasElytra=false; armor=0; dragonDefeated=false;
+  hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; armor=0; dragonDefeated=false;
   hasPet=false;
   if(pet){ scene.remove(pet); pet=null; }
   curWeapon='fist';
