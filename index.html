@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-4</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-5</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -1929,6 +1929,11 @@ function pistonPush(x,y,z,chg){
   while(n<8 && getB(x,y+1+n,z)!==AIR){
     const bid=getB(x,y+1+n,z);
     if(IMMOVABLE.has(bid)) return;
+    if(RS_TRANS.has(bid)){
+      /* 紅石粉/火把/拉桿/鐵軌被推到會壞掉（跟正版一樣） */
+      setBlockRaw(x,y+1+n,z,AIR);
+      break;
+    }
     n++;
   }
   if(n===0) return;
@@ -1955,9 +1960,11 @@ function pistonPull(x,y,z,chg){
   sfx.dig();
 }
 const RS_DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+let rsFirst=true;
 function rsScan(){
   rsReg.clear();
   pstate.clear(); obsState.clear(); obsPulse.clear();
+  rsFirst=true;
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=0;y<WY;y++){
     const id=world[idx(x,y,z)];
     if(RS_IDS.has(id)) rsReg.set(x+','+y+','+z, id);
@@ -2037,10 +2044,21 @@ function rsTick(){
     } else if(id===TNT){
       if(powered(x,y,z)) tntFire.push([k,x,y,z]);
     } else if(id===PISTON||id===SPISTON){
-      const pw=powered(x,y,z);
+      /* 活塞不吃「正上方」的電（避免被自己推的方塊供電造成抽搐） */
+      let pw=false;
+      for(const d of RS_DIRS){
+        if(d[1]===1) continue;
+        const nx=x+d[0],ny=y+d[1],nz=z+d[2];
+        const nid=getB(nx,ny,nz);
+        if(nid===RBLOCK||nid===LEVER_ON||nid===RTORCH){ pw=true; break; }
+        if(nid===OBSERVER && (obsPulse.get(nx+','+ny+','+nz)||0)>0){ pw=true; break; }
+        if(rsIsWire(nid) && (power.get(nx+','+ny+','+nz)||0)>0){ pw=true; break; }
+      }
       const was=pstate.get(k)||false;
-      if(pw && !was) pistonPush(x,y,z,chg);
-      if(!pw && was && id===SPISTON) pistonPull(x,y,z,chg);
+      if(!rsFirst){
+        if(pw && !was) pistonPush(x,y,z,chg);
+        if(!pw && was && id===SPISTON) pistonPull(x,y,z,chg);
+      }
       pstate.set(k,pw);
     } else if(id===OBSERVER){
       const above=getB(x,y+1,z);
@@ -2052,6 +2070,7 @@ function rsTick(){
       obsState.set(k,above);
     }
   }
+  rsFirst=false;
   for(const c of chg){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
   for(const [k,x,y,z] of tntFire){
     rsReg.delete(k);
@@ -3429,7 +3448,7 @@ function loop(){
     if(keys['Space']||jumpHeld) player.vy = liquid===LAVA?2.2:3.2;
   } else {
     let elytraFly=false;
-    if(hasElytra && (keys['Space']||jumpHeld) && !player.onGround){
+    if(hasElytra && (keys['Space']||jumpHeld) && !player.onGround && player.vy<=0){
       elytraFly=true;
       player.vy=0;
       const evx=-Math.sin(player.yaw)*Math.cos(player.pitch);
