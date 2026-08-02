@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-2</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-3</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -2585,21 +2585,32 @@ function checkEndPortal(fx,fy,fz){
     const b=getB(x,fy,z);
     if(b!==ENDFRAME && b!==ENDFRAMEEYE) continue;
     frames.push([x,z]);
-    if(frames.length>40) return;
+    if(frames.length>40){ toast('❌ 門框太多了！一座門最多用16塊框'); return; }
     stack.push([x+1,z],[x-1,z],[x,z+1],[x,z-1]);
   }
-  if(frames.length<8) return;
-  for(const [x,z] of frames) if(getB(x,fy,z)!==ENDFRAMEEYE) return;  /* 還有框沒鑲眼 */
+  if(frames.length<8){
+    toast('❌ 同一高度相連的門框只有 '+frames.length+' 塊（至少要8塊）。檢查是否有門框高低差1格！');
+    return;
+  }
+  let noEye=0;
+  for(const [x,z] of frames) if(getB(x,fy,z)!==ENDFRAMEEYE) noEye++;
+  if(noEye>0){ toast('❌ 還有 '+noEye+' 塊門框沒鑲終界之眼'); return; }
   /* 檢查矩形環 */
-  let x0=99,x1=-1,z0=99,z1=-1;
+  let x0=99999,x1=-1,z0=99999,z1=-1;
   for(const [x,z] of frames){ x0=Math.min(x0,x); x1=Math.max(x1,x); z0=Math.min(z0,z); z1=Math.max(z1,z); }
   const iw=x1-x0-1, ih=z1-z0-1;
-  if(iw<1||ih<1||iw>3||ih>3) { toast('門框大小不對！要圍成中空矩形（洞最大 3×3）'); return; }
+  if(iw<1||ih<1||iw>3||ih>3){ toast('❌ 門框大小不對！要圍成中空矩形（洞最大 3×3）'); return; }
   const fset=new Set(frames.map(f=>f[0]+','+f[1]));
   for(let x=x0;x<=x1;x++) for(let z=z0;z<=z1;z++){
     const edge = x===x0||x===x1||z===z0||z===z1;
-    if(edge && !fset.has(x+','+z)) return;      /* 周圍缺框 */
-    if(!edge && getB(x,fy,z)!==AIR) { toast('門洞中間要淨空！'); return; }
+    if(edge && !fset.has(x+','+z)){
+      toast('❌ 矩形環有缺角！補上缺的門框（可能被別的方塊佔位或高低不平）');
+      return;
+    }
+    if(!edge){
+      const bid=getB(x,fy,z);
+      if(bid!==AIR){ toast('❌ 門洞中間有「'+(NAMES[bid]||'東西')+'」擋住，要淨空！'); return; }
+    }
   }
   /* 啟動！ */
   for(let x=x0+1;x<x1;x++) for(let z=z0+1;z<z1;z++) setBlock(x,fy,z,ENDPORTAL);
