@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-3</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-4</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -912,7 +912,7 @@ const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, chal:false, emsword:false, hammer:false, ender:false, wblade:false };
 let hasXbow=false;
-let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, boating=false, shieldCD=0, armor=0, speedT=0;
+let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatMesh=null;
 function makeBoatMesh(){
   const g=new THREE.Group();
@@ -1522,7 +1522,8 @@ function updateZombies(dt){
         }
         m.position.set(z.x,z.y+1.4,z.z);
         scene.add(m);
-        fireballs.push({x:z.x,y:z.y+1.4,z:z.z, vx:dx/len*spd, vy:dy/len*spd, vz:dz/len*spd, life:4, col, mesh:m});
+        const isSkelShot = z.type==='skel';
+        fireballs.push({x:z.x,y:z.y+1.4,z:z.z, vx:dx/len*spd, vy:dy/len*spd+(isSkelShot?2.6:0), vz:dz/len*spd, life:4, col, grav:isSkelShot, mesh:m});
         if(z.type==='witch') tone(500,0.25,'sine',0.08,250); else sfx.bow();
         z.fireT=(z.type==='witch'?3:2.5)+Math.random()*1.5;
       }
@@ -1838,6 +1839,7 @@ function updateFireballs(dt){
   for(let i=fireballs.length-1;i>=0;i--){
     const f=fireballs[i];
     f.life-=dt;
+    if(f.grav) f.vy-=10*dt;
     f.x+=f.vx*dt; f.y+=f.vy*dt; f.z+=f.vz*dt;
     f.mesh.position.set(f.x,f.y,f.z);
     let boomHit=false;
@@ -2229,7 +2231,7 @@ function updateArrows(dt){
   for(let i=arrows.length-1;i>=0;i--){
     const a=arrows[i];
     a.life-=dt;
-    a.vy-=12*dt;
+    if(!hasScope) a.vy-=12*dt;
     let hit=false;
     const STEPS=4;
     for(let st=0; st<STEPS && !hit; st++){
@@ -2334,6 +2336,7 @@ const RECIPES=[
   {id:'bow',     kind:'bow',   name:'弓🏹（遠距攻擊，傷害 4）', cost:{wood:2,iron:1}},
   {id:'arrows',  kind:'stack', name:'箭×8🏹', cost:{wood:1,stone:1}},
   {id:'xbow',    kind:'xbow',  name:'弩⚡（箭傷害4→7、射更快）', cost:{wood:2,iron:3}},
+  {id:'scope',   kind:'scope', name:'瞄準鏡🔭（箭矢飛直線、不會下墜）', cost:{iron:3,diamond:1}},
   {id:'infbow',  kind:'infbow',name:'無限弓♾️（永遠不消耗箭！）', cost:{emerald:8,pearl:4,diamond:4,chal:2}},
   {id:'shield',  kind:'shield',name:'盾牌🛡️（每5秒完全擋下一次攻擊）', cost:{iron:3,wood:2}},
   {id:'armor1',  kind:'armor', lvl:1, name:'鐵甲🛡（受傷 -1）', cost:{iron:4}},
@@ -2370,6 +2373,7 @@ function renderCraft(){
     else if(r.kind==='shield') owned=hasShield;
     else if(r.kind==='infbow') owned=hasInfBow;
     else if(r.kind==='boat') owned=hasBoat;
+    else if(r.kind==='scope') owned=hasScope;
     else if(r.kind==='armor') owned=armor>=r.lvl;
     if(r.kind==='sword' && owned){
       btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
@@ -2392,6 +2396,7 @@ function renderCraft(){
         else if(r.kind==='shield'){ hasShield=true; toast('🛡️ 拿到盾牌！每5秒自動擋下一次攻擊'); }
         else if(r.kind==='infbow'){ hasInfBow=true; hasBow=true; toast('♾️ 傳說中的無限弓！箭永遠射不完'); }
         else if(r.kind==='boat'){ hasBoat=true; toast('🛶 造好船了！走進水裡或岩漿就會自動上船'); }
+        else if(r.kind==='scope'){ hasScope=true; toast('🔭 裝上瞄準鏡！箭矢從此飛直線，狙擊更容易'); }
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
@@ -3094,7 +3099,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, ench, armor, dragonDefeated, curWeapon,
+    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, ench, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -3168,6 +3173,7 @@ async function loadGame(){
     if(d.hasShield) hasShield=true;
     if(d.hasInfBow) hasInfBow=true;
     if(d.hasBoat) hasBoat=true;
+    if(d.hasScope) hasScope=true;
     if(d.ench) Object.assign(ench, d.ench);
     if(typeof d.armor==='number') armor=d.armor;
     if(d.dragonDefeated) dragonDefeated=true;
@@ -3194,7 +3200,7 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
-  hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; armor=0; dragonDefeated=false;
+  hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
   speedT=0;
