@@ -106,7 +106,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V16-5</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V17</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -179,6 +179,10 @@
     <b style="color:#cfa;">🔧 活塞/黏性活塞/偵測器</b><br>
     活塞通電→把上面整疊方塊往上推1格（可做電梯！）｜黏性活塞斷電會拉回來<br>
     偵測器：上方方塊一有變化就發出紅石訊號（接紅石粉使用）<br><br>
+    <b style="color:#9cf;">🎣 釣魚</b><br>
+    合成釣竿(木3+鐵1) → 對準水面按🎣 → 站著別動等上鉤 → 魚、鑽石、珍珠、金蘋果、沉船寶箱都釣得到！<br><br>
+    <b style="color:#fdc;">✨ 附魔台新增6種附魔</b><br>
+    保護🛡｜生命強化❤️（最多+4顆心）｜火焰附加🔥｜力量🏹｜跳躍提升🦘｜迅捷💨<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
@@ -908,11 +912,49 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
-const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, chal:false, emsword:false, hammer:false, ender:false, wblade:false };
+const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false };
 let hasXbow=false;
-let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, boating=false, shieldCD=0, armor=0, speedT=0;
+let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, boating=false, shieldCD=0, armor=0, speedT=0;
+let fishing=false, fishT=0, fishPos=null;
+function raycastWater(maxDist){
+  const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  let x=camera.position.x, y=camera.position.y, z=camera.position.z;
+  for(let t=0;t<maxDist;t+=0.4){
+    const b=getB(Math.floor(x),Math.floor(y),Math.floor(z));
+    if(b===WATER) return true;
+    if(isSolid(b)) return false;
+    x+=dir.x*0.4; y+=dir.y*0.4; z+=dir.z*0.4;
+  }
+  return false;
+}
+function startFish(){
+  fishing=true;
+  fishT=2.5+Math.random()*3.5;
+  fishPos={x:player.x,z:player.z};
+  toast('🎣 拋竿！乖乖站著等魚上鉤…');
+  tone(500,0.2,'sine',0.08,300);
+}
+function catchFish(){
+  fishing=false;
+  noiseBurst(0.3,0.25,900);
+  const r=Math.random();
+  let msg;
+  if(r<0.32){ inv.fish=(inv.fish||0)+1; msg='🐟 鮮魚×1（回3顆心）'; }
+  else if(r<0.42){ inv.redapple++; msg='🍎 蘋果×1（漂流過來的）'; }
+  else if(r<0.52){ inv.emerald++; msg='💚 綠寶石×1！'; }
+  else if(r<0.60){ inv.arrow+=5; msg='🏹 箭×5（沉船的箭筒）'; }
+  else if(r<0.68){ inv.gold++; msg='🥇 金塊×1（海底寶藏）'; }
+  else if(r<0.76){ inv.pearl++; msg='🔮 終界珍珠×1！！'; }
+  else if(r<0.84){ inv.diamond++; msg='💎 鑽石×1！！！'; }
+  else if(r<0.92){ msg='👢 一隻破靴子…下次會更好啦'; }
+  else if(r<0.97){ inv.apple++; msg='✨🍎 金蘋果！超級大獎！'; }
+  else { inv.diamond+=2; inv.emerald+=2; inv.gold+=2; msg='📦 沉船寶箱！💎×2 💚×2 🥇×2！！'; }
+  sfx.craft();
+  toast('🎣 釣到了：'+msg);
+  updateHUD(); scheduleSave();
+}
 let boatMesh=null;
 function makeBoatMesh(){
   const g=new THREE.Group();
@@ -926,12 +968,22 @@ function makeBoatMesh(){
   return g;
 }
 const ench={};
+const perks={armor:0, hp:0, fire:0, power:0, jump:0, speed:0};
+const PERKS=[
+  {id:'armor', name:'🛡 保護附魔（受傷再 -1）',        max:2, cost:{diamond:3,emerald:2}},
+  {id:'hp',    name:'❤️ 生命強化（最大生命 +2 顆心）',  max:2, cost:{diamond:4,emerald:4}},
+  {id:'fire',  name:'🔥 火焰附加（近戰額外 +1 燃燒傷害）',max:1, cost:{blaze:4,diamond:2}},
+  {id:'power', name:'🏹 力量附魔（箭矢傷害 +2）',       max:1, cost:{emerald:4,diamond:2}},
+  {id:'jump',  name:'🦘 跳躍提升（跳得更高）',          max:1, cost:{emerald:3,iron:3}},
+  {id:'speed', name:'💨 迅捷附魔（移動速度 +25%）',     max:1, cost:{emerald:4,gold:3}},
+];
+function maxHpVal(){ return 10+perks.hp*2; }
 let dragonDefeated=false;
 let curWeapon='fist';
-const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, chal:8, emsword:8, hammer:9, ender:10, wblade:12 };
-const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, chal:8, emsword:9, hammer:6, ender:10, wblade:8 };
+const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15 };
+const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12 };
 const WEAPON_KB = { hammer:2.4 };
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤' };
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
 
 function surfaceYo(x,z){
@@ -983,7 +1035,7 @@ function damagePlayer(n){
     updateHUD();
     return;
   }
-  n=Math.max(1, n-armor);
+  n=Math.max(1, n-armor-(perks.armor||0));
   player.hp=Math.max(0,player.hp-n);
   invulnT=0.8;
   sfx.hurt();
@@ -998,7 +1050,7 @@ function damagePlayer(n){
   }
 }
 function heal(n){
-  player.hp=Math.min(10, player.hp+n);
+  player.hp=Math.min(maxHpVal(), player.hp+n);
   updateHUD();
 }
 function eat(kind){
@@ -1006,6 +1058,7 @@ function eat(kind){
   else if(kind==='chicken' && inv.chicken>0){ inv.chicken--; heal(3); sfx.eat(); toast('🍗 回復 3 顆心'); }
   else if(kind==='beef' && inv.beef>0){ inv.beef--; heal(4); sfx.eat(); toast('🥩 回復 4 顆心'); }
   else if(kind==='mutton' && inv.mutton>0){ inv.mutton--; heal(3); sfx.eat(); toast('🍢 回復 3 顆心'); }
+  else if(kind==='fish' && inv.fish>0){ inv.fish--; heal(3); sfx.eat(); toast('🐟 回復 3 顆心'); }
   else if(kind==='redapple' && inv.redapple>0){ inv.redapple--; heal(2); sfx.eat(); toast('🍎 回復 2 顆心'); }
   else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('✨ 金蘋果！生命全滿'); }
   else if(kind==='spd' && inv.spd>0){ inv.spd--; speedT=60; sfx.eat(); sfx.fly(); toast('⚡ 速度加倍 60 秒！咻～'); }
@@ -1024,14 +1077,15 @@ function sleepBed(){
 }
 function updateHUD(){
   let s='';
-  for(let i=0;i<10;i++) s += i<player.hp ? '❤️' : '🖤';
+  const mh=maxHpVal();
+  for(let i=0;i<mh;i++) s += i<player.hp ? '❤️' : '🖤';
   document.getElementById('hearts').textContent=s;
   const sb=document.getElementById('statusBar');
   sb.innerHTML='';
   const w=document.createElement('span');
   w.textContent=WEAPON_NAME[curWeapon] + ((ench[curWeapon]||0)>0?('+'+ench[curWeapon]):'') + (armor>0?('　🛡×'+armor):'') + (hasShield?'　🛡️盾':'') + (hasElytra?'　🪂':'');
   sb.appendChild(w);
-  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡']];
+  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡']];
   for(const [k,e] of foods){
     if(inv[k]<=0) continue;
     const b=document.createElement('span');
@@ -2242,7 +2296,7 @@ function shootBow(){
   scene.add(m);
   const asp=hasXbow?27:22;
   arrows.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
-    vx:dir.x*asp,vy:dir.y*asp,vz:dir.z*asp,life:3,dmg:hasXbow?7:4,mesh:m});
+    vx:dir.x*asp,vy:dir.y*asp,vz:dir.z*asp,life:3,dmg:(hasXbow?7:4)+(perks.power?2:0),mesh:m});
   sfx.bow();
   scheduleSave();
 }
@@ -2351,7 +2405,10 @@ const RECIPES=[
   {id:'dagger',  kind:'sword', name:'吸血匕首🩸（傷害5・打中回1顆心）', cost:{gold:3,diamond:1}},
   {id:'emsword', kind:'sword', name:'綠寶石劍💚（傷害8・距離9）', cost:{emerald:6,wood:1}},
   {id:'ender',   kind:'sword', name:'終界劍🌌（傷害10・距離10）', cost:{pearl:4,chal:2,diamond:2}},
-  {id:'wblade',  kind:'sword', name:'凋靈之刃🖤（傷害12・最強！）', cost:{chal:2,blaze:5,diamond:2}},
+  {id:'frost',   kind:'sword', name:'冰霜劍❄️（傷害7・命中冰凍敵人）', cost:{diamond:3,iron:3}},
+  {id:'thammer', kind:'sword', name:'雷神之鎚⚡（傷害11・範圍震波）', cost:{gold:8,diamond:3}},
+  {id:'wblade',  kind:'sword', name:'凋靈之刃🖤（傷害12・地獄之王）', cost:{chal:2,blaze:5,diamond:2}},
+  {id:'king',    kind:'sword', name:'王者之劍👑（傷害15・距離12・傳說神器）', cost:{emerald:10,pearl:5,diamond:5,chal:3,blaze:5}},
   {id:'bow',     kind:'bow',   name:'弓🏹（遠距攻擊，傷害 4）', cost:{wood:2,iron:1}},
   {id:'arrows',  kind:'stack', name:'箭×8🏹', cost:{wood:1,stone:1}},
   {id:'xbow',    kind:'xbow',  name:'弩⚡（箭傷害4→7、射更快）', cost:{wood:2,iron:3}},
@@ -2363,6 +2420,7 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'pet',     kind:'pet',   name:'孵化龍蛋🐣（寵物小龍會幫你打怪）', cost:{egg:1,gold:3}},
+  {id:'rod',     kind:'rod',   name:'釣竿🎣（在水邊釣魚，會釣到好東西）', cost:{wood:3,iron:1}},
   {id:'boat',    kind:'boat',  name:'船🛶（水面和岩漿上都能開！）', cost:{wood:5}},
   {id:'bed',     kind:'bed',   name:'床🛏（晚上一鍵睡到天亮）', cost:{wood:3}},
   {id:'crystal', kind:'stack', name:'終界水晶💠（放4顆上祭壇復活群龍）', cost:{pearl:1,gold:2,blaze:1}},
@@ -2393,6 +2451,7 @@ function renderCraft(){
     else if(r.kind==='infbow') owned=hasInfBow;
     else if(r.kind==='boat') owned=hasBoat;
     else if(r.kind==='scope') owned=hasScope;
+    else if(r.kind==='rod') owned=hasRod;
     else if(r.kind==='armor') owned=armor>=r.lvl;
     if(r.kind==='sword' && owned){
       btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
@@ -2416,6 +2475,7 @@ function renderCraft(){
         else if(r.kind==='infbow'){ hasInfBow=true; hasBow=true; toast('♾️ 傳說中的無限弓！箭永遠射不完'); }
         else if(r.kind==='boat'){ hasBoat=true; toast('🛶 造好船了！走進水裡或岩漿就會自動上船'); }
         else if(r.kind==='scope'){ hasScope=true; toast('🔭 裝上瞄準鏡！箭矢從此飛直線，狙擊更容易'); }
+        else if(r.kind==='rod'){ hasRod=true; toast('🎣 做好釣竿了！對準水面按🎣開始釣魚'); }
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
@@ -2481,6 +2541,27 @@ function renderEnch(){
   });
   row2.appendChild(btn2);
   list.appendChild(row2);
+  for(const pk of PERKS){
+    const lv=perks[pk.id]||0;
+    const r3=document.createElement('div'); r3.className='recipe';
+    r3.innerHTML='<div><div class="rname">'+pk.name+(pk.max>1?('　'+lv+'/'+pk.max+'級'):'')+'</div><div class="rcost">需要：'+Object.keys(pk.cost).map(k=>MAT_NAME[k]+'×'+pk.cost[k]).join('、')+'</div></div>';
+    const b3=document.createElement('button'); b3.className='rbtn';
+    if(lv>=pk.max){ b3.textContent='已滿級'; b3.disabled=true; }
+    else {
+      b3.textContent='附魔';
+      b3.disabled=!canAfford(pk.cost);
+      b3.addEventListener('click',()=>{
+        if(!canAfford(pk.cost)) return;
+        payCost(pk.cost);
+        perks[pk.id]=(perks[pk.id]||0)+1;
+        sfx.eye(); sfx.craft();
+        toast('✨ 附魔成功！'+pk.name.split('（')[0]);
+        renderEnch(); updateHUD(); scheduleSave();
+      });
+    }
+    r3.appendChild(b3);
+    list.appendChild(r3);
+  }
 }
 function openEnch(){
   enchOpen=true; paused=true;
@@ -2917,6 +2998,7 @@ function updateActButton(){
   else if(hit && hit.id===ENCHANT) mode='ench';
   else if(hit && (hit.id===LEVER||hit.id===LEVER_ON)) mode='lever';
   else if(hit && hit.id===RAIL && riding!=='cart') mode='cart';
+  else if(hasRod && !fishing && raycastWater(7)) mode='fish';
   else if(hit && hit.id===OBSID && hasFlint) mode='ignite';
   else if(hit && (hit.id===ENDFRAME && inv.eye>0 || hit.id===ENDFRAMEEYE)) mode='eye';
   else if(hit && dim==='end' && dragonDefeated && inv.crystal>0 && Math.hypot(hit.x-END_C.x,hit.z-END_C.z)<=3.5) mode='revive';
@@ -2928,6 +3010,7 @@ function updateActButton(){
     else if(mode==='ench'){ b.textContent='✨'; b.style.display='flex'; }
     else if(mode==='lever'){ b.textContent='🎚'; b.style.display='flex'; }
     else if(mode==='cart'){ b.textContent='🛒'; b.style.display='flex'; }
+    else if(mode==='fish'){ b.textContent='🎣'; b.style.display='flex'; }
     else if(mode==='ignite'){ b.textContent='🔥'; b.style.display='flex'; }
     else if(mode==='eye'){ b.textContent='👁'; b.style.display='flex'; }
     else if(mode==='revive'){ b.textContent='💠'; b.style.display='flex'; }
@@ -2944,6 +3027,7 @@ function doAction(){
   else if(hit.id===ENCHANT) openEnch();
   else if(hit.id===LEVER||hit.id===LEVER_ON) toggleLever(hit);
   else if(hit.id===RAIL && riding!=='cart') startCart(hit);
+  else if(hasRod && !fishing && raycastWater(7)) startFish();
   else if(hit.id===OBSID && hasFlint) igniteAt(hit);
   else if(hit.id===ENDFRAME) insertEye(hit);
   else if(hit.id===ENDFRAMEEYE){ toast('🔍 重新檢查門框…'); checkEndPortal(hit.x,hit.y,hit.z); }
@@ -2999,8 +3083,12 @@ function mine(){
   const ent=raycastEntity(WEAPON_REACH[curWeapon]||3);
   if(ent && ent.isDragon){
     const d=ent.drg;
-    const dmg=curDmg();
+    const dmg=curDmg()+(perks.fire?1:0);
     if(curWeapon==='dagger') heal(1);
+    if(curWeapon==='thammer'){
+      for(const d2 of dragons) if(d2!==d && Math.hypot(d2.x-d.x,d2.z-d.z)<5) d2.hp-=3;
+      spawnParticles(d.x,d.y,d.z,14,0xffe860);
+    }
     d.hp-=dmg; d.hurtT=0.4;
     spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
     sfx.zHit();
@@ -3013,6 +3101,16 @@ function mine(){
     const kb=WEAPON_KB[curWeapon]||0.8;
     const dx=ent.x-player.x, dz=ent.z-player.z, d=Math.hypot(dx,dz)||1;
     ent.x+=dx/d*kb; ent.z+=dz/d*kb; ent.vy=4+(kb>1?2:0);
+    if(curWeapon==='frost'){ ent.hurtT=1.5; spawnParticles(ent.x,ent.y+1,ent.z,6,0x9adfff); }
+    if(curWeapon==='thammer'){
+      for(const e2 of entities()){
+        if(e2===ent||e2.kind==='vil') continue;
+        if(Math.hypot(e2.x-ent.x,e2.z-ent.z)<3){ e2.hp-=3; e2.hurtT=0.4; }
+      }
+      spawnParticles(ent.x,ent.y+1,ent.z,14,0xffe860);
+      noiseBurst(0.2,0.2,700);
+    }
+    if(perks.fire){ ent.hp-=1; spawnParticles(ent.x,ent.y+1,ent.z,4,0xff8020); }
     if(ent.kind==='e'&&ent.hp>0){ teleportEnder(ent); ent.aggro=true; }
     sfx.zHit();
     spawnParticles(ent.x, ent.y+1, ent.z, 5, 0xaa2222);
@@ -3118,7 +3216,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, ench, armor, dragonDefeated, curWeapon,
+    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, ench, perks, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -3193,7 +3291,9 @@ async function loadGame(){
     if(d.hasInfBow) hasInfBow=true;
     if(d.hasBoat) hasBoat=true;
     if(d.hasScope) hasScope=true;
+    if(d.hasRod) hasRod=true;
     if(d.ench) Object.assign(ench, d.ench);
+    if(d.perks) Object.assign(perks, d.perks);
     if(typeof d.armor==='number') armor=d.armor;
     if(d.dragonDefeated) dragonDefeated=true;
     if(d.curWeapon && WEAPON_DMG[d.curWeapon]) curWeapon=d.curWeapon;
@@ -3222,7 +3322,9 @@ async function newWorld(){
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
+  for(const k in perks) perks[k]=0;
   speedT=0;
+  hasRod=false; fishing=false;
   hasPet=false;
   if(pet){ scene.remove(pet); pet=null; }
   curWeapon='fist';
@@ -3333,7 +3435,7 @@ document.getElementById('newWorldBtn').addEventListener('click',()=>{
   }
 });
 document.getElementById('respawnBtn').addEventListener('click',()=>{
-  player.hp=10;
+  player.hp=maxHpVal();
   if(dim!=='over'){
     despawnDragons();
     dim='over';
@@ -3373,6 +3475,15 @@ function loop(){
   lastT=now;
   if(!started || paused){ renderer.render(scene,camera); return; }
 
+  if(fishing){
+    if(Math.hypot(player.x-fishPos.x,player.z-fishPos.z)>0.6){
+      fishing=false;
+      toast('🎣 收竿（移動會中斷釣魚）');
+    } else {
+      fishT-=dt;
+      if(fishT<=0) catchFish();
+    }
+  }
   invulnT=Math.max(0,invulnT-dt);
   shieldCD=Math.max(0,shieldCD-dt);
   portalCD=Math.max(0,portalCD-dt);
@@ -3420,6 +3531,7 @@ function loop(){
   if(speedT>0){ speedT-=dt; if(speedT<=0) toast('⚡ 速度藥水效果結束'); }
   let speed = player.fly ? 8.5 : 4.5;
   if(boating) speed=7.5;
+  if(perks.speed) speed*=1.25;
   if(speedT>0) speed*=2;
   if(liquid===LAVA) speed*=0.45;
   if(getB(Math.floor(player.x),Math.floor(player.y-0.1),Math.floor(player.z))===SOUL) speed*=0.55;
@@ -3460,7 +3572,7 @@ function loop(){
       if(!collide(player.x,player.y+evy*es,player.z)) player.y+=evy*es;
     }
     if(!elytraFly) player.vy += -26*dt;
-    if((keys['Space']||jumpHeld) && player.onGround){ player.vy=8.4; player.onGround=false; }
+    if((keys['Space']||jumpHeld) && player.onGround){ player.vy=perks.jump?10.6:8.4; player.onGround=false; }
   }
   if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
   if(!collide(player.x, player.y, player.z+dz)) player.z+=dz;
