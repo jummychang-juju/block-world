@@ -107,7 +107,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V18-1</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V18-3</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -526,7 +526,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=57;
+const TILE=16, NTILES=61;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -761,6 +761,28 @@ drawTile(56,[0,0,0],0,(x,y)=>{
   }
   return [0,0,0,0];
 });
+/* 活塞側面-向上箭頭 (57) / 推頭頂面 (58) */
+function arrowTile(i, ac){
+  drawTile(i,[150,120,72],10,(x,y)=>{
+    const tipRow=y>=2&&y<=6 && Math.abs(x-7.5)<=(y-1.5);
+    const shaft=x>=6&&x<=9&&y>6&&y<=13;
+    if(tipRow||shaft) return [ac[0],ac[1],ac[2],255];
+    if(x<1||x>14||y>14) return [110,86,50,255];
+    return [150,120,72,255];
+  });
+}
+arrowTile(57,[210,210,215]);
+drawTile(58,[148,148,152],6,(x,y)=>{
+  if(x<1||x>14||y<1||y>14) return [110,110,115,255];
+  if(y%5===2) return [128,128,132,255];
+  return [148,148,152,255];
+});
+arrowTile(59,[110,200,95]);
+drawTile(60,[148,148,152],6,(x,y)=>{
+  if(x>=5&&x<=10&&y>=5&&y<=10) return [110,190,90,255];
+  if(x<1||x>14||y<1||y>14) return [110,110,115,255];
+  return [148,148,152,255];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -789,8 +811,8 @@ const TILES = {
   [LEVER]:{top:41,side:41,bot:41}, [LEVER_ON]:{top:42,side:42,bot:42},
   [RLAMP]:{top:43,side:43,bot:43}, [RLAMP_ON]:{top:44,side:44,bot:44},
   [RBLOCK]:{top:45,side:45,bot:45},
-  [RAIL]:{top:46,side:46,bot:46}, [PISTON]:{top:47,side:47,bot:47},
-  [SPISTON]:{top:48,side:48,bot:48}, [OBSERVER]:{top:49,side:49,bot:49},
+  [RAIL]:{top:46,side:46,bot:46}, [PISTON]:{top:58,side:57,bot:47},
+  [SPISTON]:{top:60,side:59,bot:48}, [OBSERVER]:{top:49,side:49,bot:49},
   [SECRETB]:{top:50,side:50,bot:50}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
@@ -905,6 +927,50 @@ function buildChunk(cx,cz){
   for(let x=x0;x<x0+CHUNK;x++) for(let z=z0;z<z0+CHUNK;z++) for(let y=0;y<WY;y++){
     const id = world[idx(x,y,z)];
     if(id===AIR) continue;
+    /* 鐵軌與紅石粉：貼地平面 */
+    if(id===RAIL||id===RWIRE||id===RWIRE_ON){
+      const yy=y+(id===RAIL?0.07:0.04);
+      let ftile = id===RAIL ? railTile(x,y,z) : (id===RWIRE?37:38);
+      /* 爬坡：偵測較高的相鄰鐵軌，把該側抬高形成連續斜坡 */
+      let hE=0,hW=0,hN=0,hS=0;
+      if(id===RAIL){
+        if(getB(x+1,y+1,z)===RAIL){ hE=1; ftile=51; }
+        else if(getB(x-1,y+1,z)===RAIL){ hW=1; ftile=51; }
+        else if(getB(x,y+1,z+1)===RAIL){ hS=1; ftile=46; }
+        else if(getB(x,y+1,z-1)===RAIL){ hN=1; ftile=46; }
+      }
+      const fb=tra.pos.length/3;
+      tra.pos.push(
+        x,   yy+((hW||hS)?1:0), z+1,
+        x+1, yy+((hE||hS)?1:0), z+1,
+        x,   yy+((hW||hN)?1:0), z,
+        x+1, yy+((hE||hN)?1:0), z
+      );
+      const fu0=ftile/NTILES, fu1=(ftile+1)/NTILES;
+      tra.uv.push(fu0,1, fu1,1, fu0,0, fu1,0);
+      for(let k2=0;k2<4;k2++) tra.col.push(1,1,1);
+      tra.idx.push(fb,fb+1,fb+2, fb+2,fb+1,fb+3);
+      continue;
+    }
+    /* 火把與拉桿：小柱子 */
+    if(id===RTORCH||id===RTORCH_OFF||id===LEVER||id===LEVER_ON){
+      const mtile=TILES[id].side;
+      const isT=(id===RTORCH||id===RTORCH_OFF);
+      const bx0=isT?0.38:0.26, bx1=isT?0.62:0.74, by1=isT?0.66:0.5;
+      for(let f=0;f<6;f++){
+        const F=FACES[f];
+        const mb=tra.pos.length/3;
+        for(const c of F.corners){
+          tra.pos.push(x+(c[0]?bx1:bx0), y+(c[1]?by1:0), z+(c[2]?bx1:bx0));
+        }
+        const mu0=mtile/NTILES, mu1=(mtile+1)/NTILES;
+        tra.uv.push(mu0,1, mu0,0, mu1,1, mu1,0);
+        const sh=F.shade;
+        for(let k2=0;k2<4;k2++) tra.col.push(sh,sh,sh);
+        tra.idx.push(mb,mb+1,mb+2, mb+2,mb+1,mb+3);
+      }
+      continue;
+    }
     const target = (id===GLASS||id===WATER||RS_TRANS.has(id)) ? tra : (glowIds.has(id) ? glo : opa);
     for(let f=0;f<6;f++){
       const F=FACES[f];
@@ -2288,20 +2354,38 @@ function findNextRail(){
   const [cx,cy,cz]=cartCur;
   const cands=[];
   for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    let found=null;
     for(const dy of [0,1,-1]){
-      if(railAt(cx+dx,cy+dy,cz+dz)){
-        if(cartPrev && cx+dx===cartPrev[0] && cy+dy===cartPrev[1] && cz+dz===cartPrev[2]) continue;
-        cands.push([cx+dx,cy+dy,cz+dz]);
-        break;
-      }
+      if(railAt(cx+dx,cy+dy,cz+dz)){ found=[cx+dx,cy+dy,cz+dz]; break; }
     }
+    if(!found) continue;
+    if(cartPrev && found[0]===cartPrev[0] && found[2]===cartPrev[2]) continue;
+    cands.push(found);
   }
   if(cands.length===0){
-    /* 死路：允許回頭 */
     if(cartPrev && railAt(cartPrev[0],cartPrev[1],cartPrev[2])) return cartPrev;
     return null;
   }
-  /* 偏好直線 */
+  if(cands.length===1) return cands[0];
+  /* 多條岔路：優先聽玩家搖桿/按鍵的方向 */
+  let mx=0,mz=0;
+  if(keys['KeyW']||keys['ArrowUp']) mz-=1;
+  if(keys['KeyS']||keys['ArrowDown']) mz+=1;
+  if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
+  if(keys['KeyD']||keys['ArrowRight']) mx+=1;
+  mx+=joyVec.x; mz+=joyVec.y;
+  if(Math.hypot(mx,mz)>0.3){
+    const sin=Math.sin(player.yaw), cos=Math.cos(player.yaw);
+    const wx=mx*cos+mz*sin, wz=mz*cos-mx*sin;
+    let best=null, bs=-2;
+    for(const c of cands){
+      const dx=c[0]-cx, dz=c[2]-cz;
+      const sc=dx*wx+dz*wz;
+      if(sc>bs){ bs=sc; best=c; }
+    }
+    if(best) return best;
+  }
+  /* 沒操作：偏好直線 */
   if(cartPrev){
     const vx=cx-cartPrev[0], vz=cz-cartPrev[2];
     for(const c of cands) if(c[0]===cx+vx && c[2]===cz+vz) return c;
