@@ -107,7 +107,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V18</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V18-1</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -526,7 +526,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=51;
+const TILE=16, NTILES=57;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -727,6 +727,40 @@ drawTile(50,[212,168,60],8,(x,y)=>{
   if(x>=6&&x<=9&&y>=6&&y<=10) return [70,55,25,255];
   return [222,180,72,255];
 });
+/* 鐵軌-東西向 (51) */
+drawTile(51,[0,0,0],0,(x,y)=>{
+  if(y>=3&&y<=4) return [155,155,160,255];
+  if(y>=11&&y<=12) return [155,155,160,255];
+  if(x%4===1&&y>=2&&y<=13) return [110,80,45,255];
+  return [0,0,0,0];
+});
+/* 鐵軌彎角 52-55：以寬軌帶轉90度 */
+function railCornerTile(i, fx, fy){
+  drawTile(i,[0,0,0],0,(x,y)=>{
+    const X = fx>0 ? x : 15-x;
+    const Y = fy>0 ? y : 15-y;
+    const h = (Y>=6&&Y<=9&&X>=6);
+    const v = (X>=6&&X<=9&&Y>=6);
+    if(h||v){
+      const edge=(Y===6||Y===9)&&h || (X===6||X===9)&&v;
+      return edge?[155,155,160,255]:[125,95,55,255];
+    }
+    return [0,0,0,0];
+  });
+}
+railCornerTile(52, 1, 1);
+railCornerTile(53,-1, 1);
+railCornerTile(54, 1,-1);
+railCornerTile(55,-1,-1);
+/* 鐵軌十字/三岔 (56) */
+drawTile(56,[0,0,0],0,(x,y)=>{
+  const h=(y>=6&&y<=9), v=(x>=6&&x<=9);
+  if(h||v){
+    const edge=(y===6||y===9)&&h || (x===6||x===9)&&v;
+    return edge?[155,155,160,255]:[125,95,55,255];
+  }
+  return [0,0,0,0];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -850,6 +884,20 @@ const FACES = [
   {dir:[0,0,-1], corners:[[1,1,0],[1,0,0],[0,1,0],[0,0,0]], shade:0.7},
 ];
 const glowIds = new Set([GLOW,LAVA,PORTAL,ENDPORTAL,ENDCRYSTAL,GATEWAY,RLAMP_ON,RBLOCK]);
+function isRailAt(x,y,z){
+  return getB(x,y,z)===RAIL||getB(x,y+1,z)===RAIL||getB(x,y-1,z)===RAIL;
+}
+function railTile(x,y,z){
+  const e=isRailAt(x+1,y,z), w2=isRailAt(x-1,y,z), n=isRailAt(x,y,z-1), s2=isRailAt(x,y,z+1);
+  const cnt=(e?1:0)+(w2?1:0)+(n?1:0)+(s2?1:0);
+  if(cnt>=3) return 56;                       /* 十字/三岔 */
+  if(e&&s2) return 52;
+  if(w2&&s2) return 53;
+  if(e&&n)  return 54;
+  if(w2&&n) return 55;
+  if(e||w2) return 51;                        /* 東西向 */
+  return 46;                                  /* 南北向（預設） */
+}
 
 function buildChunk(cx,cz){
   const x0=cx*CHUNK, z0=cz*CHUNK;
@@ -871,7 +919,8 @@ function buildChunk(cx,cz){
       else show = isTransparent(nb);
       if(!show) continue;
       const t = TILES[id];
-      const tile = F.dir[1]===1 ? t.top : F.dir[1]===-1 ? t.bot : t.side;
+      let tile = F.dir[1]===1 ? t.top : F.dir[1]===-1 ? t.bot : t.side;
+      if(id===RAIL) tile=railTile(x,y,z);
       const u0=tile/NTILES, u1=(tile+1)/NTILES;
       const base = target.pos.length/3;
       for(const c of F.corners) target.pos.push(x+c[0], y+c[1], z+c[2]);
