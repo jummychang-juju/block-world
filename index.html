@@ -107,7 +107,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V18-3</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V19</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -189,10 +189,40 @@
     合成「尋寶羅盤🧭」(鐵2+金1) → 畫面上方顯示最近基地的距離 → 越走數字越小就對了<br>
     顯示🔥表示就在附近（往下挖或抬頭看！）→ 敲開金色寶箱領獎 💎×3💚×3🥇×3<br>
     集滿10個＝尋寶大師終極大獎🏆<br><br>
+    <b style="color:#dbf;">💀 試煉之地與凋零附魔</b><br>
+    找到白色光柱＝高空黑曜石競技場 → 站上去2秒召喚凋零怪(HP150)！<br>
+    打倒獲得凋零之星 → 附魔台「凋零附魔」共10段，每段全武器+1傷害，第10段攻擊會爆炸！<br><br>
+    <b style="color:#fea;">⚒ 鑄造台＆🌠 許願池＆🎁 幸運方塊</b><br>
+    鑄造台：集齊六神兵（匕首/巨錘/烈焰/冰霜/雷神/王者）→ 熔鑄成✨天神之劍（效果全繼承！）<br>
+    許願池：投材料賭一把，45%升級/45%降級/10%雙倍｜幸運方塊(黃?)與超級方塊(紫?)：野外挖到觸發驚喜或驚嚇<br>
+    🔮終界珍珠：點狀態列「🔮丟」擲出→落地瞬移＋隱身3秒<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
   <button class="obtn gray" id="helpCloseBtn">關閉</button>
+</div>
+<div class="overlay" id="wishOverlay" style="display:none;z-index:33;background:rgba(12,22,40,.95);justify-content:flex-start;padding-top:30px;overflow-y:auto;">
+  <h2 style="color:#8ac0ff;">🌠 許願池</h2>
+  <div style="font-size:13px;color:#bcd;max-width:460px;text-align:center;line-height:1.8;">投入材料許願，隨機變成<b>更高級</b>或<b>更低級</b>的材料（一換一）<br>小換大賺翻，大換小哭哭，偶爾雙倍大獎🎰</div>
+  <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span>賭注：</span>
+      <select id="wishMat" style="font-size:15px;padding:6px 10px;border-radius:8px;background:#223;color:#fff;border:1px solid #557;"></select>
+      <span>×</span>
+      <select id="wishQty" style="font-size:15px;padding:6px 10px;border-radius:8px;background:#223;color:#fff;border:1px solid #557;">
+        <option>1</option><option>5</option><option>10</option><option>20</option>
+      </select>
+    </div>
+    <div id="wishOwn" style="font-size:12px;color:#9ab;"></div>
+  </div>
+  <button class="obtn" id="wishBtn" style="background:#2a5a9a;">🌠 投入許願！</button>
+  <button class="obtn gray" id="wishCloseBtn">關閉</button>
+</div>
+<div class="overlay" id="forgeOverlay" style="display:none;z-index:33;background:rgba(35,22,12,.95);justify-content:flex-start;padding-top:30px;overflow-y:auto;">
+  <h2 style="color:#ffb060;">⚒ 鑄造台</h2>
+  <div id="forgeInfo" style="font-size:14px;background:rgba(255,255,255,.08);border-radius:10px;padding:10px 16px;line-height:2;max-width:480px;"></div>
+  <button class="obtn" id="forgeBtn" style="background:#8a5a20;">⚒ 鑄造 天神之劍</button>
+  <button class="obtn gray" id="forgeCloseBtn">關閉</button>
 </div>
 <div class="overlay" id="enchOverlay" style="display:none;z-index:33;background:rgba(25,14,40,.95);justify-content:flex-start;padding-top:30px;overflow-y:auto;">
   <h2 style="color:#c9a0ff;">✨ 附魔台</h2>
@@ -222,11 +252,11 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱"};
-const HOTBAR = [STONE,WOOD,LEAF,GLASS,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,PISTON,SPISTON,OBSERVER];
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊"};
+const HOTBAR = [STONE,WOOD,LEAF,GLASS,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
@@ -284,7 +314,9 @@ function computeSecrets(){
   SECRETS.push({dim:'nether', x:14+((r()*(WX-28))|0), z:14+((r()*(WZ-28))|0), idx:8, type:'nunder'});
   const a=r()*6.28, rad=9+r()*4;
   SECRETS.push({dim:'end', x:Math.round(END_C.x+Math.cos(a)*rad), z:Math.round(END_C.z+Math.sin(a)*rad), idx:9, type:'eunder'});
+  ARENA={x:30+((r()*(WX-60))|0), z:30+((r()*(WZ-60))|0), y:WY-12};
 }
+let ARENA={x:96,z:96,y:WY-12};
 function generateOver(sd, w){
   w.fill(0);
   const n1 = makeNoise(sd), n2 = makeNoise(sd^0x9e3779b9);
@@ -334,22 +366,32 @@ function generateOver(sd, w){
       }
     }
   }
+  /* （岩漿池已依設計需求移除：資源太容易到手） */
   const lRng = mulberry32(sd^0xfeed);
-  for(let p=0;p<9;p++){
-    const lx=6+((lRng()*(WX-12))|0), lz=6+((lRng()*(WZ-12))|0);
-    const h=topSolid(w,lx,lz);
-    if(h<=SEA) continue;
-    for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++){
-      const d=Math.hypot(dx,dz);
-      const x=lx+dx, z=lz+dz;
-      if(!inBounds(x,h,z)) continue;
-      if(d<=1.6){
-        w[idx(x,h,z)]=LAVA;
-        if(h-1>0) w[idx(x,h-1,z)] = lRng()<0.55 ? GOLD : DIAMOND;   /* 岩漿池底藏寶！ */
-      }
-      else if(d<=2.6) w[idx(x,h,z)]=OBSID;
+  /* 幸運方塊：地表與地底散佈 */
+  for(let x=2;x<WX-2;x++) for(let z=2;z<WZ-2;z++){
+    if(lRng()<0.0022){
+      const h=topSolid(w,x,z);
+      if(h>SEA && h+1<WY && w[idx(x,h,z)]===GRASS) w[idx(x,h+1,z)]=LAVA===-1?LUCKY:LUCKY;
+    }
+    if(lRng()<0.0007){
+      const h=topSolid(w,x,z);
+      if(h>SEA && h+1<WY && w[idx(x,h,z)]===GRASS) w[idx(x,h+1,z)]=SUPERL;
     }
   }
+  for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=2;y<16;y++){
+    if(w[idx(x,y,z)]===STONE && lRng()<0.004) w[idx(x,y,z)]= (lRng()<0.15?SUPERL:LUCKY);
+  }
+  /* 試煉之地：高空黑曜石競技場（凋零怪出沒！） */
+  computeSecrets();
+  for(let dx=-4;dx<=4;dx++) for(let dz=-4;dz<=4;dz++){
+    const ax=ARENA.x+dx, az=ARENA.z+dz;
+    if(!inBounds(ax,ARENA.y,az)) continue;
+    w[idx(ax,ARENA.y,az)]=OBSID;
+    for(let dy=1;dy<=4;dy++) if(ARENA.y+dy<WY) w[idx(ax,ARENA.y+dy,az)]=AIR;
+  }
+  for(const [cx3,cz3] of [[-4,-4],[4,-4],[-4,4],[4,4]])
+    if(inBounds(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)) w[idx(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)]=GLOW;
   const gRng = mulberry32(sd^0xdead);
   graveyard.x = 8+((gRng()*(WX-24))|0);
   graveyard.z = 8+((gRng()*(WZ-24))|0);
@@ -526,7 +568,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=61;
+const TILE=16, NTILES=65;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -783,6 +825,35 @@ drawTile(60,[148,148,152],6,(x,y)=>{
   if(x<1||x>14||y<1||y>14) return [110,110,115,255];
   return [148,148,152,255];
 });
+/* 鑄造台 (61)：鐵砧 */
+drawTile(61,[70,70,78],8,(x,y)=>{
+  if(y<5&&x>=2&&x<=13) return [95,95,105,255];
+  if(y>=5&&y<=9&&x>=6&&x<=9) return [58,58,66,255];
+  if(y>9&&x>=3&&x<=12) return [80,80,90,255];
+  if(y>=6&&y<=8&&x>=10&&x<=13) return [255,140,40,255];
+  return [45,45,52,255];
+});
+/* 許願池 (62)：藍水金星 */
+drawTile(62,[60,120,190],8,(x,y)=>{
+  if(x<2||x>13||y<2||y>13) return [120,120,128,255];
+  const d=Math.hypot(x-7.5,y-7.5);
+  if(d<2) return [255,225,120,255];
+  return ((x+y)%4===0)?[100,170,230,255]:[60,120,190,255];
+});
+/* 幸運方塊 (63)：黃底問號 */
+drawTile(63,[235,190,40],8,(x,y)=>{
+  const q=(y===4&&x>=6&&x<=9)||(y===5&&(x===5||x===10))||(y===6&&x===10)||(y===7&&x>=8&&x<=9)||(y===8&&x===7)||(y===9&&x===7)||(y===11&&x===7);
+  if(q) return [80,55,10,255];
+  if(x<1||x>14||y<1||y>14) return [185,140,25,255];
+  return [235,190,40,255];
+});
+/* 超級幸運方塊 (64)：紫金問號 */
+drawTile(64,[130,60,190],8,(x,y)=>{
+  const q=(y===4&&x>=6&&x<=9)||(y===5&&(x===5||x===10))||(y===6&&x===10)||(y===7&&x>=8&&x<=9)||(y===8&&x===7)||(y===9&&x===7)||(y===11&&x===7);
+  if(q) return [255,215,80,255];
+  if(x<1||x>14||y<1||y>14) return [90,35,140,255];
+  return [130,60,190,255];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -813,7 +884,9 @@ const TILES = {
   [RBLOCK]:{top:45,side:45,bot:45},
   [RAIL]:{top:46,side:46,bot:46}, [PISTON]:{top:58,side:57,bot:47},
   [SPISTON]:{top:60,side:59,bot:48}, [OBSERVER]:{top:49,side:49,bot:49},
-  [SECRETB]:{top:50,side:50,bot:50}
+  [SECRETB]:{top:50,side:50,bot:50},
+  [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
+  [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
 const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||RS_TRANS.has(id);
@@ -950,6 +1023,25 @@ function buildChunk(cx,cz){
       tra.uv.push(fu0,1, fu1,1, fu0,0, fu1,0);
       for(let k2=0;k2<4;k2++) tra.col.push(1,1,1);
       tra.idx.push(fb,fb+1,fb+2, fb+2,fb+1,fb+3);
+      continue;
+    }
+    /* 終界水晶：懸浮寶石造型 */
+    if(id===ENDCRYSTAL){
+      const ct=TILES[ENDCRYSTAL].side;
+      const boxes=[[0.28,0.72,0.15,0.7],[0.4,0.6,0.7,0.97]];
+      for(const [b0,b1,yA,yB] of boxes){
+        for(let f=0;f<6;f++){
+          const F=FACES[f];
+          const gb=glo.pos.length/3;
+          for(const c of F.corners){
+            glo.pos.push(x+(c[0]?b1:b0), y+(c[1]?yB:yA), z+(c[2]?b1:b0));
+          }
+          const gu0=ct/NTILES, gu1=(ct+1)/NTILES;
+          glo.uv.push(gu0,1, gu0,0, gu1,1, gu1,0);
+          for(let k2=0;k2<4;k2++) glo.col.push(1,1,1);
+          glo.idx.push(gb,gb+1,gb+2, gb+2,gb+1,gb+3);
+        }
+      }
       continue;
     }
     /* 火把與拉桿：小柱子 */
@@ -1108,12 +1200,48 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
-const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false };
+const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, boating=false, shieldCD=0, armor=0, speedT=0;
-let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0;
+let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0;
+const pearlsFly=[];
+function throwPearl(){
+  if(inv.pearl<=0){ toast('沒有終界珍珠'); return; }
+  inv.pearl--;
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.18,6,6), new THREE.MeshBasicMaterial({color:0x9060d0}));
+  m.position.copy(camera.position);
+  scene.add(m);
+  pearlsFly.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
+    vx:dir.x*18, vy:dir.y*18+3, vz:dir.z*18, life:4, mesh:m});
+  sfx.warp();
+  updateHUD(); scheduleSave();
+}
+function updatePearls(dt){
+  for(let i=pearlsFly.length-1;i>=0;i--){
+    const pr=pearlsFly[i];
+    pr.life-=dt;
+    pr.vy-=14*dt;
+    const px=pr.x, py=pr.y, pz=pr.z;
+    pr.x+=pr.vx*dt; pr.y+=pr.vy*dt; pr.z+=pr.vz*dt;
+    pr.mesh.position.set(pr.x,pr.y,pr.z);
+    const solidHit=isSolid(getB(Math.floor(pr.x),Math.floor(pr.y),Math.floor(pr.z)));
+    if(solidHit||pr.life<=0){
+      spawnParticles(player.x,player.y+1,player.z,10,0x9060d0);
+      player.x=px; player.y=py-0.5; player.z=pz;
+      player.vy=0;
+      unstick();
+      invisT=3;
+      spawnParticles(player.x,player.y+1,player.z,14,0x9060d0);
+      sfx.warp(); sfx.portal();
+      toast('🔮 瞬移成功！隱身 3 秒，怪物看不到你');
+      scene.remove(pr.mesh); pr.mesh.material.dispose();
+      pearlsFly.splice(i,1);
+    }
+  }
+}
 function raycastWater(maxDist){
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   let x=camera.position.x, y=camera.position.y, z=camera.position.z;
@@ -1164,7 +1292,7 @@ function makeBoatMesh(){
   return g;
 }
 const ench={};
-const perks={armor:0, hp:0, fire:0, power:0, jump:0, speed:0};
+const perks={armor:0, hp:0, fire:0, power:0, jump:0, speed:0, star:0};
 const PERKS=[
   {id:'armor', name:'🛡 保護附魔（受傷再 -1）',        max:2, cost:{diamond:3,emerald:2}},
   {id:'hp',    name:'❤️ 生命強化（最大生命 +2 顆心）',  max:2, cost:{diamond:4,emerald:4}},
@@ -1176,10 +1304,11 @@ const PERKS=[
 function maxHpVal(){ return 10+perks.hp*2; }
 let dragonDefeated=false;
 let curWeapon='fist';
-const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15 };
-const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12 };
-const WEAPON_KB = { hammer:2.4 };
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍' };
+const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15, god:18 };
+const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
+const WEAPON_KB = { hammer:2.4, god:2.4 };
+const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍', god:'✨ 天神之劍' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
 
 function surfaceYo(x,z){
@@ -1291,6 +1420,14 @@ function updateHUD(){
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();eat(k);});
     sb.appendChild(b);
   }
+  if(inv.pearl>0){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent='🔮丟×'+inv.pearl;
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwPearl();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwPearl();});
+    sb.appendChild(b);
+  }
   if(hasBed && dim==='over' && isNight){
     const b=document.createElement('span');
     b.className='act';
@@ -1304,8 +1441,8 @@ function updateHUD(){
 
 /* ================= 生物 ================= */
 const zombies=[], animals=[], enders=[], blazes=[];
-const MAX_Z=10, MAX_A=8, MAX_E=8, MAX_B=6;
-const entities = ()=> zombies.concat(animals, enders, blazes);
+const MAX_Z=10, MAX_A=8, MAX_E=8, MAX_B=4;
+const entities = ()=> zombies.concat(animals, enders, blazes, withers);
 
 function makeZombieMesh(v){
   const g=new THREE.Group();
@@ -1658,7 +1795,7 @@ function updateBlazes(dt){
     b.z+=dz/Math.max(dist,0.01)*sp*dt;
     b.y=b.baseY+(isGh?2.8:1.2)+Math.sin(b.animT*1.5)*0.5;
     b.fireT-=dt;
-    if(b.fireT<=0 && dist<(isGh?20:15)){
+    if(b.fireT<=0 && dist<(isGh?20:15) && invisT<=0){
       const dy=(player.y+1)-b.y;
       const len=Math.hypot(dx,dy,dz)||1;
       const bsz=isGh?0.34:0.2, bsp=isGh?6.5:8, bcol=isGh?0xff7030:0xffb020;
@@ -1752,8 +1889,20 @@ function updateZombies(dt){
     }
     let sp = z.hurtT>0 ? 0 : (z.sp||1.4);
     let dirX=dx/Math.max(dist,0.01), dirZ=dz/Math.max(dist,0.01);
+    let chasing=true;
+    /* 豬布林：中立生物，被打才會生氣（保留交易空間） */
+    if(z.type==='piglin' && !z.aggro){
+      chasing=false;
+      z.wT=(z.wT||0)-dt;
+      if(z.wT<=0){ z.wyaw=Math.random()*6.28; z.wmove=Math.random()<0.5; z.wT=2+Math.random()*3; }
+      sp=z.wmove?0.8:0;
+      if(z.hurtT>0) sp=0;
+      dirX=Math.sin(z.wyaw||0); dirZ=Math.cos(z.wyaw||0);
+    }
+    /* 玩家隱身：怪物找不到目標 */
+    if(invisT>0 && chasing){ chasing=false; sp=0; }
     /* 骷髏弓箭手：保持距離放箭 */
-    if(z.type==='skel'||z.type==='witch'){
+    if((z.type==='skel'||z.type==='witch') && chasing){
       const keep=z.type==='witch'?7:6;
       if(dist<keep){ dirX=-dirX; dirZ=-dirZ; }
       else if(dist<12) sp=0;
@@ -1779,16 +1928,16 @@ function updateZombies(dt){
       }
     }
     /* 苦力怕：貼近就開始引爆 */
-    if(z.type==='creeper' && dist<2 && Math.abs(player.y-z.y)<2 && z.fuseT<0){
+    if(chasing && z.type==='creeper' && dist<2 && Math.abs(player.y-z.y)<2 && z.fuseT<0){
       z.fuseT=1.2;
       noiseBurst(0.7,0.22,3500);
       sp=0;
     }
     const mx=dirX*sp*dt, mz=dirZ*sp*dt;
-    z.yaw=Math.atan2(dx,dz);
+    z.yaw = chasing ? Math.atan2(dx,dz) : Math.atan2(dirX,dirZ);
     entPhysics(z,mx,mz,dt);
     if(z.y<-5){ removeEnt(zombies,i,false); continue; }
-    if(z.dmg>0 && dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
+    if(chasing && z.dmg>0 && dist<1.1 && Math.abs(player.y-z.y)<2 && z.atkT<=0){
       damagePlayer(z.dmg||1);
       z.atkT=1.2;
     }
@@ -1896,13 +2045,13 @@ function raycastEntity(maxDist){
   const all=entities();
   for(let i=0;i<all.length;i++){
     const e=all[i];
-    const cy = e.y + (e.kind==='z'||e.kind==='vil'?1:(e.kind==='e'?1.5:0.5));
+    const cy = e.y + (e.kind==='z'||e.kind==='vil'?1:(e.kind==='e'?1.5:(e.kind==='w'?1.6:0.5)));
     const cx=e.x-camera.position.x, cyy=cy-camera.position.y, cz=e.z-camera.position.z;
     const t=cx*dir.x+cyy*dir.y+cz*dir.z;
     if(t<0||t>bestT) continue;
     const px=camera.position.x+dir.x*t, py=camera.position.y+dir.y*t, pz=camera.position.z+dir.z*t;
     const dd=Math.hypot(px-e.x, py-cy, pz-e.z);
-    if(dd< (e.kind==='e'?1.2:0.85)){ best=e; bestT=t; }
+    if(dd< (e.kind==='e'?1.2:(e.kind==='w'?1.9:0.85))){ best=e; bestT=t; }
   }
   for(const d of dragons){
     const cx=d.x-camera.position.x, cyy=d.y-camera.position.y, cz=d.z-camera.position.z;
@@ -2446,6 +2595,15 @@ function refreshBeams(){
       }
     }
   }
+  if(dim==='over'){
+    const abm=new THREE.Mesh(
+      new THREE.BoxGeometry(0.5,WY,0.5),
+      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.22, depthWrite:false})
+    );
+    abm.position.set(ARENA.x+0.5, WY/2, ARENA.z+0.5);
+    scene.add(abm);
+    beams.push(abm);
+  }
   for(const v of cols.values()){
     const [x,y,z,id]=v;
     const h=WY-y+6;
@@ -2456,6 +2614,104 @@ function refreshBeams(){
     m.position.set(x+0.5, y+h/2, z+0.5);
     scene.add(m);
     beams.push(m);
+  }
+}
+/* ================= 凋零怪（試煉之地Boss）================= */
+const withers=[];
+let witherCD=0, witherWarnT=0;
+function makeWitherMesh(){
+  const g=new THREE.Group();
+  const blk=new THREE.MeshLambertMaterial({color:0x18181e});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.1,0.55),blk); body.position.y=1.5;
+  const spine=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.3),blk); spine.position.y=0.7;
+  const rib1=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.5),blk); rib1.position.y=1.2;
+  const eyeM=new THREE.MeshBasicMaterial({color:0xe8e8f0});
+  const heads=[];
+  for(const hx of [-0.62,0,0.62]){
+    const hd=new THREE.Mesh(new THREE.BoxGeometry(hx===0?0.6:0.45, hx===0?0.6:0.45, hx===0?0.6:0.45), blk);
+    hd.position.set(hx, hx===0?2.35:2.2, 0);
+    g.add(hd);
+    const eL=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.08,0.03),eyeM);
+    eL.position.set(hx-0.1, hd.position.y+0.08, 0.24);
+    const eR=eL.clone(); eR.position.x=hx+0.1;
+    g.add(eL,eR);
+    heads.push(hd);
+  }
+  g.add(body,spine,rib1);
+  g.scale.setScalar(1.45);
+  g.userData={heads};
+  return g;
+}
+function spawnWither(){
+  const mesh=makeWitherMesh();
+  scene.add(mesh);
+  withers.push({kind:'w',x:ARENA.x+0.5,y:ARENA.y+1.5,z:ARENA.z+0.5,vy:0,yaw:0,
+    hp:150,maxHp:150,hurtT:0,atkT:0,fireT:2,animT:0,mesh,w:0.7,h:3.2});
+  sfx.roar(); sfx.boom();
+  toast('💀⚡ 凋零怪降臨試煉之地！HP150，小心黑色頭顱彈！');
+  document.getElementById('bossBar').style.display='block';
+  document.getElementById('bossTitle').textContent='💀 凋零怪';
+}
+function updateWithers(dt){
+  witherCD=Math.max(0,witherCD-dt);
+  /* 玩家踏上競技場→倒數召喚 */
+  if(dim==='over' && withers.length===0 && witherCD<=0){
+    const nearArena = Math.hypot(player.x-ARENA.x,player.z-ARENA.z)<6 && Math.abs(player.y-ARENA.y)<7;
+    if(nearArena){
+      witherWarnT+=dt;
+      if(witherWarnT>=2){ witherWarnT=0; spawnWither(); }
+    } else witherWarnT=0;
+  }
+  for(let i=withers.length-1;i>=0;i--){
+    const wt=withers[i];
+    if(wt.hp<=0){
+      inv.star=(inv.star||0)+1;
+      spawnParticles(wt.x,wt.y+1,wt.z,35,0x9090a0);
+      sfx.boom(); sfx.roar();
+      toast('🏆 打倒凋零怪！獲得 💀凋零之星！拿去附魔台解鎖凋零附魔');
+      scene.remove(wt.mesh);
+      withers.splice(i,1);
+      witherCD=10;
+      document.getElementById('bossBar').style.display='none';
+      updateHUD(); scheduleSave();
+      continue;
+    }
+    const dx=player.x-wt.x, dz=player.z-wt.z;
+    const dist=Math.hypot(dx,dz);
+    if(dist>45 || dim!=='over'){
+      scene.remove(wt.mesh);
+      withers.splice(i,1);
+      document.getElementById('bossBar').style.display='none';
+      continue;
+    }
+    wt.hurtT=Math.max(0,wt.hurtT-dt);
+    wt.atkT=Math.max(0,wt.atkT-dt);
+    wt.animT+=dt;
+    if(invisT<=0){
+      const sp=1.3*dt;
+      wt.x+=dx/Math.max(dist,0.01)*sp;
+      wt.z+=dz/Math.max(dist,0.01)*sp;
+      const ty=player.y+2.2;
+      wt.y+=(ty-wt.y)*0.8*dt;
+      wt.yaw=Math.atan2(dx,dz);
+      wt.fireT-=dt;
+      if(wt.fireT<=0 && dist<18){
+        const dy=(player.y+1)-wt.y;
+        const len=Math.hypot(dx,dy,dz)||1;
+        const m=new THREE.Mesh(new THREE.SphereGeometry(0.26,6,6), new THREE.MeshBasicMaterial({color:0x2a2a38}));
+        m.position.set(wt.x,wt.y+2,wt.z);
+        scene.add(m);
+        fireballs.push({x:wt.x,y:wt.y+2,z:wt.z, vx:dx/len*10, vy:dy/len*10, vz:dz/len*10, life:5, col:0x555568, mesh:m});
+        tone(120,0.3,'sawtooth',0.12,60);
+        wt.fireT=2.2+Math.random()*1.5;
+      }
+      if(dist<1.8 && Math.abs(player.y+1-wt.y)<3 && wt.atkT<=0){ damagePlayer(3); wt.atkT=1.2; }
+    }
+    wt.mesh.position.set(wt.x,wt.y-1.5,wt.z);
+    wt.mesh.rotation.y=wt.yaw;
+    wt.mesh.position.y += Math.sin(wt.animT*2)*0.1;
+    wt.mesh.children.forEach(c=>{ if(c.material&&c.material.emissive) c.material.emissive.setHex(wt.hurtT>0?0x442222:0x000000); });
+    document.getElementById('bossFill').style.width=(wt.hp/wt.maxHp*100)+'%';
   }
 }
 /* ================= 寵物小龍 ================= */
@@ -2528,7 +2784,7 @@ function updateArrows(dt){
       if(bid===ENDCRYSTAL){ breakCrystalAt(bx,by,bz); hit=true; break; }
       if(isSolid(bid)){ hit=true; break; }
       for(const e of entities()){
-        const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:0.5));
+        const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:(e.kind==='w'?1.6:0.5)));
         if(Math.hypot(a.x-e.x,a.y-cy,a.z-e.z)<0.9){
           e.hp-=(a.dmg||4); e.hurtT=0.4;
           if(e.kind==='e'&&e.hp>0){ teleportEnder(e); e.aggro=true; }
@@ -2571,9 +2827,9 @@ function updateDay(dt){
   if(dim==='nether'){
     isNight=true;
     zSpawnT-=dt;
-    if(zSpawnT<=0){ trySpawnZombie(); trySpawnZombie(); zSpawnT=1.8+Math.random()*1.5; }
+    if(zSpawnT<=0){ trySpawnZombie(); zSpawnT=3.5+Math.random()*2.5; }
     bSpawnT-=dt;
-    if(bSpawnT<=0){ trySpawnBlaze(); trySpawnBlaze(); bSpawnT=2.5+Math.random()*2; }
+    if(bSpawnT<=0){ trySpawnBlaze(); bSpawnT=4.5+Math.random()*3; }
     return;
   }
   if(dim==='end'){
@@ -2605,7 +2861,7 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -2718,7 +2974,89 @@ const TRADES=[
   {give:{iron:5},    get:{emerald:2}, name:'💚 綠寶石×2（賣出鐵×5）'},
   {give:{diamond:2}, get:{emerald:6}, name:'💚 綠寶石×6（賣出鑽石×2）'},
 ];
-function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0); }
+function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0) + (perks.star||0); }
+let wishOpen=false;
+const WISH_LADDER=['wood','stone','coal','iron','gold','emerald','blaze','diamond','pearl','chal'];
+function renderWish(){
+  const sel=document.getElementById('wishMat');
+  const cur=sel.value;
+  sel.innerHTML='';
+  for(const k of WISH_LADDER){
+    const o=document.createElement('option');
+    o.value=k; o.textContent=MAT_NAME[k];
+    sel.appendChild(o);
+  }
+  if(cur) sel.value=cur;
+  const own=inv[sel.value||'wood']||0;
+  document.getElementById('wishOwn').textContent='持有：'+MAT_NAME[sel.value||'wood']+'×'+own;
+}
+function openWish(){
+  wishOpen=true; paused=true;
+  renderWish();
+  document.getElementById('wishOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+}
+function closeWish(){
+  wishOpen=false; paused=false;
+  document.getElementById('wishOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
+document.getElementById('wishCloseBtn').addEventListener('click',closeWish);
+document.getElementById('wishMat').addEventListener('change',renderWish);
+document.getElementById('wishBtn').addEventListener('click',()=>{
+  const mat=document.getElementById('wishMat').value;
+  const qty=parseInt(document.getElementById('wishQty').value)||1;
+  if((inv[mat]||0)<qty){ toast('材料不夠！'); return; }
+  inv[mat]-=qty;
+  const i=WISH_LADDER.indexOf(mat);
+  const r=Math.random();
+  let out, msg;
+  if(r<0.1){ out=mat; inv[out]+=qty*2; msg='🎰 池水沸騰！雙倍奉還 '+MAT_NAME[out]+'×'+(qty*2); }
+  else if(r<0.55){ out=WISH_LADDER[Math.min(WISH_LADDER.length-1,i+1)]; inv[out]+=qty; msg='✨ 願望成真！升級成 '+MAT_NAME[out]+'×'+qty; }
+  else { out=WISH_LADDER[Math.max(0,i-1)]; inv[out]+=qty; msg='💧 撲通…降級成 '+MAT_NAME[out]+'×'+qty; }
+  sfx.eat(); sfx.eye();
+  spawnParticles(player.x,player.y+1.5,player.z,12,0x60a0ff);
+  toast(msg);
+  renderWish(); updateHUD(); scheduleSave();
+});
+let forgeOpen=false;
+const FORGE_COST={diamond:5,emerald:5,blaze:5};
+function renderForge(){
+  const names={dagger:'🔪吸血匕首',hammer:'💥巨錘',flame:'🔥烈焰劍',frost:'❄️冰霜劍',thammer:'⚡雷神之鎚',king:'👑王者之劍'};
+  let html='<b>將六把神兵熔鑄為一，繼承全部效果：</b><br>';
+  for(const k of GOD_REQ) html+=(weapons[k]?'✅':'❌')+' '+names[k]+'<br>';
+  html+='<br>額外材料：💎×5、💚×5、🔥烈焰粉×5<br>';
+  html+='<span style="color:#f96;">⚠️ 鑄造會消耗這六把武器！</span><br>';
+  html+='成品：<b>✨天神之劍</b>（傷害18・距離12・吸血+冰凍+燃燒+震波+超擊退）';
+  document.getElementById('forgeInfo').innerHTML=html;
+  const ok = GOD_REQ.every(k=>weapons[k]) && canAfford(FORGE_COST) && !weapons.god;
+  const btn=document.getElementById('forgeBtn');
+  btn.disabled=!ok;
+  btn.textContent = weapons.god ? '已鑄造完成' : '⚒ 鑄造 天神之劍';
+}
+function openForge(){
+  forgeOpen=true; paused=true;
+  renderForge();
+  document.getElementById('forgeOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+}
+function closeForge(){
+  forgeOpen=false; paused=false;
+  document.getElementById('forgeOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
+document.getElementById('forgeCloseBtn').addEventListener('click',closeForge);
+document.getElementById('forgeBtn').addEventListener('click',()=>{
+  if(!GOD_REQ.every(k=>weapons[k]) || !canAfford(FORGE_COST) || weapons.god) return;
+  payCost(FORGE_COST);
+  for(const k of GOD_REQ) weapons[k]=false;
+  weapons.god=true;
+  curWeapon='god';
+  sfx.craft(); sfx.eye(); sfx.roar();
+  spawnParticles(player.x,player.y+1.5,player.z,40,0xffe080);
+  toast('✨⚒ 六兵合一！天神之劍鑄造完成！！');
+  renderForge(); updateHUD(); scheduleSave();
+});
 let enchOpen=false;
 const ENCH_COST={diamond:2, emerald:2};
 function renderEnch(){
@@ -2758,6 +3096,28 @@ function renderEnch(){
   });
   row2.appendChild(btn2);
   list.appendChild(row2);
+  /* 凋零附魔（消耗凋零之星，10段） */
+  {
+    const sl=perks.star||0;
+    const rw=document.createElement('div'); rw.className='recipe';
+    rw.innerHTML='<div><div class="rname">💀 凋零附魔 '+sl+'/10（每段全武器+1傷害'+(sl>=10?'・攻擊會爆炸！':'，第10段攻擊爆炸')+'）</div><div class="rcost">需要：💀凋零之星×1（打倒試煉之地的凋零怪取得）</div></div>';
+    const rb=document.createElement('button'); rb.className='rbtn'; rb.style.background='#5a2a6a';
+    if(sl>=10){ rb.textContent='已滿段'; rb.disabled=true; }
+    else {
+      rb.textContent='附魔';
+      rb.disabled=(inv.star||0)<1;
+      rb.addEventListener('click',()=>{
+        if((inv.star||0)<1) return;
+        inv.star--;
+        perks.star=(perks.star||0)+1;
+        sfx.eye(); sfx.roar();
+        toast('💀 凋零附魔升至第 '+perks.star+' 段！'+(perks.star>=10?'攻擊將引發爆炸！！':''));
+        renderEnch(); updateHUD(); scheduleSave();
+      });
+    }
+    rw.appendChild(rb);
+    list.appendChild(rw);
+  }
   for(const pk of PERKS){
     const lv=perks[pk.id]||0;
     const r3=document.createElement('div'); r3.className='recipe';
@@ -2984,6 +3344,8 @@ function goDim(target){
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
   for(let i=blazes.length-1;i>=0;i--) removeEnt(blazes,i,false);
+  for(let i=withers.length-1;i>=0;i--){ scene.remove(withers[i].mesh); withers.splice(i,1); }
+  document.getElementById('bossBar').style.display='none';
   despawnDragons();
   for(let i=arrows.length-1;i>=0;i--){ scene.remove(arrows[i].mesh); arrows.splice(i,1); }
   dim=target;
@@ -3052,12 +3414,15 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyF') toggleFly();
   if(e.code==='KeyE') doAction();
   if(e.code==='KeyR') shootBow();
+  if(e.code==='KeyT') throwPearl();
   if(e.code==='KeyB') sleepBed();
   if(e.code==='KeyQ'){
     for(const k of ['pork','chicken','beef','redapple','apple']) if(inv[k]>0){ eat(k); break; }
   }
   if(e.code==='Escape'){
-    if(enchOpen) closeEnch();
+    if(forgeOpen) closeForge();
+    else if(wishOpen) closeWish();
+    else if(enchOpen) closeEnch();
     else if(tradeOpen) closeTrade();
     else if(craftOpen) closeCraft();
     else if(started && !paused) openPause();
@@ -3230,6 +3595,8 @@ function updateActButton(){
   let mode=null;
   if(hit && hit.id===CRAFT) mode='craft';
   else if(hit && hit.id===ENCHANT) mode='ench';
+  else if(hit && hit.id===FORGE) mode='forge';
+  else if(hit && hit.id===WISH) mode='wish';
   else if(hit && (hit.id===LEVER||hit.id===LEVER_ON)) mode='lever';
   else if(hit && hit.id===RAIL && riding!=='cart') mode='cart';
   else if(hasRod && !fishing && raycastWater(7)) mode='fish';
@@ -3242,6 +3609,8 @@ function updateActButton(){
     if(!isTouch) return;
     if(mode==='craft'){ b.textContent='🔨'; b.style.display='flex'; }
     else if(mode==='ench'){ b.textContent='✨'; b.style.display='flex'; }
+    else if(mode==='forge'){ b.textContent='⚒'; b.style.display='flex'; }
+    else if(mode==='wish'){ b.textContent='🌠'; b.style.display='flex'; }
     else if(mode==='lever'){ b.textContent='🎚'; b.style.display='flex'; }
     else if(mode==='cart'){ b.textContent='🛒'; b.style.display='flex'; }
     else if(mode==='fish'){ b.textContent='🎣'; b.style.display='flex'; }
@@ -3259,6 +3628,8 @@ function doAction(){
   if(!hit) return;
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===ENCHANT) openEnch();
+  else if(hit.id===FORGE) openForge();
+  else if(hit.id===WISH) openWish();
   else if(hit.id===LEVER||hit.id===LEVER_ON) toggleLever(hit);
   else if(hit.id===RAIL && riding!=='cart') startCart(hit);
   else if(hasRod && !fishing && raycastWater(7)) startFish();
@@ -3319,7 +3690,7 @@ function mine(){
     const d=ent.drg;
     const dmg=curDmg()+(perks.fire?1:0);
     if(curWeapon==='dagger') heal(1);
-    if(curWeapon==='thammer'){
+    if(curWeapon==='thammer'||curWeapon==='god'){
       for(const d2 of dragons) if(d2!==d && Math.hypot(d2.x-d.x,d2.z-d.z)<5) d2.hp-=3;
       spawnParticles(d.x,d.y,d.z,14,0xffe860);
     }
@@ -3332,11 +3703,13 @@ function mine(){
     const dmg=curDmg();
     if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
     ent.hp-=dmg; ent.hurtT=0.4;
+    if(ent.kind==='z') ent.aggro=true;
     const kb=WEAPON_KB[curWeapon]||0.8;
     const dx=ent.x-player.x, dz=ent.z-player.z, d=Math.hypot(dx,dz)||1;
     ent.x+=dx/d*kb; ent.z+=dz/d*kb; ent.vy=4+(kb>1?2:0);
-    if(curWeapon==='frost'){ ent.hurtT=1.5; spawnParticles(ent.x,ent.y+1,ent.z,6,0x9adfff); }
-    if(curWeapon==='thammer'){
+    if(curWeapon==='frost'||curWeapon==='god'){ ent.hurtT=1.5; spawnParticles(ent.x,ent.y+1,ent.z,6,0x9adfff); }
+    if(curWeapon==='god'){ heal(1); ent.hp-=2; spawnParticles(ent.x,ent.y+1,ent.z,6,0xff8020); }
+    if(curWeapon==='thammer'||curWeapon==='god'){
       for(const e2 of entities()){
         if(e2===ent||e2.kind==='vil') continue;
         if(Math.hypot(e2.x-ent.x,e2.z-ent.z)<3){ e2.hp-=3; e2.hurtT=0.4; }
@@ -3345,6 +3718,14 @@ function mine(){
       noiseBurst(0.2,0.2,700);
     }
     if(perks.fire){ ent.hp-=1; spawnParticles(ent.x,ent.y+1,ent.z,4,0xff8020); }
+    if((perks.star||0)>=10){
+      for(const e2 of entities()){
+        if(e2===ent||e2.kind==='vil') continue;
+        if(Math.hypot(e2.x-ent.x,e2.z-ent.z)<3){ e2.hp-=4; e2.hurtT=0.4; }
+      }
+      spawnParticles(ent.x,ent.y+1,ent.z,18,0x8a4aa8);
+      noiseBurst(0.25,0.22,600);
+    }
     if(ent.kind==='e'&&ent.hp>0){ teleportEnder(ent); ent.aggro=true; }
     sfx.zHit();
     spawnParticles(ent.x, ent.y+1, ent.z, 5, 0xaa2222);
@@ -3363,6 +3744,48 @@ function mine(){
     sfx.craft();
     spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,12,0xc060e0);
     toast('🥚 撿起龍蛋！到合成台孵化成寵物小龍');
+    updateHUD(); scheduleSave();
+    return;
+  }
+  if(hit.id===LUCKY||hit.id===SUPERL){
+    const isSuper=hit.id===SUPERL;
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,16,isSuper?0xb060ff:0xf0c040);
+    const r=Math.random();
+    if(!isSuper){
+      if(r<0.55){
+        const goods=[['iron',2],['coal',3],['arrow',4],['redapple',2],['gold',1],['emerald',1]];
+        const [gk,gn]=goods[(Math.random()*goods.length)|0];
+        inv[gk]+=gn;
+        sfx.craft();
+        toast('🎁 幸運方塊：'+MAT_NAME[gk]+'×'+gn+'！');
+      } else {
+        sfx.zHit();
+        damagePlayer(2);
+        toast('💢 幸運方塊是陷阱！受到小懲罰（盾牌可以擋）');
+      }
+    } else {
+      if(r<0.4){
+        const jack=[['diamond',10],['emerald',8],['pearl',3],['apple',2]];
+        const [gk,gn]=jack[(Math.random()*jack.length)|0];
+        inv[gk]+=gn;
+        sfx.craft(); sfx.eye();
+        spawnParticles(hit.x+0.5,hit.y+1,hit.z+0.5,25,0xffe060);
+        toast('🌟💜 超級大獎：'+MAT_NAME[gk]+'×'+gn+'！！！');
+      } else {
+        const mats=['iron','gold','diamond','emerald','coal','stone','wood'].filter(k=>(inv[k]||0)>1);
+        if(mats.length){
+          const mk=mats[(Math.random()*mats.length)|0];
+          const lose=Math.ceil(inv[mk]/2);
+          inv[mk]-=lose;
+          sfx.die();
+          toast('😱 超級方塊詛咒！失去 '+MAT_NAME[mk]+'×'+lose+'…');
+        } else {
+          damagePlayer(3);
+          toast('😱 超級方塊詛咒！但你身無長物，改扣3顆心');
+        }
+      }
+    }
     updateHUD(); scheduleSave();
     return;
   }
@@ -3576,6 +3999,8 @@ async function newWorld(){
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
   for(let i=blazes.length-1;i>=0;i--) removeEnt(blazes,i,false);
+  for(let i=withers.length-1;i>=0;i--){ scene.remove(withers[i].mesh); withers.splice(i,1); }
+  document.getElementById('bossBar').style.display='none';
   despawnDragons();
   dim='over';
   ensureDim('over');
@@ -3753,17 +4178,20 @@ function loop(){
     }
   }
   invulnT=Math.max(0,invulnT-dt);
+  invisT=Math.max(0,invisT-dt);
   shieldCD=Math.max(0,shieldCD-dt);
   portalCD=Math.max(0,portalCD-dt);
   updateDay(dt);
   updateParticles(dt);
   updateZombies(dt);
   updateBlazes(dt);
+  updateWithers(dt);
   updateEnders(dt);
   updateAnimals(dt);
   updateDragons(dt);
   updateFireballs(dt);
   updatePet(dt);
+  updatePearls(dt);
   beamT-=dt;
   if(beamT<=0){ refreshBeams(); beamT=8; }
   rsT-=dt;
