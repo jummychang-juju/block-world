@@ -107,7 +107,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V19</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V19-1</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -196,6 +196,8 @@
     鑄造台：集齊六神兵（匕首/巨錘/烈焰/冰霜/雷神/王者）→ 熔鑄成✨天神之劍（效果全繼承！）<br>
     許願池：投材料賭一把，45%升級/45%降級/10%雙倍｜幸運方塊(黃?)與超級方塊(紫?)：野外挖到觸發驚喜或驚嚇<br>
     🔮終界珍珠：點狀態列「🔮丟」擲出→落地瞬移＋隱身3秒<br><br>
+    <b style="color:#cef;">🗄 武器庫</b><br>
+    合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
@@ -1408,7 +1410,10 @@ function updateHUD(){
   const sb=document.getElementById('statusBar');
   sb.innerHTML='';
   const w=document.createElement('span');
+  w.className='act';
   w.textContent=WEAPON_NAME[curWeapon] + ((ench[curWeapon]||0)>0?('+'+ench[curWeapon]):'') + (armor>0?('　🛡×'+armor):'') + (hasShield?'　🛡️盾':'') + (hasElytra?'　🪂':'');
+  w.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();cycleWeapon(1);},{passive:false});
+  w.addEventListener('mousedown',ev=>{ev.stopPropagation();cycleWeapon(1);});
   sb.appendChild(w);
   const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡']];
   for(const [k,e] of foods){
@@ -2518,8 +2523,8 @@ function findNextRail(){
   if(cands.length===1) return cands[0];
   /* 多條岔路：優先聽玩家搖桿/按鍵的方向 */
   let mx=0,mz=0;
-  if(keys['KeyW']||keys['ArrowUp']) mz-=1;
-  if(keys['KeyS']||keys['ArrowDown']) mz+=1;
+  if(keys['KeyW']) mz-=1;
+  if(keys['KeyS']) mz+=1;
   if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
   if(keys['KeyD']||keys['ArrowRight']) mx+=1;
   mx+=joyVec.x; mz+=joyVec.y;
@@ -2975,6 +2980,22 @@ const TRADES=[
   {give:{diamond:2}, get:{emerald:6}, name:'💚 綠寶石×6（賣出鑽石×2）'},
 ];
 function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0) + (perks.star||0); }
+/* 武器庫：所有擁有過的武器都收藏在這，隨時切換 */
+const WLIST=['fist','wood','stone','iron','dagger','axe','diamond','trident','flame','frost','chal','emsword','hammer','ender','thammer','wblade','king','god'];
+function ownedWeapons(){
+  return WLIST.filter(k=>k==='fist'||weapons[k]);
+}
+function cycleWeapon(dir){
+  const list=ownedWeapons();
+  if(list.length<=1){ toast('🗄 武器庫只有空手，先去合成武器吧！'); return; }
+  let i=list.indexOf(curWeapon);
+  if(i<0) i=0;
+  i=(i+dir+list.length)%list.length;
+  curWeapon=list[i];
+  tone(660+i*30,0.06,'square',0.1);
+  toast('🗄 武器庫：'+WEAPON_NAME[curWeapon]+'（'+(i+1)+'/'+list.length+'，傷害'+curDmg()+'）');
+  updateHUD(); scheduleSave();
+}
 let wishOpen=false;
 const WISH_LADDER=['wood','stone','coal','iron','gold','emerald','blaze','diamond','pearl','chal'];
 function renderWish(){
@@ -3415,6 +3436,8 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyE') doAction();
   if(e.code==='KeyR') shootBow();
   if(e.code==='KeyT') throwPearl();
+  if(e.code==='ArrowUp'){ e.preventDefault(); cycleWeapon(1); }
+  if(e.code==='ArrowDown'){ e.preventDefault(); cycleWeapon(-1); }
   if(e.code==='KeyB') sleepBed();
   if(e.code==='KeyQ'){
     for(const k of ['pork','chicken','beef','redapple','apple']) if(inv[k]>0){ eat(k); break; }
@@ -4211,8 +4234,8 @@ function loop(){
     return;
   }
   let mx=0,mz=0;
-  if(keys['KeyW']||keys['ArrowUp']) mz-=1;
-  if(keys['KeyS']||keys['ArrowDown']) mz+=1;
+  if(keys['KeyW']) mz-=1;
+  if(keys['KeyS']) mz+=1;
   if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
   if(keys['KeyD']||keys['ArrowRight']) mx+=1;
   mx+=joyVec.x; mz+=joyVec.y;
