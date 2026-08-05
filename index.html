@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+<script>
+window.onerror=function(msg,src,line,col,err){
+  try{
+    var d=document.getElementById('errBox');
+    if(!d){
+      d=document.createElement('div');
+      d.id='errBox';
+      d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#a00;color:#fff;font-size:12px;padding:10px;white-space:pre-wrap;font-family:monospace;max-height:40vh;overflow:auto;';
+      if(document.body) document.body.appendChild(d);
+      else document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(d);});
+    }
+    d.textContent += '💥 '+msg+'  (第'+line+'行:'+col+')\n';
+  }catch(e){}
+  return false;
+};
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>方塊世界</title>
@@ -107,7 +123,7 @@
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V19-1</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-1</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -196,12 +212,25 @@
     鑄造台：集齊六神兵（匕首/巨錘/烈焰/冰霜/雷神/王者）→ 熔鑄成✨天神之劍（效果全繼承！）<br>
     許願池：投材料賭一把，45%升級/45%降級/10%雙倍｜幸運方塊(黃?)與超級方塊(紫?)：野外挖到觸發驚喜或驚嚇<br>
     🔮終界珍珠：點狀態列「🔮丟」擲出→落地瞬移＋隱身3秒<br><br>
+    <b style="color:#ffa;">📱 手機操作</b><br>
+    左搖桿移動｜滑右半邊轉視角｜⛏挖/攻擊｜🧱放置｜⬆跳(按住連跳)｜⬇蹲｜🕊飛行(需鞘翅)｜🏹射箭｜左上武器名＝切換武器<br><br>
+    <b style="color:#aff;">💻 電腦操作</b><br>
+    WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置｜Space跳｜E互動｜R射箭｜T丟珍珠｜F飛行(需鞘翅)｜⬆️⬇️切換武器｜1-9選方塊<br><br>
+    <b style="color:#fbb;">🌊 新生存規則</b><br>
+    摔落3格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
+    <b style="color:#cfc;">🐺 寵物與工具</b><br>
+    寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鏈子：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
     合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
   <button class="obtn gray" id="helpCloseBtn">關閉</button>
+</div>
+<div class="overlay" id="chestOverlay" style="display:none;z-index:33;background:rgba(30,22,10,.95);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
+  <h2 style="color:#e0b070;">📦 儲物箱</h2>
+  <div id="chestBody" style="font-size:14px;background:rgba(255,255,255,.08);border-radius:10px;padding:10px 16px;line-height:2.2;max-width:480px;min-width:280px;"></div>
+  <button class="obtn gray" id="chestCloseBtn">關閉</button>
 </div>
 <div class="overlay" id="wishOverlay" style="display:none;z-index:33;background:rgba(12,22,40,.95);justify-content:flex-start;padding-top:30px;overflow-y:auto;">
   <h2 style="color:#8ac0ff;">🌠 許願池</h2>
@@ -211,9 +240,7 @@
       <span>賭注：</span>
       <select id="wishMat" style="font-size:15px;padding:6px 10px;border-radius:8px;background:#223;color:#fff;border:1px solid #557;"></select>
       <span>×</span>
-      <select id="wishQty" style="font-size:15px;padding:6px 10px;border-radius:8px;background:#223;color:#fff;border:1px solid #557;">
-        <option>1</option><option>5</option><option>10</option><option>20</option>
-      </select>
+      <input id="wishQty" type="number" min="1" max="999" value="5" style="font-size:15px;padding:6px 10px;border-radius:8px;background:#223;color:#fff;border:1px solid #557;width:80px;">
     </div>
     <div id="wishOwn" style="font-size:12px;color:#9ab;"></div>
   </div>
@@ -241,6 +268,16 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+if(typeof THREE==='undefined'){
+  document.addEventListener('DOMContentLoaded',function(){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:40%;left:10%;right:10%;z-index:999999;background:#333;color:#ffd;font-size:16px;padding:20px;border-radius:12px;text-align:center;line-height:1.8;';
+    d.innerHTML='⚠️ 遊戲引擎（three.js）沒有載入成功<br>通常是網路不穩造成的<br><b>請關閉此頁面後重新開啟一次</b>';
+    document.body.appendChild(d);
+  });
+}
+</script>
+<script>
 (function(){
 "use strict";
 
@@ -254,11 +291,11 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊"};
-const HOTBAR = [STONE,WOOD,LEAF,GLASS,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱"};
+const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
@@ -345,14 +382,14 @@ function generateOver(sd, w){
     if(w[idx(x,y,z)]!==STONE) continue;
     const r=oreRng();
     if(y<=3 && r<0.13) w[idx(x,y,z)]=LAVA;
-    else if(y<9 && r<0.016) w[idx(x,y,z)]=GOLD;
-    else if(y<10 && r<0.024) w[idx(x,y,z)]=EMERALD;
-    else if(y<14 && r<0.055) w[idx(x,y,z)]=IRON;
-    else if(r<0.085) w[idx(x,y,z)]=COAL;
+    else if(y<9 && r<0.013) w[idx(x,y,z)]=GOLD;
+    else if(y<10 && r<0.020) w[idx(x,y,z)]=EMERALD;
+    else if(y<14 && r<0.045) w[idx(x,y,z)]=IRON;
+    else if(r<0.070) w[idx(x,y,z)]=COAL;
   }
   const dRng = mulberry32(sd^0x77dd);
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=1;y<6;y++){
-    if(w[idx(x,y,z)]===STONE && dRng()<0.008) w[idx(x,y,z)]=DIAMOND;
+    if(w[idx(x,y,z)]===STONE && dRng()<0.0065) w[idx(x,y,z)]=DIAMOND;
   }
   for(let x=3;x<WX-3;x++) for(let z=3;z<WZ-3;z++){
     const h=hmap[x*WZ+z];
@@ -471,7 +508,7 @@ function generateNether(sd, w){
     for(let y=1;y<=fH;y++){
       if(w[idx(x,y,z)]!==NETHER) continue;
       const rr=rng();
-      if(y<=5 && rr<0.010) w[idx(x,y,z)]=CHAL;   /* 獄髓礦：地獄深處岩漿層附近，稀有 */
+      if(y<=3 && rr<0.007) w[idx(x,y,z)]=CHAL;   /* 獄髓礦：貼近基岩層，更稀有 */
       else if(rr<0.030) w[idx(x,y,z)]=GLOW;
     }
   }
@@ -570,7 +607,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=65;
+const TILE=16, NTILES=66;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -856,6 +893,13 @@ drawTile(64,[130,60,190],8,(x,y)=>{
   if(x<1||x>14||y<1||y>14) return [90,35,140,255];
   return [130,60,190,255];
 });
+/* 儲物箱 (65) */
+drawTile(65,[150,105,55],8,(x,y)=>{
+  if(x<1||x>14||y<1||y>14) return [95,64,32,255];
+  if(y>=7&&y<=8) return [110,76,38,255];
+  if(x>=7&&x<=8&&y>=6&&y<=9) return [200,170,80,255];
+  return [150,105,55,255];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -888,7 +932,8 @@ const TILES = {
   [SPISTON]:{top:60,side:59,bot:48}, [OBSERVER]:{top:49,side:49,bot:49},
   [SECRETB]:{top:50,side:50,bot:50},
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
-  [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64}
+  [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
+  [CHEST]:{top:65,side:65,bot:65}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
 const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||RS_TRANS.has(id);
@@ -1202,12 +1247,12 @@ function updateParticles(dt){
 const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, hp:10, fly:false };
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
-              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0,
+              pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0 };
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
-let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, boating=false, shieldCD=0, armor=0, speedT=0;
-let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0;
+let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
+let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0;
 const pearlsFly=[];
 function throwPearl(){
   if(inv.pearl<=0){ toast('沒有終界珍珠'); return; }
@@ -1217,7 +1262,7 @@ function throwPearl(){
   m.position.copy(camera.position);
   scene.add(m);
   pearlsFly.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
-    vx:dir.x*18, vy:dir.y*18+3, vz:dir.z*18, life:4, mesh:m});
+    vx:dir.x*28, vy:dir.y*28+3, vz:dir.z*28, life:4, mesh:m});
   sfx.warp();
   updateHUD(); scheduleSave();
 }
@@ -1225,7 +1270,7 @@ function updatePearls(dt){
   for(let i=pearlsFly.length-1;i>=0;i--){
     const pr=pearlsFly[i];
     pr.life-=dt;
-    pr.vy-=14*dt;
+    pr.vy-=7*dt;
     const px=pr.x, py=pr.y, pz=pr.z;
     pr.x+=pr.vx*dt; pr.y+=pr.vy*dt; pr.z+=pr.vz*dt;
     pr.mesh.position.set(pr.x,pr.y,pr.z);
@@ -1386,6 +1431,8 @@ function eat(kind){
   else if(kind==='beef' && inv.beef>0){ inv.beef--; heal(4); sfx.eat(); toast('🥩 回復 4 顆心'); }
   else if(kind==='mutton' && inv.mutton>0){ inv.mutton--; heal(3); sfx.eat(); toast('🍢 回復 3 顆心'); }
   else if(kind==='fish' && inv.fish>0){ inv.fish--; heal(3); sfx.eat(); toast('🐟 回復 3 顆心'); }
+  else if(kind==='cooked' && inv.cooked>0){ inv.cooked--; heal(5); sfx.eat(); toast('🔥🍖 香噴噴烤肉！回復 5 顆心'); }
+  else if(kind==='luck' && inv.luck>0){ inv.luck--; luckT=60; sfx.eat(); sfx.eye(); toast('🍀 幸運加持 60 秒！快去許願池'); }
   else if(kind==='redapple' && inv.redapple>0){ inv.redapple--; heal(2); sfx.eat(); toast('🍎 回復 2 顆心'); }
   else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('✨ 金蘋果！生命全滿'); }
   else if(kind==='spd' && inv.spd>0){ inv.spd--; speedT=60; sfx.eat(); sfx.fly(); toast('⚡ 速度加倍 60 秒！咻～'); }
@@ -1394,6 +1441,10 @@ function eat(kind){
 }
 function sleepBed(){
   if(!hasBed || dim!=='over' || !isNight) return;
+  if(!player.onGround){ toast('🛏 要站在地面上才能睡覺'); return; }
+  for(const z of zombies){
+    if(Math.hypot(z.x-player.x,z.z-player.z)<5){ toast('🛏 五格內有怪物在盯著你，先清掉才能睡！'); return; }
+  }
   dayT=0.96;
   heal(10);
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
@@ -1415,7 +1466,7 @@ function updateHUD(){
   w.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();cycleWeapon(1);},{passive:false});
   w.addEventListener('mousedown',ev=>{ev.stopPropagation();cycleWeapon(1);});
   sb.appendChild(w);
-  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡']];
+  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀']];
   for(const [k,e] of foods){
     if(inv[k]<=0) continue;
     const b=document.createElement('span');
@@ -1424,6 +1475,12 @@ function updateHUD(){
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();eat(k);},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();eat(k);});
     sb.appendChild(b);
+  }
+  if(o2<10){
+    const ob=document.createElement('span');
+    ob.textContent='🫧×'+o2;
+    ob.style.color = o2<=3 ? '#f66' : '#8cf';
+    sb.appendChild(ob);
   }
   if(inv.pearl>0){
     const b=document.createElement('span');
@@ -1712,7 +1769,7 @@ function trySpawnZombie(){
     else { v={type:'witch',scale:1.0,hp:5,sp:1.1,dmg:0}; mesh=makeWitchMesh(); }
   }
   scene.add(mesh);
-  zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:v.hp,sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:(v.type==='spider'||v.type==='slime'||v.type==='magma')?0.42:0.25*v.scale,h:v.type==='spider'?0.85:(v.type==='slime'||v.type==='magma')?0.72:1.75*v.scale});
+  zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:(dim==='over'?Math.round(v.hp*1.5):v.hp),sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:(v.type==='spider'||v.type==='slime'||v.type==='magma')?0.42:0.25*v.scale,h:v.type==='spider'?0.85:(v.type==='slime'||v.type==='magma')?0.72:1.75*v.scale});
   if(v.type!=='skel') sfx.zGroan();
 }
 function trySpawnEnder(){
@@ -1933,7 +1990,8 @@ function updateZombies(dt){
       }
     }
     /* 苦力怕：貼近就開始引爆 */
-    if(chasing && z.type==='creeper' && dist<2 && Math.abs(player.y-z.y)<2 && z.fuseT<0){
+    if(z.type==='creeper' && hasCat && dist<7){ dirX=-dirX; dirZ=-dirZ; }
+    if(chasing && z.type==='creeper' && !hasCat && dist<2 && Math.abs(player.y-z.y)<2 && z.fuseT<0){
       z.fuseT=1.2;
       noiseBurst(0.7,0.22,3500);
       sp=0;
@@ -1990,6 +2048,7 @@ function updateEnders(dt){
     if(dist>40){ removeEnt(enders,i,false); continue; }
     e.hurtT=Math.max(0,e.hurtT-dt);
     e.atkT=Math.max(0,e.atkT-dt);
+    if(!e.aggro && dist<14 && invisT<=0) e.aggro=true;   /* 主動索敵 */
     let sp=0;
     if(e.aggro){
       sp = e.hurtT>0 ? 0 : 2.3;
@@ -2719,6 +2778,91 @@ function updateWithers(dt){
     document.getElementById('bossFill').style.width=(wt.hp/wt.maxHp*100)+'%';
   }
 }
+/* ================= 寵物狼與貓 ================= */
+let wolfEnt=null, catEnt=null;
+function makeWolfMesh(){
+  const g=new THREE.Group();
+  const grey=new THREE.MeshLambertMaterial({color:0xb8b4ac});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.32,0.62),grey); body.position.y=0.45;
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.28),grey); head.position.set(0,0.62,0.42);
+  const snout=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.12,0.14),new THREE.MeshLambertMaterial({color:0x8a8078})); snout.position.set(0,0.55,0.6);
+  const e1=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.1,0.06),grey); e1.position.set(-0.1,0.82,0.4);
+  const e2=e1.clone(); e2.position.x=0.1;
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.3),grey); tail.position.set(0,0.55,-0.42); tail.rotation.x=0.6;
+  const legG=new THREE.BoxGeometry(0.1,0.3,0.1); legG.translate(0,-0.15,0);
+  for(const [lx,lz] of [[-0.12,0.2],[0.12,0.2],[-0.12,-0.2],[0.12,-0.2]]){
+    const l=new THREE.Mesh(legG,grey); l.position.set(lx,0.3,lz); g.add(l);
+  }
+  g.add(body,head,snout,e1,e2,tail);
+  return g;
+}
+function makeCatMesh(){
+  const g=new THREE.Group();
+  const org=new THREE.MeshLambertMaterial({color:0xe09a4a});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.24,0.5),org); body.position.y=0.35;
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.24,0.22,0.2),org); head.position.set(0,0.5,0.32);
+  const e1=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.09,0.05),org); e1.position.set(-0.08,0.65,0.3); e1.rotation.z=0.3;
+  const e2=e1.clone(); e2.position.x=0.08; e2.rotation.z=-0.3;
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.07,0.34),org); tail.position.set(0,0.45,-0.36); tail.rotation.x=0.9;
+  const legG=new THREE.BoxGeometry(0.08,0.22,0.08); legG.translate(0,-0.11,0);
+  for(const [lx,lz] of [[-0.09,0.16],[0.09,0.16],[-0.09,-0.16],[0.09,-0.16]]){
+    const l=new THREE.Mesh(legG,org); l.position.set(lx,0.24,lz); g.add(l);
+  }
+  g.add(body,head,e1,e2,tail);
+  return g;
+}
+function updateBuddies(dt){
+  /* 狼 */
+  if(hasWolf && !wolfEnt){
+    const mesh=makeWolfMesh(); scene.add(mesh);
+    wolfEnt={x:player.x+1.2,y:player.y,z:player.z,atkT:0,animT:0,mesh};
+  }
+  if(!hasWolf && wolfEnt){ scene.remove(wolfEnt.mesh); wolfEnt=null; }
+  if(wolfEnt){
+    const w2=wolfEnt;
+    w2.animT+=dt; w2.atkT=Math.max(0,w2.atkT-dt);
+    let tgt=null, td=7;
+    for(const z of zombies){
+      if(z.type==='piglin' && !z.aggro) continue;
+      const dd=Math.hypot(z.x-w2.x,z.z-w2.z);
+      if(dd<td){ td=dd; tgt=z; }
+    }
+    const hx = tgt? tgt.x : player.x+Math.sin(player.yaw+2.4)*1.4;
+    const hz = tgt? tgt.z : player.z+Math.cos(player.yaw+2.4)*1.4;
+    const ddx=hx-w2.x, ddz=hz-w2.z, dl=Math.hypot(ddx,ddz);
+    if(dl>0.4){ const spw=tgt?4.2:Math.min(5,dl*2); w2.x+=ddx/dl*spw*dt; w2.z+=ddz/dl*spw*dt; }
+    if(Math.hypot(player.x-w2.x,player.z-w2.z)>18){ w2.x=player.x; w2.z=player.z; }
+    const gy=floorY(Math.floor(w2.x),Math.floor(w2.z));
+    if(gy>0) w2.y+=( gy - w2.y )*8*dt;
+    if(tgt && td<1.3 && w2.atkT<=0){
+      tgt.hp-=2; tgt.hurtT=0.4; tgt.aggro=true; w2.atkT=1.5;
+      spawnParticles(tgt.x,tgt.y+1,tgt.z,6,0xcccccc);
+      tone(500,0.08,'square',0.1,300);
+      if(tgt.hp<=0){ /* 死亡交由 updateZombies 處理 */ }
+    }
+    w2.mesh.position.set(w2.x,w2.y,w2.z);
+    w2.mesh.rotation.y=Math.atan2(ddx,ddz);
+  }
+  /* 貓 */
+  if(hasCat && !catEnt){
+    const mesh=makeCatMesh(); scene.add(mesh);
+    catEnt={x:player.x-1.2,y:player.y,z:player.z,animT:0,mesh};
+  }
+  if(!hasCat && catEnt){ scene.remove(catEnt.mesh); catEnt=null; }
+  if(catEnt){
+    const c2=catEnt;
+    c2.animT+=dt;
+    const hx=player.x+Math.sin(player.yaw-2.4)*1.3;
+    const hz=player.z+Math.cos(player.yaw-2.4)*1.3;
+    const ddx=hx-c2.x, ddz=hz-c2.z, dl=Math.hypot(ddx,ddz);
+    if(dl>0.3){ const spc=Math.min(5.5,dl*2.2); c2.x+=ddx/dl*spc*dt; c2.z+=ddz/dl*spc*dt; }
+    if(Math.hypot(player.x-c2.x,player.z-c2.z)>18){ c2.x=player.x; c2.z=player.z; }
+    const gy=floorY(Math.floor(c2.x),Math.floor(c2.z));
+    if(gy>0) c2.y+=( gy - c2.y )*8*dt;
+    c2.mesh.position.set(c2.x,c2.y,c2.z);
+    c2.mesh.rotation.y=Math.atan2(ddx,ddz);
+  }
+}
 /* ================= 寵物小龍 ================= */
 let pet=null, petAtkT=0;
 function spawnPet(){
@@ -2741,7 +2885,7 @@ function updatePet(dt){
   petAtkT-=dt;
   if(petAtkT<=0){
     let best=null, bd=7;
-    const foes=zombies.concat(blazes, enders.filter(e=>e.aggro));
+    const foes=zombies.filter(z=>!(z.type==='piglin'&&!z.aggro)).concat(blazes, enders.filter(e=>e.aggro));
     for(const e of foes){
       const d=Math.hypot(e.x-player.x,e.z-player.z);
       if(d<bd){ bd=d; best=e; }
@@ -2866,7 +3010,7 @@ function updateDay(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星',cooked:'🔥🍖烤肉',luck:'🍀幸運藥水'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -2895,6 +3039,11 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'pet',     kind:'pet',   name:'孵化龍蛋🐣（寵物小龍會幫你打怪）', cost:{egg:1,gold:3}},
+  {id:'chain',   kind:'chain', name:'鏈子⛓（砍1格木頭＝收下整棵樹！）', cost:{iron:4}},
+  {id:'digger',  kind:'digger',name:'挖土器🪏（相連的土/沙/石一次挖光）', cost:{iron:3,stone:5}},
+  {id:'wolf',    kind:'wolf',  name:'寵物狼🐺（跟著你、幫你咬怪）', cost:{beef:3,iron:2}},
+  {id:'cat',     kind:'cat',   name:'寵物貓🐱（苦力怕害怕貓，不敢靠近你）', cost:{fish:3,gold:1}},
+  {id:'luck',    kind:'stack', name:'幸運藥水🍀×1（60秒內許願池勝率大增）', cost:{emerald:2,redapple:1}},
   {id:'compass', kind:'compass',name:'尋寶羅盤🧭（顯示最近秘密基地的距離）', cost:{iron:2,gold:1}},
   {id:'rod',     kind:'rod',   name:'釣竿🎣（在水邊釣魚，會釣到好東西）', cost:{wood:3,iron:1}},
   {id:'boat',    kind:'boat',  name:'船🛶（水面和岩漿上都能開！）', cost:{wood:5}},
@@ -2929,6 +3078,10 @@ function renderCraft(){
     else if(r.kind==='scope') owned=hasScope;
     else if(r.kind==='rod') owned=hasRod;
     else if(r.kind==='compass') owned=hasCompass;
+    else if(r.kind==='chain') owned=hasChain;
+    else if(r.kind==='digger') owned=hasDigger;
+    else if(r.kind==='wolf') owned=hasWolf;
+    else if(r.kind==='cat') owned=hasCat;
     else if(r.kind==='armor') owned=armor>=r.lvl;
     if(r.kind==='sword' && owned){
       btn.textContent = curWeapon===r.id ? '裝備中' : '裝備';
@@ -2954,12 +3107,17 @@ function renderCraft(){
         else if(r.kind==='scope'){ hasScope=true; toast('🔭 裝上瞄準鏡！箭矢從此飛直線，狙擊更容易'); }
         else if(r.kind==='rod'){ hasRod=true; toast('🎣 做好釣竿了！對準水面按🎣開始釣魚'); }
         else if(r.kind==='compass'){ hasCompass=true; toast('🧭 尋寶羅盤啟動！畫面上方會顯示最近秘密基地的距離'); }
+        else if(r.kind==='chain'){ hasChain=true; toast('⛓ 鏈子做好了！砍樹幹一下＝整棵樹進背包'); }
+        else if(r.kind==='digger'){ hasDigger=true; toast('🪏 挖土器完成！挖土/沙/石一下＝整片挖光'); }
+        else if(r.kind==='wolf'){ hasWolf=true; toast('🐺 汪！寵物狼加入隊伍，會幫你咬怪！'); }
+        else if(r.kind==='cat'){ hasCat=true; toast('🐱 喵～寵物貓加入！苦力怕從此不敢靠近你'); }
         else if(r.kind==='armor'){ armor=r.lvl; toast('🛡 穿上盔甲！受到傷害 -'+r.lvl); }
         else if(r.id==='arrows'){ inv.arrow+=8; toast('🏹 +8 支箭'); }
         else if(r.id==='eye'){ inv.eye++; sfx.eye(); toast('👁 合成了終界之眼！對準終界門框鑲進去'); }
         else if(r.id==='crystal'){ inv.crystal++; toast('💠 合成了終界水晶！（'+inv.crystal+'/4）到終界中央祭壇一顆顆放上去'); }
         else if(r.id==='apple'){ inv.apple++; toast('✨🍎 合成了金蘋果！'); }
         else if(r.id==='spd'){ inv.spd=(inv.spd||0)+1; toast('⚡ 合成了速度藥水！點左上角⚡喝掉'); }
+        else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
     }
@@ -2996,6 +3154,54 @@ function cycleWeapon(dir){
   toast('🗄 武器庫：'+WEAPON_NAME[curWeapon]+'（'+(i+1)+'/'+list.length+'，傷害'+curDmg()+'）');
   updateHUD(); scheduleSave();
 }
+let chestData={};
+let chestOpen=false, chestKey=null;
+function chestOverlayHTML(){}
+function renderChest(){
+  const box=chestData[chestKey]||{};
+  let h='<b>📦 箱子裡（放進箱子的材料不怕超級方塊詛咒！）</b><br>';
+  const keys=Object.keys(box).filter(k=>box[k]>0);
+  if(keys.length===0) h+='<span style="color:#998;">（空的）</span><br>';
+  for(const k of keys){
+    h+=MAT_NAME[k]+'×'+box[k]+'　<button class="rbtn" style="padding:2px 10px;font-size:12px;" onclick="window.__chestTake(\''+k+'\')">全部取出</button><br>';
+  }
+  h+='<br><b>🎒 我的背包（點按存入10個）</b><br>';
+  for(const k of Object.keys(MAT_NAME)){
+    if((inv[k]||0)<=0) continue;
+    h+=MAT_NAME[k]+'×'+inv[k]+'　<button class="rbtn" style="padding:2px 10px;font-size:12px;background:#3a6a3a;" onclick="window.__chestPut(\''+k+'\')">存10</button><br>';
+  }
+  document.getElementById('chestBody').innerHTML=h;
+}
+window.__chestPut=function(k){
+  const box=chestData[chestKey]||(chestData[chestKey]={});
+  if(!(k in box) && Object.keys(box).filter(x=>box[x]>0).length>=10){ toast('📦 箱子最多放10種資源'); return; }
+  const n=Math.min(10, inv[k]||0);
+  if(n<=0) return;
+  inv[k]-=n;
+  box[k]=(box[k]||0)+n;
+  sfx.place();
+  renderChest(); updateHUD(); scheduleSave();
+};
+window.__chestTake=function(k){
+  const box=chestData[chestKey]||{};
+  inv[k]=(inv[k]||0)+(box[k]||0);
+  box[k]=0;
+  sfx.dig();
+  renderChest(); updateHUD(); scheduleSave();
+};
+function openChest(hit){
+  chestKey=dim+':'+hit.x+','+hit.y+','+hit.z;
+  if(!chestData[chestKey]) chestData[chestKey]={};
+  chestOpen=true; paused=true;
+  renderChest();
+  document.getElementById('chestOverlay').style.display='flex';
+  if(document.pointerLockElement) document.exitPointerLock();
+}
+function closeChest(){
+  chestOpen=false; paused=false;
+  document.getElementById('chestOverlay').style.display='none';
+  if(!isTouch) renderer.domElement.requestPointerLock();
+}
 let wishOpen=false;
 const WISH_LADDER=['wood','stone','coal','iron','gold','emerald','blaze','diamond','pearl','chal'];
 function renderWish(){
@@ -3023,6 +3229,7 @@ function closeWish(){
   if(!isTouch) renderer.domElement.requestPointerLock();
 }
 document.getElementById('wishCloseBtn').addEventListener('click',closeWish);
+document.getElementById('chestCloseBtn').addEventListener('click',closeChest);
 document.getElementById('wishMat').addEventListener('change',renderWish);
 document.getElementById('wishBtn').addEventListener('click',()=>{
   const mat=document.getElementById('wishMat').value;
@@ -3031,9 +3238,11 @@ document.getElementById('wishBtn').addEventListener('click',()=>{
   inv[mat]-=qty;
   const i=WISH_LADDER.indexOf(mat);
   const r=Math.random();
+  const lucky=luckT>0;
   let out, msg;
-  if(r<0.1){ out=mat; inv[out]+=qty*2; msg='🎰 池水沸騰！雙倍奉還 '+MAT_NAME[out]+'×'+(qty*2); }
-  else if(r<0.55){ out=WISH_LADDER[Math.min(WISH_LADDER.length-1,i+1)]; inv[out]+=qty; msg='✨ 願望成真！升級成 '+MAT_NAME[out]+'×'+qty; }
+  const upP = lucky?0.75:0.55, dbP = lucky?0.12:0.10;
+  if(r<dbP){ out=mat; inv[out]+=qty*2; msg='🎰 池水沸騰！雙倍奉還 '+MAT_NAME[out]+'×'+(qty*2); }
+  else if(r<upP){ out=WISH_LADDER[Math.min(WISH_LADDER.length-1,i+1)]; inv[out]+=qty; msg='✨ 願望成真！升級成 '+MAT_NAME[out]+'×'+qty+(lucky?'（🍀幸運加持中）':''); }
   else { out=WISH_LADDER[Math.max(0,i-1)]; inv[out]+=qty; msg='💧 撲通…降級成 '+MAT_NAME[out]+'×'+qty; }
   sfx.eat(); sfx.eye();
   spawnParticles(player.x,player.y+1.5,player.z,12,0x60a0ff);
@@ -3443,7 +3652,8 @@ addEventListener('keydown',e=>{
     for(const k of ['pork','chicken','beef','redapple','apple']) if(inv[k]>0){ eat(k); break; }
   }
   if(e.code==='Escape'){
-    if(forgeOpen) closeForge();
+    if(chestOpen) closeChest();
+    else if(forgeOpen) closeForge();
     else if(wishOpen) closeWish();
     else if(enchOpen) closeEnch();
     else if(tradeOpen) closeTrade();
@@ -3553,6 +3763,7 @@ bindBtn('btnBow',()=>shootBow());
 bindBtn('btnFly',()=>toggleFly());
 bindBtn('btnAct',()=>doAction());
 function toggleFly(){
+  if(!player.fly && !hasElytra){ toast('🕊 需要先取得鞘翅才能開飛行模式！（打贏五龍→折躍門→寶藏島）'); return; }
   player.fly=!player.fly;
   player.vy=0;
   sfx.fly();
@@ -3607,6 +3818,13 @@ function updateActButton(){
     }
     return;
   }
+  if(tent && hasFlint && (tent.kind==='pig'||tent.kind==='cow'||tent.kind==='chicken'||tent.kind==='sheep')){
+    if(actMode!=='burn'){
+      actMode='burn';
+      if(isTouch){ const b=document.getElementById('btnAct'); b.textContent='🔥'; b.style.display='flex'; }
+    }
+    return;
+  }
   if(tent && tent.kind==='vil'){
     if(actMode!=='trade'){
       actMode='trade';
@@ -3620,6 +3838,7 @@ function updateActButton(){
   else if(hit && hit.id===ENCHANT) mode='ench';
   else if(hit && hit.id===FORGE) mode='forge';
   else if(hit && hit.id===WISH) mode='wish';
+  else if(hit && hit.id===CHEST) mode='chest';
   else if(hit && (hit.id===LEVER||hit.id===LEVER_ON)) mode='lever';
   else if(hit && hit.id===RAIL && riding!=='cart') mode='cart';
   else if(hasRod && !fishing && raycastWater(7)) mode='fish';
@@ -3634,6 +3853,7 @@ function updateActButton(){
     else if(mode==='ench'){ b.textContent='✨'; b.style.display='flex'; }
     else if(mode==='forge'){ b.textContent='⚒'; b.style.display='flex'; }
     else if(mode==='wish'){ b.textContent='🌠'; b.style.display='flex'; }
+    else if(mode==='chest'){ b.textContent='📦'; b.style.display='flex'; }
     else if(mode==='lever'){ b.textContent='🎚'; b.style.display='flex'; }
     else if(mode==='cart'){ b.textContent='🛒'; b.style.display='flex'; }
     else if(mode==='fish'){ b.textContent='🎣'; b.style.display='flex'; }
@@ -3647,12 +3867,25 @@ function doAction(){
   const tent=raycastEntity(5);
   if(tent && tent.kind==='z' && tent.type==='piglin'){ barterPiglin(); return; }
   if(tent && tent.kind==='vil'){ openTrade(); return; }
+  if(tent && hasFlint && (tent.kind==='pig'||tent.kind==='cow'||tent.kind==='chicken'||tent.kind==='sheep')){
+    const ai=animals.indexOf(tent);
+    if(ai>=0){
+      inv.cooked=(inv.cooked||0)+2;
+      spawnParticles(tent.x,tent.y+0.6,tent.z,14,0xff8020);
+      tone(300,0.3,'sawtooth',0.1,120);
+      removeEnt(animals,ai,true,0xff8020);
+      toast('🔥🍖 火烤成功！獲得烤肉×2（吃了回5顆心）');
+      updateHUD(); scheduleSave();
+    }
+    return;
+  }
   const hit=raycast(5);
   if(!hit) return;
   if(hit.id===CRAFT) openCraft();
   else if(hit.id===ENCHANT) openEnch();
   else if(hit.id===FORGE) openForge();
   else if(hit.id===WISH) openWish();
+  else if(hit.id===CHEST) openChest(hit);
   else if(hit.id===LEVER||hit.id===LEVER_ON) toggleLever(hit);
   else if(hit.id===RAIL && riding!=='cart') startCart(hit);
   else if(hasRod && !fishing && raycastWater(7)) startFish();
@@ -3723,7 +3956,8 @@ function mine(){
     return;
   }
   if(ent){
-    const dmg=curDmg();
+    let dmg=curDmg();
+    if(!player.onGround && player.vy<0){ dmg=Math.round(dmg*1.2); spawnParticles(ent.x,ent.y+1.4,ent.z,6,0xffd050); }
     if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
     ent.hp-=dmg; ent.hurtT=0.4;
     if(ent.kind==='z') ent.aggro=true;
@@ -3767,6 +4001,18 @@ function mine(){
     sfx.craft();
     spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,12,0xc060e0);
     toast('🥚 撿起龍蛋！到合成台孵化成寵物小龍');
+    updateHUD(); scheduleSave();
+    return;
+  }
+  if(hit.id===CHEST){
+    const ck=dim+':'+hit.x+','+hit.y+','+hit.z;
+    const box=chestData[ck]||{};
+    for(const k in box){ inv[k]=(inv[k]||0)+box[k]; }
+    delete chestData[ck];
+    inv.wood+=1;
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    toast('📦 收回箱子，裡面的東西全部拿回來了（退回木×1）');
+    sfx.dig();
     updateHUD(); scheduleSave();
     return;
   }
@@ -3851,10 +4097,82 @@ function mine(){
     updateHUD(); scheduleSave();
     return;
   }
+  /* 鏈子：砍樹幹＝整棵樹收下 */
+  if(hasChain && hit.id===WOOD){
+    const seen=new Set(), st=[[hit.x,hit.y,hit.z]];
+    let nw=0, nl=0;
+    const chg=new Set();
+    while(st.length && seen.size<48){
+      const [x,y,z]=st.pop();
+      const k=x+','+y+','+z;
+      if(seen.has(k)) continue;
+      seen.add(k);
+      const b=getB(x,y,z);
+      if(b!==WOOD && b!==LEAF) continue;
+      if(b===WOOD) nw++; else nl++;
+      setBlockRaw(x,y,z,AIR);
+      markChunks(chg,x,z);
+      st.push([x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]);
+    }
+    for(const c of chg){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
+    inv.wood+=nw;
+    let ap=0;
+    for(let i2=0;i2<nl;i2++) if(Math.random()<0.12) ap++;
+    if(ap>0) inv.redapple+=ap;
+    spawnParticles(hit.x+0.5,hit.y+1,hit.z+0.5,16,0x69a33a);
+    sfx.dig(); sfx.craft();
+    toast('⛓🌳 整棵樹到手！原木×'+nw+(ap>0?('、蘋果×'+ap):''));
+    updateHUD(); scheduleSave();
+    return;
+  }
+  /* 挖土器：相連同種方塊一次挖光 */
+  if(hasDigger && (hit.id===DIRT||hit.id===SAND||hit.id===GRASS||hit.id===STONE)){
+    const tid=hit.id;
+    const seen=new Set(), st=[[hit.x,hit.y,hit.z]];
+    let n=0;
+    const chg=new Set();
+    while(st.length && n<24){
+      const [x,y,z]=st.pop();
+      const k=x+','+y+','+z;
+      if(seen.has(k)) continue;
+      seen.add(k);
+      if(getB(x,y,z)!==tid) continue;
+      n++;
+      setBlockRaw(x,y,z,AIR);
+      markChunks(chg,x,z);
+      st.push([x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]);
+    }
+    for(const c of chg){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
+    if(tid===STONE) inv.stone+=n;
+    if(tid===WOOD) inv.wood+=n;
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,14,0xb0906a);
+    sfx.dig();
+    toast('🪏 挖土器發動！清除 '+NAMES[tid]+'×'+n+(tid===STONE?'（石頭入包）':''));
+    updateHUD(); scheduleSave();
+    return;
+  }
   const mat=COLLECT[hit.id];
   const isOre = (hit.id>=COAL && hit.id<=CHAL) || hit.id===EMERALD;
   const wasLeaf = hit.id===LEAF;
   setBlock(hit.x,hit.y,hit.z,AIR);
+  /* 天神之劍：挖掘＝安全爆破，3×3×3 連鎖並自動收礦 */
+  if(curWeapon==='god'){
+    const PROT=new Set([AIR,BEDROCK,OBSID,WATER,LAVA,PORTAL,ENDPORTAL,GATEWAY,ENDFRAME,ENDFRAMEEYE,ENDCRYSTAL,SECRETB,LUCKY,SUPERL,CRAFT,ENCHANT,FORGE,WISH,CHEST,ELYTRAB,DRAGONEGG]);
+    const chg=new Set();
+    for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) for(let dz=-1;dz<=1;dz++){
+      const x=hit.x+dx, y=hit.y+dy, z=hit.z+dz;
+      if(!inBounds(x,y,z)) continue;
+      const b=getB(x,y,z);
+      if(PROT.has(b)) continue;
+      const m2=COLLECT[b];
+      if(m2) inv[m2]++;
+      setBlockRaw(x,y,z,AIR);
+      markChunks(chg,x,z);
+    }
+    for(const c of chg){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,18,0xffe080);
+    noiseBurst(0.2,0.18,500);
+  }
   /* 挖空後若鄰近有鑲眼門框，自動重新檢查開門 */
   for(const d of [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]){
     if(getB(hit.x+d[0],hit.y,hit.z+d[2])===ENDFRAMEEYE){
@@ -3891,7 +4209,14 @@ function place(){
   const oy0=Math.floor(player.y), oy1=Math.floor(player.y+P_H);
   const oz0=Math.floor(player.z-P_W), oz1=Math.floor(player.z+P_W);
   if(px>=ox0&&px<=ox1&&py>=oy0&&py<=oy1&&pz>=oz0&&pz<=oz1) return;
-  setBlock(px,py,pz,HOTBAR[selSlot]);
+  const pid=HOTBAR[selSlot];
+  if(pid===CHEST){
+    if((inv.wood||0)<2){ toast('📦 放置儲物箱需要 🌲原木×2'); return; }
+    inv.wood-=2;
+    chestData[dim+':'+px+','+py+','+pz]={};
+    updateHUD();
+  }
+  setBlock(px,py,pz,pid);
   sfx.place();
 }
 
@@ -3926,7 +4251,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
+    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -4003,6 +4328,11 @@ async function loadGame(){
     if(d.hasScope) hasScope=true;
     if(d.hasRod) hasRod=true;
     if(d.hasCompass) hasCompass=true;
+    if(d.hasChain) hasChain=true;
+    if(d.hasDigger) hasDigger=true;
+    if(d.hasWolf) hasWolf=true;
+    if(d.hasCat) hasCat=true;
+    if(d.chest) chestData=d.chest;
     if(d.found) for(const i of d.found) foundSec.add(i);
     if(d.ench) Object.assign(ench, d.ench);
     if(d.perks) Object.assign(perks, d.perks);
@@ -4039,6 +4369,8 @@ async function newWorld(){
   for(const k in perks) perks[k]=0;
   speedT=0;
   hasRod=false; fishing=false; hasCompass=false;
+  hasChain=false; hasDigger=false; hasWolf=false; hasCat=false;
+  chestData={};
   foundSec.clear();
   computeSecrets();
   hasPet=false;
@@ -4214,6 +4546,7 @@ function loop(){
   updateDragons(dt);
   updateFireballs(dt);
   updatePet(dt);
+  updateBuddies(dt);
   updatePearls(dt);
   beamT-=dt;
   if(beamT<=0){ refreshBeams(); beamT=8; }
@@ -4221,6 +4554,22 @@ function loop(){
   if(rsT<=0){ rsTick(); rsT=0.15; }
   compT-=dt;
   if(compT<=0){ updateCompass(); compT=0.5; }
+  /* 水中氧氣：頭進水10秒後開始每秒扣氧，氧盡扣血 */
+  {
+    const headB=getB(Math.floor(player.x),Math.floor(player.y+EYE),Math.floor(player.z));
+    if(headB===WATER && !boating){
+      graceT+=dt;
+      if(graceT>10){
+        o2T+=dt;
+        while(o2T>=1){
+          o2T-=1;
+          if(o2>0){ o2--; updateHUD(); if(o2===3) toast('🫧 氧氣快沒了！快浮上水面！'); }
+          else damagePlayer(1);
+        }
+      }
+    } else if(o2<10||graceT>0){ o2=10; graceT=0; o2T=0; updateHUD(); }
+  }
+  if(luckT>0) luckT-=dt;
   updateArrows(dt);
   updateActButton();
 
@@ -4294,6 +4643,17 @@ function loop(){
     }
     if(!elytraFly) player.vy += -26*dt;
     if((keys['Space']||jumpHeld) && player.onGround){ player.vy=perks.jump?10.6:8.4; player.onGround=false; }
+  }
+  /* 摔落傷害：3格起跳，每多2格+1（落水免傷） */
+  if(!player.onGround && player.vy<0 && !player.fly && !boating && !elytraFly) fallD-=player.vy*dt;
+  else if(player.fly||boating||elytraFly||liquid===WATER||liquid===LAVA) fallD=0;
+  if(player.onGround){
+    if(fallD>3.2 && liquid!==WATER && feetLq!==WATER){
+      const fd=Math.min(8, 1+Math.floor((fallD-3.2)/2));
+      damagePlayer(fd);
+      toast('💥 摔痛了 -'+fd+'（下次往水裡跳就不會痛）');
+    }
+    fallD=0;
   }
   if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
   if(!collide(player.x, player.y, player.z+dz)) player.z+=dz;
