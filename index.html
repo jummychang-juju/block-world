@@ -123,7 +123,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-4</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-5</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -217,7 +217,7 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#aff;">💻 電腦操作</b><br>
     WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置｜Space跳｜E互動｜R射箭｜T丟珍珠｜F飛行(需鞘翅)｜⬆️⬇️切換武器｜1-9選方塊<br><br>
     <b style="color:#fbb;">🌊 新生存規則</b><br>
-    摔落3格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
+    摔落5格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
@@ -4654,8 +4654,8 @@ function loop(){
   if(!player.onGround && player.vy<0 && !player.fly && !boating && !gliding) fallD-=player.vy*dt;
   else if(player.fly||boating||gliding||liquid===WATER||liquid===LAVA) fallD=0;
   if(player.onGround){
-    if(fallD>3.2 && liquid!==WATER && feetLq!==WATER){
-      const fd=Math.min(8, 1+Math.floor((fallD-3.2)/2));
+    if(fallD>5.2 && liquid!==WATER && feetLq!==WATER){
+      const fd=Math.min(8, 1+Math.floor((fallD-5.2)/2));
       damagePlayer(fd);
       toast('💥 摔痛了 -'+fd+'（下次往水裡跳就不會痛）');
     }
