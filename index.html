@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V32・每日挑戰·怪物亂鬥</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V33・星空·螢火蟲·蝙蝠</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -260,6 +260,8 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#ccf;">🌟 世界活起來（V33）</b><br>
+    晴朗夜晚抬頭看<b>滿天星斗</b>緩緩流轉｜草原夜裡有<b>螢火蟲</b>✨群舞｜深入洞穴會遇到<b>蝙蝠</b>🦇亂飛！<br><br>
     <b style="color:#faa;">📅 每日挑戰・⚔️ 怪物亂鬥（V32）</b><br>
     每天一個新挑戰（打怪/挖礦/釣魚/收小麥），完成得 <b>15 積分</b>！☰選單看今日任務進度<br>
     ⚔️ <b>怪物亂鬥</b>：☰選單花 20 積分開戰，怪物一波波湧來，<b>撐過 3 波</b>贏 40 積分＋💎×3＋💚×3！<br>
@@ -3909,6 +3911,86 @@ function updateWeather(dt){
   updateSky(dt);
 }
 
+/* ================= 環境生命：星空・螢火蟲・蝙蝠 ================= */
+/* 夜空星星 */
+const starN=420, starPos=new Float32Array(starN*3);
+for(let i=0;i<starN;i++){
+  const a=Math.random()*6.28, e2=Math.random()*1.2, r=200;
+  starPos[i*3]=Math.cos(a)*Math.cos(e2)*r;
+  starPos[i*3+1]=40+Math.sin(e2)*r*0.6;
+  starPos[i*3+2]=Math.sin(a)*Math.cos(e2)*r;
+}
+const starGeo=new THREE.BufferGeometry();
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+const starObj=new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xdfe8ff, size:1.6, transparent:true, opacity:0, sizeAttenuation:false, depthWrite:false}));
+starObj.frustumCulled=false; scene.add(starObj);
+/* 螢火蟲 */
+const ffN=26, ffPos=new Float32Array(ffN*3), ffPhase=new Float32Array(ffN);
+for(let i=0;i<ffN;i++){ ffPos[i*3]=(Math.random()-0.5)*24; ffPos[i*3+1]=Math.random()*3; ffPos[i*3+2]=(Math.random()-0.5)*24; ffPhase[i]=Math.random()*6.28; }
+const ffGeo=new THREE.BufferGeometry();
+ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos,3));
+const ffObj=new THREE.Points(ffGeo, new THREE.PointsMaterial({color:0xb8ff60, size:0.16, transparent:true, opacity:0.9, depthWrite:false}));
+ffObj.frustumCulled=false; ffObj.visible=false; scene.add(ffObj);
+/* 蝙蝠 */
+const bats=[];
+function makeBat(){
+  const g=new THREE.Group();
+  const m=new THREE.MeshLambertMaterial({color:0x2a2230});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.16,0.22),m);
+  const wL=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.04,0.18),m); wL.position.x=-0.22;
+  const wR=wL.clone(); wR.position.x=0.22;
+  g.add(body,wL,wR);
+  g.userData={wL,wR};
+  return g;
+}
+function updateAmbient(dt){
+  /* 星星：主世界夜晚淡入 */
+  const wantStars = dim==='over' && isNight && weather!=='rain' && weather!=='thunder';
+  starObj.material.opacity += ((wantStars?0.9:0)-starObj.material.opacity)*Math.min(1,dt*1.5);
+  starObj.visible = starObj.material.opacity>0.02;
+  starObj.position.set(player.x,0,player.z);
+  starObj.rotation.y += dt*0.004;
+  /* 螢火蟲：夜晚地表（非雨天）圍繞玩家漂舞 */
+  const wantFf = dim==='over' && isNight && weather==='clear' && player.y>SEA-1;
+  ffObj.visible=wantFf;
+  if(wantFf){
+    ffObj.position.set(player.x, player.y+0.5, player.z);
+    for(let i=0;i<ffN;i++){
+      ffPhase[i]+=dt;
+      ffPos[i*3]+=Math.sin(ffPhase[i]*0.9+i)*0.6*dt;
+      ffPos[i*3+1]+=Math.cos(ffPhase[i]*0.7+i*2)*0.4*dt;
+      ffPos[i*3+2]+=Math.cos(ffPhase[i]*0.8+i)*0.6*dt;
+    }
+    ffGeo.attributes.position.needsUpdate=true;
+    ffObj.material.opacity=0.55+Math.sin(ffPhase[0]*3)*0.35;
+  }
+  /* 蝙蝠：玩家深入地底時出現，在洞穴裡亂飛 */
+  const underground = dim==='over' && player.y < surfaceYo(Math.floor(player.x),Math.floor(player.z))-3;
+  if(underground && bats.length<4 && Math.random()<dt*0.5){
+    const m=makeBat();
+    m.position.set(player.x+(Math.random()-0.5)*6, player.y+1.5, player.z+(Math.random()-0.5)*6);
+    scene.add(m);
+    bats.push({m, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*1.5, vz:(Math.random()-0.5)*4, t:0, life:20+Math.random()*20});
+    tone(1400,0.08,'square',0.03,1800);
+  }
+  for(let i=bats.length-1;i>=0;i--){
+    const bt=bats[i];
+    bt.life-=dt; bt.t+=dt;
+    if(bt.t>1.2){ bt.t=0; bt.vx=(Math.random()-0.5)*5; bt.vy=(Math.random()-0.5)*2; bt.vz=(Math.random()-0.5)*5; }
+    const nx=bt.m.position.x+bt.vx*dt, ny=bt.m.position.y+bt.vy*dt, nz=bt.m.position.z+bt.vz*dt;
+    if(!isSolid(getB(Math.floor(nx),Math.floor(ny),Math.floor(nz)))) bt.m.position.set(nx,ny,nz);
+    else { bt.vx=-bt.vx; bt.vz=-bt.vz; bt.vy=-bt.vy*0.5; }
+    const flap=Math.sin(performance.now()*0.02+i)*0.7;
+    bt.m.userData.wL.rotation.z=flap; bt.m.userData.wR.rotation.z=-flap;
+    const far=Math.hypot(bt.m.position.x-player.x,bt.m.position.z-player.z)>28;
+    if(bt.life<=0||far||!underground&&bt.life<15){
+      scene.remove(bt.m);
+      bt.m.traverse(o=>{ if(o.isMesh){ o.geometry.dispose(); } });
+      bats.splice(i,1);
+    }
+  }
+}
+
 /* 流星：晴朗（或下雪）的夜晚偶爾劃過天際，可能實現願望 */
 const shootingStars=[];
 let starT=8+Math.random()*12;
@@ -5781,6 +5863,7 @@ function loop(){
   cropT-=dt;
   if(cropT<=0){ growCrops(); cropT=8; }
   battleTick(dt);
+  updateAmbient(dt);
   coordsT-=dt;
   if(coordsT<=0){
     coordsT=0.5;
