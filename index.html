@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V36・Boss討伐獎勵</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V37・冰塊3D修正</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -1114,12 +1114,12 @@ drawTile(69,[220,180,60],10,(x,y)=>{
   const head=(y>=1&&y<=6)&&((x>=3&&x<=5)||(x>=7&&x<=9)||(x>=11&&x<=13));
   return head?[235,195,80,255]:(stem?[190,160,70,255]:[0,0,0,0]);
 });
-/* 冰塊 (67)：半透明淡藍，帶裂紋 */
+/* 冰塊 (67)：實心 3D 淡藍冰，帶白色裂紋 */
 drawTile(67,[160,205,240],6,(x,y)=>{
   const crack=((x*3+y*5)%16===0)||((x+y*2)%13===0);
   const edge=x===0||y===0||x===15||y===15;
-  if(edge) return [190,225,250,210];
-  return crack?[220,240,255,200]:[150,200,240,185];
+  if(edge) return [196,228,250,255];
+  return crack?[225,242,255,255]:[158,205,242,255];
 });
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
@@ -1158,7 +1158,7 @@ const TILES = {
   [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
-const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===ICE||id===CROP||id===WHEATB||RS_TRANS.has(id);
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===CROP||id===WHEATB||RS_TRANS.has(id);
 const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && id!==SNOW && id!==CROP && id!==WHEATB && !RS_TRANS.has(id);
 
 /* ================= 音效 ================= */
@@ -1361,13 +1361,13 @@ function buildChunk(cx,cz){
       }
       continue;
     }
-    const target = (id===GLASS||id===ICE||id===WATER||RS_TRANS.has(id)) ? tra : (glowIds.has(id) ? glo : opa);
+    const target = (id===GLASS||id===WATER||RS_TRANS.has(id)) ? tra : (glowIds.has(id) ? glo : opa);
     for(let f=0;f<6;f++){
       const F=FACES[f];
       const nb = getB(x+F.dir[0], y+F.dir[1], z+F.dir[2]);
       let show;
       if(id===WATER||id===LAVA) show = nb===AIR;
-      else if(id===GLASS||id===ICE) show = nb!==id && isTransparent(nb);
+      else if(id===GLASS) show = nb!==GLASS && isTransparent(nb);
       else if(RS_TRANS.has(id)) show = nb!==id && isTransparent(nb);
       else if(id===PORTAL) show = nb!==PORTAL && (nb===AIR||nb===WATER);
       else if(id===ENDPORTAL) show = nb!==ENDPORTAL && (nb===AIR||nb===WATER);
