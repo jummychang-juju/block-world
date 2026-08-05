@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V29・積分兌換商店</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V30・洞穴·成就·音樂</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -134,6 +134,8 @@ window.onerror=function(msg,src,line,col,err){
   <h2>⏸ 遊戲暫停</h2>
   <div id="scoreBox" style="background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.45);border-radius:12px;padding:10px 18px;margin-bottom:6px;font-size:14px;line-height:2;text-align:center;color:#ffe9a8;"></div>
   <button class="obtn" id="shopBtn" style="background:#8a6a1a;">🎁 積分兌換獎勵</button>
+  <button class="obtn" id="achBtn" style="background:#3a4a8a;">🏆 成就</button>
+  <button class="obtn gray" id="musicBtn">🎵 音樂：開</button>
   <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
   <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
   <button class="obtn gray" id="helpBtn">📖 遊戲說明書</button>
@@ -141,6 +143,12 @@ window.onerror=function(msg,src,line,col,err){
   <button class="obtn gray" id="importBtn">📥 匯入存檔</button>
   <button class="obtn gray" id="newWorldBtn">🌍 建立新世界</button>
   <button class="obtn red" id="exitBtn">🚪 退出遊戲</button>
+</div>
+<div class="overlay" id="achOverlay" style="display:none;z-index:34;background:rgba(14,18,34,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
+  <h2 style="color:#ffd700;">🏆 成就</h2>
+  <div id="achSum" style="font-size:14px;color:#cde;margin-bottom:6px;"></div>
+  <div id="achList" style="display:flex;flex-direction:column;gap:6px;width:min(440px,92vw);font-size:13px;"></div>
+  <button class="obtn gray" id="achCloseBtn" style="margin-top:12px;">返回</button>
 </div>
 <div class="overlay" id="shopOverlay" style="display:none;z-index:34;background:rgba(30,24,8,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
   <h2 style="color:#ffd700;">🎁 積分兌換</h2>
@@ -251,6 +259,10 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#adf;">🕳️ 洞穴・🏆 成就・🎵 音樂（V30）</b><br>
+    地底現在有<b>天然洞穴</b>！蜿蜒地道、發光石照明、礦脈裸露在洞壁——帶著武器下去探險吧<br>
+    🏆 <b>成就系統</b>：☰選單→「成就」看12個挑戰，達成解鎖並獲得<b>積分加成</b>直接進商店用！<br>
+    🎵 <b>背景音樂</b>：白天恬靜、夜晚神秘（☰選單可開關）<br><br>
     <b style="color:#fd8;">⛏ 個人挖礦積分</b><br>
     親手用<b>鎬子挖</b>或<b>自己引爆TNT</b>炸到的礦才算分：💎鑽石每顆<b>1分</b>、🟣獄髓每顆<b>5分</b><br>
     打開 ☰ 選單就能看到你挖到幾顆和總積分！（苦力怕炸掉的不算、交易買的也不算，要親手挖！）<br>
@@ -433,6 +445,27 @@ function generateOver(sd, w){
   const dRng = mulberry32(sd^0x77dd);
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=1;y<6;y++){
     if(w[idx(x,y,z)]===STONE && dRng()<0.0065) w[idx(x,y,z)]=DIAMOND;
+  }
+  /* 天然洞穴：蜿蜒地道與洞窟（只挖石頭與泥土，礦脈會裸露在洞壁上） */
+  const cvRng=mulberry32(sd^0xCAFE5);
+  for(let c=0;c<16;c++){
+    let cx=8+cvRng()*(WX-16), cy=5+cvRng()*14, cz=8+cvRng()*(WZ-16);
+    let ang=cvRng()*6.28, pit=(cvRng()-0.5)*0.6;
+    const len=50+((cvRng()*80)|0);
+    for(let s=0;s<len;s++){
+      const r=1.4+cvRng()*1.2, rr=Math.ceil(r);
+      for(let dx=-rr;dx<=rr;dx++) for(let dy=-rr;dy<=rr;dy++) for(let dz=-rr;dz<=rr;dz++){
+        if(dx*dx+dy*dy+dz*dz>r*r) continue;
+        const x=(cx+dx)|0, y=(cy+dy)|0, z=(cz+dz)|0;
+        if(!inBounds(x,y,z)||y<1) continue;
+        const b=w[idx(x,y,z)];
+        if(b===STONE||b===DIRT) w[idx(x,y,z)] = cvRng()<0.006 ? GLOW : AIR;   /* 偶爾留發光石照亮洞穴 */
+      }
+      ang+=(cvRng()-0.5)*0.7;
+      pit+=(cvRng()-0.5)*0.3; pit=Math.max(-0.5,Math.min(0.4,pit));
+      cx+=Math.cos(ang)*1.6; cz+=Math.sin(ang)*1.6; cy+=pit*1.4;
+      cy=Math.max(3,Math.min(SEA+5,cy));
+    }
   }
   for(let x=3;x<WX-3;x++) for(let z=3;z<WZ-3;z++){
     const h=hmap[x*WZ+z];
@@ -1125,6 +1158,23 @@ function noiseBurst(dur, vol, fc){
     s.connect(f); f.connect(g); g.connect(AC.destination); s.start();
   }catch(e){}
 }
+/* 背景音樂：WebAudio 生成式旋律（白天恬靜五聲音階、夜晚/地獄低音） */
+let musicOn = (typeof localStorage!=='undefined' && localStorage.getItem('bw_music')==='off') ? false : true;
+let musT=1.5;
+const SCALE_DAY=[262,294,330,392,440,523,587,659];
+const SCALE_NIGHT=[220,247,262,330,349,440];
+function musicTick(dt){
+  if(!musicOn||!AC) return;
+  musT-=dt;
+  if(musT>0) return;
+  musT=0.55+Math.random()*0.5;
+  if(Math.random()<0.35) return;   /* 休止符讓旋律呼吸 */
+  const dark = isNight||dim==='nether'||dim==='end';
+  const sc = dark?SCALE_NIGHT:SCALE_DAY;
+  const f = sc[(Math.random()*sc.length)|0] * (dim==='nether'?0.5:1);
+  tone(f, 1.8, 'sine', 0.03);
+  if(Math.random()<0.25) tone(f/2, 2.2, 'sine', 0.02);
+}
 const sfx = {
   dig:   ()=>tone(90,0.12,'square',0.1,60),
   place: ()=>tone(220,0.08,'square',0.09),
@@ -1462,7 +1512,55 @@ const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
-const availScore=()=> mineScore() - (mineStats.spent||0);
+/* 成就系統：達成解鎖稱號並獲得積分加成（可在商店使用） */
+const ACH=[
+  {id:'d1',   name:'💎 初次閃耀',   desc:'親手挖到第 1 顆鑽石',      pts:5},
+  {id:'d30',  name:'💎 鑽石大亨',   desc:'親手挖到 30 顆鑽石',       pts:30},
+  {id:'c1',   name:'🟣 獄髓獵人',   desc:'親手挖到第 1 顆獄髓',      pts:10},
+  {id:'c10',  name:'🟣 獄髓大師',   desc:'親手挖到 10 顆獄髓',       pts:50},
+  {id:'s100', name:'🏆 百分達人',   desc:'挖礦總積分達到 100 分',    pts:20},
+  {id:'drg',  name:'🐉 屠龍勇者',   desc:'打敗終界龍',               pts:40},
+  {id:'wit',  name:'💀 凋零剋星',   desc:'獲得凋零之星',             pts:30},
+  {id:'sec',  name:'🗺️ 尋寶大師',   desc:'找齊 10 個秘密基地',       pts:40},
+  {id:'god',  name:'✨ 神兵鑄造',   desc:'鑄造出天神之劍',           pts:50},
+  {id:'fly',  name:'🪂 展翅高飛',   desc:'獲得鞘翅',                 pts:20},
+  {id:'pets', name:'🐺🐱 寵物家族', desc:'同時擁有寵物狼與貓',       pts:15},
+  {id:'arm',  name:'🗄 武器收藏家', desc:'武器庫收藏 10 把武器',     pts:25},
+];
+const achDone=new Set();
+const achPts=()=>{ let s=0; for(const a of ACH) if(achDone.has(a.id)) s+=a.pts; return s; };
+const availScore=()=> mineScore() + achPts() - (mineStats.spent||0);
+function achChk(id){
+  switch(id){
+    case 'd1': return mineStats.diamond>=1;
+    case 'd30': return mineStats.diamond>=30;
+    case 'c1': return mineStats.chal>=1;
+    case 'c10': return mineStats.chal>=10;
+    case 's100': return mineScore()>=100;
+    case 'drg': return dragonDefeated;
+    case 'wit': return (inv.star||0)+(perks.star||0)>=1;
+    case 'sec': return foundSec.size>=10;
+    case 'god': return weapons.god;
+    case 'fly': return hasElytra;
+    case 'pets': return hasWolf&&hasCat;
+    case 'arm': return ownedWeapons().length>=10;
+  }
+  return false;
+}
+let achT=2;
+function checkAch(){
+  for(const a of ACH){
+    if(achDone.has(a.id)) continue;
+    let ok=false; try{ ok=achChk(a.id); }catch(e){}
+    if(ok){
+      achDone.add(a.id);
+      sfx.craft(); sfx.eye(); sfx.portal();
+      spawnParticles(player.x,player.y+2,player.z,25,0xffd700);
+      toast('🏆 達成成就【'+a.name+'】獲得 '+a.pts+' 積分加成！');
+      scheduleSave();
+    }
+  }
+}
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
@@ -5050,7 +5148,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, mineStats, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
+    inv, weapons, mineStats, ach:[...achDone], hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -5116,6 +5214,7 @@ async function loadGame(){
     if(d.inv) Object.assign(inv, d.inv);
     if(d.weapons) Object.assign(weapons, d.weapons);
     if(d.mineStats) Object.assign(mineStats, d.mineStats);
+    if(d.ach) for(const a of d.ach) achDone.add(a);
     if(d.hasFlint) hasFlint=true;
     if(d.hasBow) hasBow=true;
     if(d.hasBed) hasBed=true;
@@ -5165,6 +5264,7 @@ async function newWorld(){
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
   mineStats.diamond=0; mineStats.chal=0; mineStats.spent=0;
+  achDone.clear();
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
@@ -5195,7 +5295,9 @@ function openPause(){
     '<b style="color:#ffd700;">⛏ 個人挖礦積分</b>（親手用鎬子或TNT挖到才算！）<br>'+
     '💎 鑽石挖到 <b>'+mineStats.diamond+'</b> 顆　🟣 獄髓挖到 <b>'+mineStats.chal+'</b> 顆<br>'+
     '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>'+
-    (mineStats.spent>0 ? '（已使用 '+mineStats.spent+' 分，可用 <b>'+availScore()+'</b> 分）' : '');
+    (achPts()>0 ? '　🏅成就加成 +'+achPts() : '')+
+    (mineStats.spent>0||achPts()>0 ? '<br>已使用 '+(mineStats.spent||0)+' 分 → 可用 <b style="color:#ffd700;">'+availScore()+'</b> 分' : '');
+  document.getElementById('musicBtn').textContent = musicOn?'🎵 音樂：開':'🔇 音樂：關';
   document.getElementById('pauseOverlay').style.display='flex';
   if(document.pointerLockElement) document.exitPointerLock();
   saveGame(false);
@@ -5254,6 +5356,35 @@ function closeShop(){
 }
 document.getElementById('shopBtn').addEventListener('click',openShop);
 document.getElementById('shopCloseBtn').addEventListener('click',closeShop);
+/* 成就頁 */
+function renderAch(){
+  document.getElementById('achSum').innerHTML='已達成 <b style="color:#ffd700;">'+achDone.size+'</b> / '+ACH.length+'　成就積分加成：<b style="color:#ffd700;">+'+achPts()+'</b> 分';
+  const list=document.getElementById('achList');
+  list.innerHTML='';
+  for(const a of ACH){
+    const done=achDone.has(a.id);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;'+
+      (done?'background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.5);color:#ffe9a8;':'background:rgba(255,255,255,.05);border:1px solid #445;color:#89a;');
+    row.innerHTML='<span style="text-align:left;">'+(done?'✅ ':'🔒 ')+'<b>'+a.name+'</b><br><span style="font-size:11px;">'+a.desc+'</span></span><span style="white-space:nowrap;color:'+(done?'#ffd700':'#678')+';">+'+a.pts+'分</span>';
+    list.appendChild(row);
+  }
+}
+document.getElementById('achBtn').addEventListener('click',()=>{
+  document.getElementById('pauseOverlay').style.display='none';
+  renderAch();
+  document.getElementById('achOverlay').style.display='flex';
+});
+document.getElementById('achCloseBtn').addEventListener('click',()=>{
+  document.getElementById('achOverlay').style.display='none';
+  openPause();
+});
+document.getElementById('musicBtn').addEventListener('click',()=>{
+  musicOn=!musicOn;
+  try{ localStorage.setItem('bw_music', musicOn?'on':'off'); }catch(e){}
+  document.getElementById('musicBtn').textContent = musicOn?'🎵 音樂：開':'🔇 音樂：關';
+  toast(musicOn?'🎵 背景音樂開啟':'🔇 背景音樂關閉');
+});
 function closePause(){
   paused=false;
   document.getElementById('pauseOverlay').style.display='none';
@@ -5400,6 +5531,9 @@ function loop(){
   updateDay(dt);
   updateWeather(dt);
   updateFires(dt);
+  musicTick(dt);
+  achT-=dt;
+  if(achT<=0){ checkAch(); achT=3; }
   updateParticles(dt);
   updateZombies(dt);
   updateBlazes(dt);
