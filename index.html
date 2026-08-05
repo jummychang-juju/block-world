@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V31・農耕·養殖·精英怪</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V32・每日挑戰·怪物亂鬥</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -135,6 +135,7 @@ window.onerror=function(msg,src,line,col,err){
   <div id="scoreBox" style="background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.45);border-radius:12px;padding:10px 18px;margin-bottom:6px;font-size:14px;line-height:2;text-align:center;color:#ffe9a8;"></div>
   <button class="obtn" id="shopBtn" style="background:#8a6a1a;">🎁 積分兌換獎勵</button>
   <button class="obtn" id="achBtn" style="background:#3a4a8a;">🏆 成就</button>
+  <button class="obtn" id="battleBtn" style="background:#7a2a2a;">⚔️ 怪物亂鬥（花20分・全勝得40分+寶物）</button>
   <button class="obtn gray" id="musicBtn">🎵 音樂：開</button>
   <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
   <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
@@ -259,6 +260,10 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#faa;">📅 每日挑戰・⚔️ 怪物亂鬥（V32）</b><br>
+    每天一個新挑戰（打怪/挖礦/釣魚/收小麥），完成得 <b>15 積分</b>！☰選單看今日任務進度<br>
+    ⚔️ <b>怪物亂鬥</b>：☰選單花 20 積分開戰，怪物一波波湧來，<b>撐過 3 波</b>贏 40 積分＋💎×3＋💚×3！<br>
+    📍 左下角隨時顯示座標，大世界探險不迷路<br><br>
     <b style="color:#bfa;">🌾 農耕與養殖・👑 精英怪（V31）</b><br>
     挖草地撿🌱種子 → 點狀態列「🌱種」種在草地上 → 長成金黃色🌾收成小麥<br>
     小麥用途：合成台烤🍞<b>麵包×2</b>（回4心）｜點「🌾餵」餵動物——<b>餵飽兩隻同種動物就會生小寶寶</b>💕（60秒長大）<br>
@@ -1548,7 +1553,90 @@ const ACH=[
 ];
 const achDone=new Set();
 const achPts=()=>{ let s=0; for(const a of ACH) if(achDone.has(a.id)) s+=a.pts; return s; };
-const availScore=()=> mineScore() + achPts() - (mineStats.spent||0);
+const availScore=()=> mineScore() + achPts() + (mineStats.bonus||0) - (mineStats.spent||0);
+/* 每日挑戰：每天一個任務，完成得15積分 */
+const DAILY_TYPES=[
+  {t:'kill', name:'打倒 8 隻怪物',   goal:8,  icon:'⚔️'},
+  {t:'ore',  name:'親手挖 15 個礦物', goal:15, icon:'⛏'},
+  {t:'fish', name:'釣魚釣起 5 次',   goal:5,  icon:'🎣'},
+  {t:'wheat',name:'收成 6 株小麥',   goal:6,  icon:'🌾'},
+];
+let daily={key:'',ti:0,prog:0,done:false};
+function dailyKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function ensureDaily(){
+  const k=dailyKey();
+  if(daily.key!==k){
+    let h=0; for(const c of k) h=(h*31+c.charCodeAt(0))|0;
+    daily={key:k, ti:Math.abs(h)%DAILY_TYPES.length, prog:0, done:false};
+  }
+}
+function dailyEvt(t){
+  ensureDaily();
+  if(daily.done) return;
+  const D=DAILY_TYPES[daily.ti];
+  if(D.t!==t) return;
+  daily.prog++;
+  if(daily.prog>=D.goal){
+    daily.done=true;
+    mineStats.bonus=(mineStats.bonus||0)+15;
+    sfx.craft(); sfx.eye(); sfx.portal();
+    spawnParticles(player.x,player.y+2,player.z,25,0x60d0ff);
+    toast('📅 每日挑戰完成！獲得 15 積分加成，明天有新挑戰！');
+  } else if(daily.prog===Math.ceil(D.goal/2)){
+    toast('📅 每日挑戰過半：'+daily.prog+'/'+D.goal+'，加油！');
+  }
+  scheduleSave();
+}
+/* 怪物亂鬥防守戰：花20積分開戰，撐過3波獲得40積分+寶物 */
+const battle={active:false,wave:0};
+let battleT=0;
+function startBattle(){
+  if(battle.active){ toast('⚔️ 亂鬥進行中！'); return; }
+  if(availScore()<20){ toast('⚔️ 需要 20 可用積分才能開戰（全勝拿 40 積分＋寶物！）'); return; }
+  mineStats.spent=(mineStats.spent||0)+20;
+  battle.active=true; battle.wave=0;
+  document.getElementById('pauseOverlay').style.display='none';
+  paused=false;
+  if(!isTouch) renderer.domElement.requestPointerLock();
+  toast('⚔️ 亂鬥開始！怪物即將從四面八方湧來——撐過 3 波！');
+  battleT=1.5;   /* 1.5秒後由 battleTick 開出第一波 */
+}
+function nextWave(){
+  if(!battle.active) return;
+  battle.wave++;
+  const n=2+battle.wave*2;
+  let spawned=0;
+  for(let t=0;t<50 && spawned<n;t++){
+    const before=zombies.length;
+    trySpawnZombie();
+    if(zombies.length>before){
+      const zz=zombies[zombies.length-1];
+      if(zz.type==='creeper'){ removeEnt(zombies,zombies.length-1,false); continue; }   /* 亂鬥不出苦力怕，保護玩家建築 */
+      const a=Math.random()*6.28, d=9+Math.random()*4;
+      const x=Math.floor(player.x+Math.cos(a)*d), z=Math.floor(player.z+Math.sin(a)*d);
+      if(inBounds(x,1,z)){ zz.x=x+0.5; zz.z=z+0.5; zz.y=surfaceYo(x,z)+1; zz.vy=0; }
+      zz.arena=true; zz.aggro=true;
+      spawned++;
+    }
+  }
+  sfx.roar();
+  toast('⚔️ 第 '+battle.wave+'/3 波來襲：'+spawned+' 隻怪物！');
+}
+function battleTick(dt){
+  if(!battle.active) return;
+  battleT-=dt; if(battleT>0) return; battleT=0.5;
+  if(player.hp<=0){ battle.active=false; return; }
+  if(zombies.some(z=>z.arena)) return;
+  if(battle.wave>=3){
+    battle.active=false;
+    mineStats.bonus=(mineStats.bonus||0)+40;
+    inv.diamond+=3; inv.emerald+=3;
+    spawnParticles(player.x,player.y+2,player.z,40,0xffd700);
+    sfx.portal(); sfx.roar(); sfx.craft();
+    toast('🏆⚔️ 亂鬥全勝！獲得 40 積分＋💎×3＋💚×3！');
+    updateHUD(); scheduleSave();
+  } else nextWave();
+}
 function achChk(id){
   switch(id){
     case 'd1': return mineStats.diamond>=1;
@@ -1873,6 +1961,7 @@ function catchFish(){
   else { inv.diamond+=2; inv.emerald+=2; inv.gold+=2; msg='📦 沉船寶箱！💎×2 💚×2 🥇×2！！'; }
   sfx.craft();
   toast('🎣 釣到了：'+msg);
+  dailyEvt('fish');
   updateHUD(); scheduleSave();
 }
 let boatMesh=null;
@@ -2330,7 +2419,7 @@ function trySpawnZombie(){
   if(x<1||x>=WX-1||z<1||z>=WZ-1) return;
   const y = dim==='over' ? surfaceYo(x,z)+1 : floorY(x,z);
   if(y<=0||y>=WY-2) return;
-  if(getB(x,y,z)!==AIR) return;
+  { const sb2=getB(x,y,z); if(sb2!==AIR&&sb2!==SNOW) return; }
   if(Math.hypot(x-player.x,z-player.z)<6) return;
   const isN=dim==='nether';
   let v, mesh;
@@ -2372,7 +2461,7 @@ function trySpawnEnder(){
   if(x<2||x>=WX-2||z<2||z>=WZ-2) return;
   const y = dim==='over' ? surfaceYo(x,z)+1 : floorY(x,z);
   if(y<=0||y+3>=WY) return;
-  if(getB(x,y,z)!==AIR||getB(x,y+1,z)!==AIR) return;
+  { const s1=getB(x,y,z), s2=getB(x,y+1,z); if((s1!==AIR&&s1!==SNOW)||(s2!==AIR&&s2!==SNOW)) return; }
   const mesh=makeEnderMesh();
   scene.add(mesh);
   enders.push({kind:'e',x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:5,hurtT:0,atkT:0,aggro:false,dirT:0,moving:false,animT:0,mesh,w:0.25,h:2.7});
@@ -2476,7 +2565,7 @@ function trySpawnAnimal(){
   const x=Math.floor(player.x+Math.cos(a)*d), z=Math.floor(player.z+Math.sin(a)*d);
   if(x<1||x>=WX-1||z<1||z>=WZ-1) return;
   const y=surfaceYo(x,z)+1;
-  if(y>=WY-2||getB(x,y,z)!==AIR) return;
+  { const sa=getB(x,y,z); if(y>=WY-2||(sa!==AIR&&sa!==SNOW)) return; }
   if(getB(x,y-1,z)!==GRASS) return;
   const r=Math.random();
   const type = r<0.26 ? 'pig' : (r<0.46 ? 'chicken' : (r<0.66 ? 'cow' : (r<0.84 ? 'sheep' : 'vil')));
@@ -2514,13 +2603,14 @@ function updateZombies(dt){
       else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛掉了煤炭'); updateHUD(); scheduleSave(); }
       else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕掉了鐵'); updateHUD(); scheduleSave(); }
       if(z.elite){ inv.iron+=3; inv.diamond++; spawnParticles(z.x,z.y+1,z.z,20,0xffd700); toast('👑 打倒精英隊長！掉落 🔩×3 💎×1'); updateHUD(); scheduleSave(); }
+      dailyEvt('kill');
       const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : z.type==='slime'?0x58c048 : z.type==='magma'?0xd85820 : z.type==='witch'?0x4a2a6a : (z.fromNether?0xf0a8a0:0x55a04a);
       removeEnt(zombies,i,true,col); continue;
     }
-    if(dim==='over' && !isNight){ removeEnt(zombies,i,true,0xff8833); continue; }
+    if(dim==='over' && !isNight && !z.arena){ removeEnt(zombies,i,true,0xff8833); continue; }
     const dx=player.x-z.x, dz=player.z-z.z;
     const dist=Math.hypot(dx,dz);
-    if(dist>36){ removeEnt(zombies,i,false); continue; }
+    if(dist>36 && !z.arena){ removeEnt(zombies,i,false); continue; }
     z.hurtT=Math.max(0,z.hurtT-dt);
     z.atkT=Math.max(0,z.atkT-dt);
     z.groanT-=dt;
@@ -2653,6 +2743,7 @@ function updateEnders(dt){
     const e=enders[i];
     if(e.hp<=0){
       inv.pearl += 1+(Math.random()<0.5?1:0);
+      dailyEvt('kill');
       toast('🔮 獲得終界珍珠！');
       updateHUD(); scheduleSave();
       removeEnt(enders,i,true,0xd070f0);
@@ -3659,7 +3750,7 @@ function updateDay(dt){
         const x=Math.floor(v.x+Math.cos(a2)*d2), z=Math.floor(v.z+Math.sin(a2)*d2);
         if(!inBounds(x,1,z)) continue;
         const y=surfaceYo(x,z)+1;
-        if(y>=WY-2||getB(x,y,z)!==AIR) continue;
+        { const sv=getB(x,y,z); if(y>=WY-2||(sv!==AIR&&sv!==SNOW)) continue; }
         const mesh=makeVillagerMesh(); scene.add(mesh);
         animals.push({kind:'vil',x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:5,hurtT:0,dirT:0,moving:false,animT:0,mesh,w:0.25,h:1.8});
       }
@@ -4993,6 +5084,7 @@ function mine(){
     spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,10,0xe8c050);
     sfx.craft();
     toast('🌾 收成小麥！可以烤麵包或餵動物繁殖');
+    dailyEvt('wheat');
     updateHUD(); scheduleSave();
     return;
   }
@@ -5215,6 +5307,7 @@ function mine(){
       spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5, 10, oreColors[hit.id]);
       sfx.ore();
       toast('⛏ 挖到'+NAMES[hit.id]+'！'+(hit.id===DIAMOND?'（積分+1）':hit.id===CHAL?'（積分+5）':''));
+      dailyEvt('ore');
     }
     scheduleSave();
   }
@@ -5288,7 +5381,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, mineStats, ach:[...achDone], hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
+    inv, weapons, mineStats, ach:[...achDone], daily, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -5355,6 +5448,7 @@ async function loadGame(){
     if(d.weapons) Object.assign(weapons, d.weapons);
     if(d.mineStats) Object.assign(mineStats, d.mineStats);
     if(d.ach) for(const a of d.ach) achDone.add(a);
+    if(d.daily) daily=d.daily;
     if(d.hasFlint) hasFlint=true;
     if(d.hasBow) hasBow=true;
     if(d.hasBed) hasBed=true;
@@ -5403,8 +5497,9 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
-  mineStats.diamond=0; mineStats.chal=0; mineStats.spent=0;
+  mineStats.diamond=0; mineStats.chal=0; mineStats.spent=0; mineStats.bonus=0;
   achDone.clear();
+  battle.active=false;
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
@@ -5436,7 +5531,10 @@ function openPause(){
     '💎 鑽石挖到 <b>'+mineStats.diamond+'</b> 顆　🟣 獄髓挖到 <b>'+mineStats.chal+'</b> 顆<br>'+
     '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>'+
     (achPts()>0 ? '　🏅成就加成 +'+achPts() : '')+
-    (mineStats.spent>0||achPts()>0 ? '<br>已使用 '+(mineStats.spent||0)+' 分 → 可用 <b style="color:#ffd700;">'+availScore()+'</b> 分' : '');
+    (mineStats.spent>0||achPts()>0||(mineStats.bonus||0)>0 ? '<br>加成 +'+((mineStats.bonus||0)+achPts())+'　已使用 '+(mineStats.spent||0)+' 分 → 可用 <b style="color:#ffd700;">'+availScore()+'</b> 分' : '');
+  ensureDaily();
+  const DD=DAILY_TYPES[daily.ti];
+  document.getElementById('scoreBox').innerHTML += '<br>📅 今日挑戰：'+DD.icon+' '+DD.name+'　'+(daily.done?'<b style="color:#8f8;">✅ 完成(+15分)</b>':'<b>'+daily.prog+'/'+DD.goal+'</b>');
   document.getElementById('musicBtn').textContent = musicOn?'🎵 音樂：開':'🔇 音樂：關';
   document.getElementById('pauseOverlay').style.display='flex';
   if(document.pointerLockElement) document.exitPointerLock();
@@ -5519,6 +5617,7 @@ document.getElementById('achCloseBtn').addEventListener('click',()=>{
   document.getElementById('achOverlay').style.display='none';
   openPause();
 });
+document.getElementById('battleBtn').addEventListener('click',startBattle);
 document.getElementById('musicBtn').addEventListener('click',()=>{
   musicOn=!musicOn;
   try{ localStorage.setItem('bw_music', musicOn?'on':'off'); }catch(e){}
@@ -5638,6 +5737,11 @@ addEventListener('visibilitychange',()=>{ if(document.hidden && dirty) saveGame(
 
 /* ================= UI ================= */
 const toastEl=document.getElementById('toast');
+/* 座標顯示 */
+const coordsEl=document.createElement('div');
+coordsEl.style.cssText='position:fixed;bottom:8px;left:10px;z-index:10;font-size:11px;color:#cfe0ff;text-shadow:0 1px 2px #000;background:rgba(0,0,0,.35);border-radius:8px;padding:2px 8px;pointer-events:none;';
+document.body.appendChild(coordsEl);
+let coordsT=0;
 let toastTimer=null;
 function toast(msg){
   toastEl.textContent=msg;
@@ -5676,6 +5780,12 @@ function loop(){
   if(achT<=0){ checkAch(); achT=3; }
   cropT-=dt;
   if(cropT<=0){ growCrops(); cropT=8; }
+  battleTick(dt);
+  coordsT-=dt;
+  if(coordsT<=0){
+    coordsT=0.5;
+    coordsEl.textContent='📍 '+Math.floor(player.x)+', '+Math.floor(player.z)+(battle.active?'　⚔️第'+battle.wave+'/3波':'');
+  }
   updateParticles(dt);
   updateZombies(dt);
   updateBlazes(dt);
