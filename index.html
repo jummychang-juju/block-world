@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V35・戰狼進化</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V36・Boss討伐獎勵</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -3025,6 +3025,8 @@ function allDragonsDead(){
   setBlockRaw(gwx,gwy+1,gwz,GATEWAY);
   dirty=true;
   rebuildAll();
+  mineStats.bonus=(mineStats.bonus||0)+50;
+  toast('🐉🏆 屠龍獎勵：+50 積分！（終界龍 Dragon Boss）');
   document.getElementById('winOverlay').style.display='flex';
   paused=true;
   scheduleSave();
@@ -3478,6 +3480,8 @@ function updateWithers(dt){
       withers.splice(i,1);
       witherCD=10;
       document.getElementById('bossBar').style.display='none';
+      mineStats.bonus=(mineStats.bonus||0)+30;
+      toast('💀🏆 Boss 討伐獎勵：+30 積分！（凋零怪 Boss）');
       updateHUD(); scheduleSave();
       continue;
     }
