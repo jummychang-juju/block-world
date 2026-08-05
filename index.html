@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V28・個人挖礦積分</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V29・積分兌換商店</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -133,6 +133,7 @@ window.onerror=function(msg,src,line,col,err){
 <div class="overlay" id="pauseOverlay">
   <h2>⏸ 遊戲暫停</h2>
   <div id="scoreBox" style="background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.45);border-radius:12px;padding:10px 18px;margin-bottom:6px;font-size:14px;line-height:2;text-align:center;color:#ffe9a8;"></div>
+  <button class="obtn" id="shopBtn" style="background:#8a6a1a;">🎁 積分兌換獎勵</button>
   <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
   <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
   <button class="obtn gray" id="helpBtn">📖 遊戲說明書</button>
@@ -140,6 +141,12 @@ window.onerror=function(msg,src,line,col,err){
   <button class="obtn gray" id="importBtn">📥 匯入存檔</button>
   <button class="obtn gray" id="newWorldBtn">🌍 建立新世界</button>
   <button class="obtn red" id="exitBtn">🚪 退出遊戲</button>
+</div>
+<div class="overlay" id="shopOverlay" style="display:none;z-index:34;background:rgba(30,24,8,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
+  <h2 style="color:#ffd700;">🎁 積分兌換</h2>
+  <div id="shopPts" style="font-size:15px;color:#ffe9a8;margin-bottom:6px;"></div>
+  <div id="shopList" style="display:flex;flex-direction:column;gap:8px;width:min(440px,92vw);"></div>
+  <button class="obtn gray" id="shopCloseBtn" style="margin-top:12px;">返回</button>
 </div>
 <div class="overlay" id="deathOverlay">
   <h2>💀 你死掉了！</h2>
@@ -246,7 +253,9 @@ window.onerror=function(msg,src,line,col,err){
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
     <b style="color:#fd8;">⛏ 個人挖礦積分</b><br>
     親手用<b>鎬子挖</b>或<b>自己引爆TNT</b>炸到的礦才算分：💎鑽石每顆<b>1分</b>、🟣獄髓每顆<b>5分</b><br>
-    打開 ☰ 選單就能看到你挖到幾顆和總積分！（苦力怕炸掉的不算、交易買的也不算，要親手挖！）<br><br>
+    打開 ☰ 選單就能看到你挖到幾顆和總積分！（苦力怕炸掉的不算、交易買的也不算，要親手挖！）<br>
+    🎁 <b>積分兌換</b>：☰ 選單 →「積分兌換獎勵」用積分換好料——箭、烤肉、金蘋果、珍珠、凋零之星…<br>
+    最貴的 🎰 <b>神秘大獎（50分）</b>隨機開出超值大禮！積分用掉後要再挖礦賺回來哦<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
@@ -1451,8 +1460,9 @@ const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
-const mineStats={ diamond:0, chal:0 };
+const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
+const availScore=()=> mineScore() - (mineStats.spent||0);
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
@@ -5154,7 +5164,7 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
-  mineStats.diamond=0; mineStats.chal=0;
+  mineStats.diamond=0; mineStats.chal=0; mineStats.spent=0;
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
@@ -5184,11 +5194,66 @@ function openPause(){
   document.getElementById('scoreBox').innerHTML =
     '<b style="color:#ffd700;">⛏ 個人挖礦積分</b>（親手用鎬子或TNT挖到才算！）<br>'+
     '💎 鑽石挖到 <b>'+mineStats.diamond+'</b> 顆　🟣 獄髓挖到 <b>'+mineStats.chal+'</b> 顆<br>'+
-    '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>';
+    '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>'+
+    (mineStats.spent>0 ? '（已使用 '+mineStats.spent+' 分，可用 <b>'+availScore()+'</b> 分）' : '');
   document.getElementById('pauseOverlay').style.display='flex';
   if(document.pointerLockElement) document.exitPointerLock();
   saveGame(false);
 }
+/* ================= 積分兌換商店 ================= */
+const REWARDS=[
+  {name:'🏹 箭×10',                        cost:3,  give:()=>{ inv.arrow+=10; }},
+  {name:'🔥🍖 烤肉×3（每個回5顆心）',       cost:5,  give:()=>{ inv.cooked+=3; }},
+  {name:'🍀 幸運藥水×1（許願勝率大增）',    cost:8,  give:()=>{ inv.luck=(inv.luck||0)+1; }},
+  {name:'⚡ 速度藥水×2（狂奔60秒）',        cost:10, give:()=>{ inv.spd+=2; }},
+  {name:'✨🍎 金蘋果×2（回滿血）',          cost:12, give:()=>{ inv.apple+=2; }},
+  {name:'🔮 終界珍珠×3（瞬移+隱身）',       cost:15, give:()=>{ inv.pearl+=3; }},
+  {name:'💚 綠寶石×5（找村民交易）',        cost:20, give:()=>{ inv.emerald+=5; }},
+  {name:'💀 凋零之星×1（凋零附魔材料）',    cost:35, give:()=>{ inv.star+=1; }},
+  {name:'🎰 神秘大獎（隨機超值好料！）',    cost:50, give:()=>{
+    const r=Math.random();
+    if(r<0.25){ inv.diamond+=5; return '💎 鑽石×5！'; }
+    if(r<0.5){ inv.emerald+=8; return '💚 綠寶石×8！'; }
+    if(r<0.75){ inv.pearl+=5; return '🔮 終界珍珠×5！'; }
+    inv.apple+=3; inv.luck=(inv.luck||0)+2; return '✨🍎 金蘋果×3＋🍀幸運藥水×2！';
+  }},
+];
+function renderShop(){
+  document.getElementById('shopPts').innerHTML='可用積分：<b style="color:#ffd700;font-size:18px;">'+availScore()+'</b> 分（挖礦賺分：💎=1分、🟣獄髓=5分）';
+  const list=document.getElementById('shopList');
+  list.innerHTML='';
+  const avail=availScore();
+  for(const r of REWARDS){
+    const row=document.createElement('button');
+    const can=avail>=r.cost;
+    row.className='obtn';
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0;font-size:14px;'+(can?'background:#3a6a2a;':'background:#444;color:#999;');
+    row.innerHTML='<span style="text-align:left;">'+r.name+'</span><span style="white-space:nowrap;color:#ffd700;">'+r.cost+' 分</span>';
+    if(can) row.addEventListener('click',()=>redeem(r));
+    list.appendChild(row);
+  }
+}
+function redeem(r){
+  if(availScore()<r.cost){ toast('😢 積分不夠！快去挖鑽石和獄髓'); return; }
+  mineStats.spent=(mineStats.spent||0)+r.cost;
+  const msg=r.give();
+  sfx.craft(); sfx.eye();
+  spawnParticles(player.x,player.y+1.5,player.z,16,0xffd700);
+  toast('🎁 兌換成功：'+(msg||r.name));
+  updateHUD(); scheduleSave();
+  renderShop();
+}
+function openShop(){
+  document.getElementById('pauseOverlay').style.display='none';
+  renderShop();
+  document.getElementById('shopOverlay').style.display='flex';
+}
+function closeShop(){
+  document.getElementById('shopOverlay').style.display='none';
+  openPause();
+}
+document.getElementById('shopBtn').addEventListener('click',openShop);
+document.getElementById('shopCloseBtn').addEventListener('click',closeShop);
 function closePause(){
   paused=false;
   document.getElementById('pauseOverlay').style.display='none';
