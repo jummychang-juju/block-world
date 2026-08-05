@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V24・忠誠三叉戟</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V27・大世界·村莊·智慧怪物</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -235,6 +235,10 @@ window.onerror=function(msg,src,line,col,err){
     ⚡<b>落雷</b>打中樹木有機會引發火災🔥，火會蔓延燒掉樹葉原木後自行熄滅（不燒木板建築）<br>
     🌈雨停轉晴的白天，天邊會掛起一道<b>彩虹</b>！<br>
     晴朗的夜晚偶爾會有🌠<b>流星</b>劃過天際，有機會實現願望送你綠寶石／鑽石／珍珠或幸運藥水！<br><br>
+    <b style="color:#fc9;">🌍 大世界・村莊・智慧怪物（V27）</b><br>
+    世界放大 <b>2.25 倍</b>（288×288）！更多地方可以探險，遠處區塊自動載入不卡頓<br>
+    🏘️ <b>村莊</b>：平原上有小屋聚落（夜裡會亮燈），村民聚集在廣場，白天按💱交易超方便<br>
+    🧠 <b>怪物變聰明了</b>：💀骷髏會邊繞圈邊放箭｜💣苦力怕遠處潛行靠近、貼身衝刺！｜🕷蜘蛛會跳撲｜🧟殭屍左右包抄｜終界人會<b>瞬移到你背後</b>偷襲——記得常回頭看！<br><br>
     <b style="color:#fdb;">🏜️❄️ 生態域與雪球</b><br>
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
@@ -299,7 +303,7 @@ if(typeof THREE==='undefined'){
 "use strict";
 
 /* ================= 基本設定 ================= */
-const WX=192, WY=64, WZ=192;
+const WX=288, WY=64, WZ=288;   /* V27：世界放大 2.25 倍 */
 const CHUNK=16;
 const SEA=9;
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
@@ -358,6 +362,7 @@ function topSolid(w,x,z){
 }
 
 let SECRETS=[];
+let VILLAGES=[];
 const foundSec=new Set();
 function computeSecrets(){
   const r=mulberry32(seed^0x5EC12E7);
@@ -550,6 +555,51 @@ function generateOver(sd, w){
       for(let dx=-1;dx<=1;dx++) for(let dz=-1;dz<=1;dz++) w[idx(x+dx,h,z+dz)]=PLANK;
       w[idx(x,h+1,z)]=SECRETB;
     }
+  }
+  /* ===== 村莊聚落：平原上的小屋聚落，村民聚集 ===== */
+  VILLAGES=[];
+  const vRng=mulberry32(sd^0x71C0DE);
+  for(let tries=0; tries<300 && VILLAGES.length<3; tries++){
+    const vx=18+((vRng()*(WX-36))|0), vz=18+((vRng()*(WZ-36))|0);
+    if(bmap[vx*WZ+vz]!==0) continue;
+    const h0=topSolid(w,vx,vz);
+    if(h0<=SEA+1 || h0+7>=WY) continue;
+    if(w[idx(vx,h0,vz)]!==GRASS) continue;
+    let flat=true;
+    for(let dx=-8;dx<=8;dx+=4) for(let dz=-8;dz<=8;dz+=4){
+      const hh=topSolid(w,vx+dx,vz+dz);
+      if(Math.abs(hh-h0)>3 || w[idx(vx+dx,hh,vz+dz)]===WATER) flat=false;
+    }
+    if(!flat) continue;
+    if(VILLAGES.some(v2=>Math.hypot(v2.x-vx,v2.z-vz)<55)) continue;
+    if(SECRETS.some(s=>s.dim==='over'&&Math.hypot(s.x-vx,s.z-vz)<16)) continue;   /* 不壓到秘密基地 */
+    if(Math.hypot(graveyard.x-vx,graveyard.z-vz)<18) continue;                     /* 不壓到墓園 */
+    /* 整平場地 */
+    for(let dx=-9;dx<=9;dx++) for(let dz=-9;dz<=9;dz++){
+      const x=vx+dx, z=vz+dz;
+      if(!inBounds(x,0,z)) continue;
+      for(let y=h0+1;y<=Math.min(WY-2,h0+7);y++) w[idx(x,y,z)]=AIR;
+      for(let y=Math.max(1,h0-3);y<=h0;y++){ const b=w[idx(x,y,z)]; if(b===AIR||b===WATER) w[idx(x,y,z)]= (y===h0?GRASS:DIRT); }
+    }
+    /* 中央路燈 */
+    w[idx(vx,h0+1,vz)]=PLANK; w[idx(vx,h0+2,vz)]=GLOW;
+    /* 四間小屋，門口朝向中央廣場 */
+    for(const [ox,oz] of [[-6,-6],[6,-6],[-6,6],[6,6]]){
+      const cx=vx+ox, cz=vz+oz;
+      for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++){
+        const x=cx+dx, z=cz+dz;
+        if(!inBounds(x,0,z)) continue;
+        w[idx(x,h0,z)]=PLANK;
+        const edge=Math.abs(dx)===2||Math.abs(dz)===2;
+        for(let y2=1;y2<=2;y2++) w[idx(x,h0+y2,z)]= edge?PLANK:AIR;
+        w[idx(x,h0+3,z)]=PLANK;
+      }
+      w[idx(cx-2,h0+2,cz)]=GLASS; w[idx(cx+2,h0+2,cz)]=GLASS;   /* 窗戶 */
+      w[idx(cx-Math.sign(ox)*2,h0+1,cz)]=AIR;                    /* 門口 */
+      w[idx(cx-Math.sign(ox)*2,h0+2,cz)]=AIR;
+      w[idx(cx,h0+3,cz)]=GLOW;                                   /* 屋頂夜燈 */
+    }
+    VILLAGES.push({x:vx,z:vz,y:h0});
   }
   /* ===== 生態域最終修飾（沙漠仙人掌 / 雪原積雪與結冰湖）===== */
   const cacRng=mulberry32(sd^0xCAC705);
@@ -1260,10 +1310,45 @@ function rebuildChunk(cx,cz){
     for(const m of [old.solid, old.trans, old.glow]) if(m){ scene.remove(m); m.geometry.dispose(); }
   }
   const nc = buildChunk(cx,cz);
-  for(const m of [nc.solid, nc.trans, nc.glow]) if(m) scene.add(m);
+  /* 依視距決定顯示與否（大世界：遠處區塊隱藏） */
+  const pcx=Math.floor(player.x/CHUNK), pcz=Math.floor(player.z/CHUNK);
+  const near=Math.abs(cx-pcx)<=VIEW_CH && Math.abs(cz-pcz)<=VIEW_CH;
+  for(const m of [nc.solid, nc.trans, nc.glow]) if(m){ scene.add(m); m.visible=near; }
   chunks[cx*NCZ+cz]=nc;
 }
-function rebuildAll(){ for(let cx=0;cx<NCX;cx++) for(let cz=0;cz<NCZ;cz++) rebuildChunk(cx,cz); if(typeof refreshBeams==='function') refreshBeams(); if(typeof rsScan==='function') rsScan(); }
+/* 區塊視距系統：只建造與顯示玩家附近的區塊，跨區塊移動時分批補建（每幀最多4塊，避免卡頓） */
+const VIEW_CH=6;
+let lastCC='';
+function updateChunkVis(){
+  const pcx=Math.max(0,Math.min(NCX-1,Math.floor(player.x/CHUNK)));
+  const pcz=Math.max(0,Math.min(NCZ-1,Math.floor(player.z/CHUNK)));
+  const key=pcx+','+pcz+','+dim;
+  if(key===lastCC) return;
+  let built=0, missing=false;
+  for(let cx=0;cx<NCX;cx++) for(let cz=0;cz<NCZ;cz++){
+    const near=Math.abs(cx-pcx)<=VIEW_CH && Math.abs(cz-pcz)<=VIEW_CH;
+    let c=chunks[cx*NCZ+cz];
+    if(near && !c){
+      if(built<4){ rebuildChunk(cx,cz); c=chunks[cx*NCZ+cz]; built++; }
+      else { missing=true; continue; }
+    }
+    if(c) for(const m of [c.solid,c.trans,c.glow]) if(m) m.visible=near;
+  }
+  lastCC = missing ? '' : key;   /* 還有缺的下一幀繼續補 */
+}
+function rebuildAll(){
+  for(let cx=0;cx<NCX;cx++) for(let cz=0;cz<NCZ;cz++){
+    const old=chunks[cx*NCZ+cz];
+    if(old){
+      for(const m of [old.solid,old.trans,old.glow]) if(m){ scene.remove(m); m.geometry.dispose(); }
+      chunks[cx*NCZ+cz]=null;
+    }
+  }
+  lastCC='';
+  updateChunkVis();
+  if(typeof refreshBeams==='function') refreshBeams();
+  if(typeof rsScan==='function') rsScan();
+}
 
 let dirty=false;
 function setBlockRaw(x,y,z,id){
@@ -2246,8 +2331,10 @@ function updateZombies(dt){
     /* 骷髏弓箭手：保持距離放箭 */
     if((z.type==='skel'||z.type==='witch') && chasing){
       const keep=z.type==='witch'?7:6;
+      z.stT=(z.stT||0)-dt;
+      if(z.stT<=0){ z.strafe=Math.random()<0.5?1:-1; z.stT=1.2+Math.random()*1.8; }
       if(dist<keep){ dirX=-dirX; dirZ=-dirZ; }
-      else if(dist<12) sp=0;
+      else if(dist<13){ const sx2=dirZ*z.strafe, sz2=-dirX*z.strafe; dirX=sx2; dirZ=sz2; sp=1.6; }
       z.fireT-=dt;
       if(z.fireT<=0 && dist<15){
         const dy=(player.y+1.2)-(z.y+1.4);
@@ -2275,6 +2362,26 @@ function updateZombies(dt){
       z.fuseT=1.2;
       noiseBurst(0.7,0.22,3500);
       sp=0;
+    }
+    /* 苦力怕：遠處放輕腳步悄悄靠近，貼近突然衝刺偷襲！ */
+    if(z.type==='creeper' && chasing && z.fuseT<0 && !(hasCat&&dist<7)){
+      sp = dist<8 ? z.sp*2.1 : z.sp*0.65;
+    }
+    /* 蜘蛛：蓄力跳撲 */
+    if(z.type==='spider' && chasing){
+      z.lungeT=(z.lungeT||0)-dt;
+      if(z.lungeT<=0 && dist<5 && dist>1.4 && Math.abs(z.vy)<0.05){
+        z.vy=6.2; z.lungeBoost=0.5; z.lungeT=2.6;
+        tone(300,0.12,'sawtooth',0.06,600);
+      }
+      if(z.lungeBoost>0){ z.lungeBoost-=dt; sp*=2.6; }
+    }
+    /* 近戰怪：左右包抄，不走直線（多隻圍上來像鉗形攻勢） */
+    if(chasing && z.dmg>0 && z.type!=='spider' && z.type!=='creeper' && dist>4.5){
+      z.flank=z.flank||(Math.random()<0.5?1:-1);
+      const ang=0.55*z.flank, ca=Math.cos(ang), sa=Math.sin(ang);
+      const nx=dirX*ca-dirZ*sa, nz=dirX*sa+dirZ*ca;
+      dirX=nx; dirZ=nz;
     }
     const mx=dirX*sp*dt, mz=dirZ*sp*dt;
     z.yaw = chasing ? Math.atan2(dx,dz) : Math.atan2(dirX,dirZ);
@@ -2333,6 +2440,22 @@ function updateEnders(dt){
     if(e.aggro){
       sp = e.hurtT>0 ? 0 : 2.3;
       e.yaw=Math.atan2(dx,dz);
+      /* 闇影步：偶爾瞬移到玩家背後偷襲！ */
+      e.blinkT = (e.blinkT===undefined ? 3+Math.random()*4 : e.blinkT-dt);
+      if(e.blinkT<=0){
+        if(dist>4 && dist<18 && invisT<=0){
+          const bx=Math.floor(player.x+Math.sin(player.yaw)*2.2), bz=Math.floor(player.z+Math.cos(player.yaw)*2.2);
+          const by=surfaceYo(bx,bz)+1;
+          const okB=v2=>v2===AIR||v2===SNOW;
+          if(inBounds(bx,by,bz) && Math.abs(by-player.y)<3 && okB(getB(bx,by,bz)) && okB(getB(bx,by+1,bz)) && isSolid(getB(bx,by-1,bz))){
+            spawnParticles(e.x,e.y+1.5,e.z,8,0xd070f0);
+            e.x=bx+0.5; e.y=by; e.z=bz+0.5; e.vy=0;
+            spawnParticles(e.x,e.y+1.5,e.z,10,0xd070f0);
+            sfx.warp();
+          }
+        }
+        e.blinkT=5+Math.random()*5;
+      }
       if(dist<1.2 && Math.abs(player.y-e.y)<3 && e.atkT<=0){ damagePlayer(2); e.atkT=1.1; }
     } else {
       e.dirT-=dt;
@@ -3245,7 +3368,7 @@ function updateArrows(dt){
 const DAY_LEN=200;
 let dayT=0.05;
 let isNight=false;
-let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0;
+let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0, vilT=0;
 function dayFactor(t){
   if(t<0.45) return 1;
   if(t<0.55) return 1-(t-0.45)/0.1;
@@ -3287,6 +3410,24 @@ function updateDay(dt){
   } else {
     aSpawnT-=dt;
     if(aSpawnT<=0){ trySpawnAnimal(); aSpawnT=4+Math.random()*4; }
+    /* 村莊人口：白天讓附近村莊保持至少3位村民 */
+    vilT-=dt;
+    if(vilT<=0){
+      vilT=6;
+      for(const v of VILLAGES){
+        if(Math.hypot(v.x-player.x,v.z-player.z)>60) continue;
+        let n=0;
+        for(const a of animals) if(a.kind==='vil' && Math.hypot(a.x-v.x,a.z-v.z)<15) n++;
+        if(n>=3) continue;
+        const a2=Math.random()*6.28, d2=2+Math.random()*4;
+        const x=Math.floor(v.x+Math.cos(a2)*d2), z=Math.floor(v.z+Math.sin(a2)*d2);
+        if(!inBounds(x,1,z)) continue;
+        const y=surfaceYo(x,z)+1;
+        if(y>=WY-2||getB(x,y,z)!==AIR) continue;
+        const mesh=makeVillagerMesh(); scene.add(mesh);
+        animals.push({kind:'vil',x:x+0.5,y,z:z+0.5,vy:0,yaw:Math.random()*6.28,hp:5,hurtT:0,dirT:0,moving:false,animT:0,mesh,w:0.25,h:1.8});
+      }
+    }
   }
 }
 
@@ -5212,6 +5353,7 @@ function loop(){
 
   if(riding==='cart'){
     updateCart(dt);
+    updateChunkVis();
     const hit0=raycast(6);
     if(hit0){ hlBox.visible=true; hlBox.position.set(hit0.x+0.5,hit0.y+0.5,hit0.z+0.5); } else hlBox.visible=false;
     camera.position.set(player.x, player.y+EYE, player.z);
@@ -5347,6 +5489,7 @@ function loop(){
     boatMesh.position.set(player.x, player.y-0.05, player.z);
     boatMesh.rotation.y=player.yaw;
   }
+  updateChunkVis();
   camera.position.set(player.x, player.y+EYE, player.z);
   camera.rotation.set(player.pitch, player.yaw, 0);
   const hit=raycast(6);
@@ -5371,8 +5514,8 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
 /* ================= 啟動 ================= */
 (async function init(){
   document.getElementById('ctrlHint').innerHTML = isTouch
-    ? '🏜️❄️ 新內容：沙漠與雪原生態域！冰湖可以走上去、鑿冰洞釣魚🎣<br>⚾ 挖積雪❄️收集雪球 → 點狀態列「⚾❄️」丟怪物，凍住牠！<br>🌦️ 天氣系統：雨天好釣魚、雷雨落雷⚡、晴夜流星🌠許願<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
-    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜G 丟雪球｜Q 吃東西｜F 飛行<br>🏜️❄️ 新增生態域：沙漠仙人掌、雪原冰湖（可以走！鑿冰洞冰釣🎣）<br>⚾ 挖積雪得雪球→按G丟怪物凍住牠｜🌦️ 天氣：雨天好釣魚、雷雨落雷、晴夜流星🌠<br>進度自動儲存';
+    ? '🌍 大更新：世界放大2.25倍＋🏘️村莊聚落＋🧠怪物AI升級！<br>骷髏會繞圈放箭、苦力怕潛行偷襲、終界人瞬移背刺——小心背後！<br>白天找村莊跟村民💱交易｜🌦️ 天氣、生態域、忠誠三叉戟🔱都在等你<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
+    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭/擲三叉戟｜G 丟雪球｜Q 吃東西｜F 飛行<br>🌍 世界放大2.25倍＋🏘️村莊（找村民交易）＋🧠怪物更聰明（終界人會瞬移背刺！）<br>🌦️ 天氣、生態域、冰湖冰釣、忠誠三叉戟🔱應有盡有<br>進度自動儲存';
   const t = await loadGame();
   if(t===null){
     ensureDim('over');
