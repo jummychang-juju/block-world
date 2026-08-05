@@ -123,7 +123,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-2</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-3</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -219,7 +219,7 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#fbb;">🌊 新生存規則</b><br>
     摔落3格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
-    寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鏈子：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
     合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
@@ -3039,7 +3039,7 @@ const RECIPES=[
   {id:'flint',   kind:'flint', name:'打火石🔥（點燃地獄門）', cost:{iron:1,coal:1}},
   {id:'eye',     kind:'stack', name:'終界之眼👁（鑲進終界門框）', cost:{pearl:1,blaze:1}},
   {id:'pet',     kind:'pet',   name:'孵化龍蛋🐣（寵物小龍會幫你打怪）', cost:{egg:1,gold:3}},
-  {id:'chain',   kind:'chain', name:'鏈子⛓（砍1格木頭＝收下整棵樹！）', cost:{iron:4}},
+  {id:'chain',   kind:'chain', name:'鋸子🪚（砍1格木頭＝收下整棵樹！）', cost:{iron:4}},
   {id:'digger',  kind:'digger',name:'挖土器🪏（相連的土/沙/石一次挖光）', cost:{iron:3,stone:5}},
   {id:'wolf',    kind:'wolf',  name:'寵物狼🐺（跟著你、幫你咬怪）', cost:{beef:3,iron:2}},
   {id:'cat',     kind:'cat',   name:'寵物貓🐱（苦力怕害怕貓，不敢靠近你）', cost:{fish:3,gold:1}},
@@ -3107,7 +3107,7 @@ function renderCraft(){
         else if(r.kind==='scope'){ hasScope=true; toast('🔭 裝上瞄準鏡！箭矢從此飛直線，狙擊更容易'); }
         else if(r.kind==='rod'){ hasRod=true; toast('🎣 做好釣竿了！對準水面按🎣開始釣魚'); }
         else if(r.kind==='compass'){ hasCompass=true; toast('🧭 尋寶羅盤啟動！畫面上方會顯示最近秘密基地的距離'); }
-        else if(r.kind==='chain'){ hasChain=true; toast('⛓ 鏈子做好了！砍樹幹一下＝整棵樹進背包'); }
+        else if(r.kind==='chain'){ hasChain=true; toast('🪚 鋸子做好了！砍樹幹一下＝整棵樹進背包'); }
         else if(r.kind==='digger'){ hasDigger=true; toast('🪏 挖土器完成！挖土/沙/石一下＝整片挖光'); }
         else if(r.kind==='wolf'){ hasWolf=true; toast('🐺 汪！寵物狼加入隊伍，會幫你咬怪！'); }
         else if(r.kind==='cat'){ hasCat=true; toast('🐱 喵～寵物貓加入！苦力怕從此不敢靠近你'); }
@@ -4121,7 +4121,7 @@ function mine(){
     if(ap>0) inv.redapple+=ap;
     spawnParticles(hit.x+0.5,hit.y+1,hit.z+0.5,16,0x69a33a);
     sfx.dig(); sfx.craft();
-    toast('⛓🌳 整棵樹到手！原木×'+nw+(ap>0?('、蘋果×'+ap):''));
+    toast('🪚🌳 整棵樹到手！原木×'+nw+(ap>0?('、蘋果×'+ap):''));
     updateHUD(); scheduleSave();
     return;
   }
@@ -4199,16 +4199,20 @@ function mine(){
 }
 function place(){
   if(paused) return;
-  const hit=raycast(6);
+  const pidSel=HOTBAR[selSlot];
+  /* 水：不限距離，準心對到哪就放到哪（落地水專用） */
+  const hit=raycast(pidSel===WATER?80:6);
   if(!hit) return;
   const px=hit.x+hit.face[0], py=hit.y+hit.face[1], pz=hit.z+hit.face[2];
   if(!inBounds(px,py,pz)) return;
   const cur=getB(px,py,pz);
   if(cur!==AIR && cur!==WATER && cur!==LAVA) return;
-  const ox0=Math.floor(player.x-P_W), ox1=Math.floor(player.x+P_W);
-  const oy0=Math.floor(player.y), oy1=Math.floor(player.y+P_H);
-  const oz0=Math.floor(player.z-P_W), oz1=Math.floor(player.z+P_W);
-  if(px>=ox0&&px<=ox1&&py>=oy0&&py<=oy1&&pz>=oz0&&pz<=oz1) return;
+  if(pidSel!==WATER){
+    const ox0=Math.floor(player.x-P_W), ox1=Math.floor(player.x+P_W);
+    const oy0=Math.floor(player.y), oy1=Math.floor(player.y+P_H);
+    const oz0=Math.floor(player.z-P_W), oz1=Math.floor(player.z+P_W);
+    if(px>=ox0&&px<=ox1&&py>=oy0&&py<=oy1&&pz>=oz0&&pz<=oz1) return;
+  }
   const pid=HOTBAR[selSlot];
   if(pid===CHEST){
     if((inv.wood||0)<2){ toast('📦 放置儲物箱需要 🌲原木×2'); return; }
