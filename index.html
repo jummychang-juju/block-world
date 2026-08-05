@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V21・天氣與流星</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V22・積雪·落雷·彩虹</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -230,6 +230,9 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#9cf;">🌦️ 天氣與流星</b><br>
     主世界會隨機變天：☀️晴天／🌧️下雨／⛈️雷雨／❄️下雪（右上角圖示可看）<br>
     下雨時<b>釣魚更快更容易釣到寶物</b>🎣｜雷雨會落下閃電⚡且夜裡怪物大量增加，要小心！<br>
+    ❄️<b>下雪</b>會在露天地面鋪上白色雪毯，雪停後自然融化（純裝飾、可踩過，不影響方塊）<br>
+    ⚡<b>落雷</b>打中樹木有機會引發火災🔥，火會蔓延燒掉樹葉原木後自行熄滅（不燒木板建築）<br>
+    🌈雨停轉晴的白天，天邊會掛起一道<b>彩虹</b>！<br>
     晴朗的夜晚偶爾會有🌠<b>流星</b>劃過天際，有機會實現願望送你綠寶石／鑽石／珍珠或幸運藥水！<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
@@ -300,10 +303,10 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪"};
 const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
@@ -658,7 +661,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=66;
+const TILE=16, NTILES=67;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -951,6 +954,8 @@ drawTile(65,[150,105,55],8,(x,y)=>{
   if(x>=7&&x<=8&&y>=6&&y<=9) return [200,170,80,255];
   return [150,105,55,255];
 });
+/* 積雪 (66)：白色帶淡藍陰影的雪毯 */
+drawTile(66,[240,246,252],5,(x,y,r)=> r()<0.10?[214,226,242,255]:(((x+y)%6===0)?[228,236,248,255]:[242,247,253,255]));
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -984,11 +989,11 @@ const TILES = {
   [SECRETB]:{top:50,side:50,bot:50},
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
   [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
-  [CHEST]:{top:65,side:65,bot:65}
+  [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
-const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||RS_TRANS.has(id);
-const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && !RS_TRANS.has(id);
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||RS_TRANS.has(id);
+const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && id!==SNOW && !RS_TRANS.has(id);
 
 /* ================= 音效 ================= */
 let AC=null;
@@ -1098,6 +1103,17 @@ function buildChunk(cx,cz){
   for(let x=x0;x<x0+CHUNK;x++) for(let z=z0;z<z0+CHUNK;z++) for(let y=0;y<WY;y++){
     const id = world[idx(x,y,z)];
     if(id===AIR) continue;
+    /* 積雪：貼在方塊底部的薄雪毯 */
+    if(id===SNOW){
+      const yy=y+0.06, ft=66;
+      const fb=tra.pos.length/3;
+      tra.pos.push(x, yy, z+1,  x+1, yy, z+1,  x, yy, z,  x+1, yy, z);
+      const su0=ft/NTILES, su1=(ft+1)/NTILES;
+      tra.uv.push(su0,1, su1,1, su0,0, su1,0);
+      for(let k2=0;k2<4;k2++) tra.col.push(1,1,1);
+      tra.idx.push(fb,fb+1,fb+2, fb+2,fb+1,fb+3);
+      continue;
+    }
     /* 鐵軌與紅石粉：貼地平面 */
     if(id===RAIL||id===RWIRE||id===RWIRE_ON){
       const yy=y+(id===RAIL?0.07:0.04);
@@ -3111,10 +3127,12 @@ function updateWeatherHUD(){
 }
 function setWeather(w){
   if(w===weather) return;
+  const wasWet=(weather==='rain'||weather==='thunder');
   weather=w;
   if(w==='rain')        toast('🌧️ 下雨了…水面起漣漪，魚兒更愛上鉤');
   else if(w==='thunder')toast('⛈️ 暴風雨來襲！小心落雷，夜裡怪物變多了');
   else if(w==='snow')   toast('❄️ 開始下雪，世界一片靜謐雪白');
+  else if(wasWet && !isNight && dim==='over') showRainbow();
   else                  toast('☀️ 雲散天開，天氣放晴了');
   if(w!=='clear' && !precInit) seedPrecip();
   updateWeatherHUD();
@@ -3141,18 +3159,21 @@ function strikeLightning(){
   flashT=1;
   const a=Math.random()*6.28, d=9+Math.random()*15;
   const lx=player.x+Math.cos(a)*d, lz=player.z+Math.sin(a)*d;
-  const ty=surfaceYo(Math.floor(lx),Math.floor(lz));
+  const fx=Math.floor(lx), fz=Math.floor(lz), ty=surfaceYo(fx,fz);
   const m=new THREE.Mesh(new THREE.BoxGeometry(0.35,34,0.35), new THREE.MeshBasicMaterial({color:0xfaffff}));
   m.position.set(lx, ty+17, lz);
   scene.add(m);
   spawnParticles(lx, ty+1, lz, 16, 0xffffff);
   setTimeout(()=>{ scene.remove(m); m.geometry.dispose(); m.material.dispose(); }, 130);
+  /* 落在樹上有機會引發火災 */
+  if(flammable(getB(fx,ty,fz)) && Math.random()<0.5){ igniteBlock(fx,ty,fz); toast('⚡🔥 落雷引燃了樹木！'); }
   noiseBurst(0.05,0.16,4000);
   setTimeout(()=>{ tone(70,0.9,'sine',0.18,32); noiseBurst(0.7,0.22,240); }, 220+Math.random()*380);
 }
 function updateWeather(dt){
   if(dim!=='over'){
     if(rainObj.visible||snowObj.visible){ rainObj.visible=false; snowObj.visible=false; }
+    if(rainbowObj && rainbowObj.visible) rainbowObj.visible=false;
     flashT=0;
     return;
   }
@@ -3205,6 +3226,8 @@ function updateWeather(dt){
     flashT -= dt*2.2; if(flashT<0) flashT=0;
   }
   scene.background=skyCol; scene.fog.color.copy(skyCol);
+  if(weather==='snow') accumulateSnow(dt); else meltSnow(dt);
+  updateRainbow(dt);
   updateSky(dt);
 }
 
@@ -3244,6 +3267,116 @@ function updateSky(dt){
     s.mesh.material.opacity=Math.max(0,Math.min(1,s.life/1.5));
     if(s.life<=0){ scene.remove(s.mesh); s.mesh.geometry.dispose(); s.mesh.material.dispose(); shootingStars.splice(i,1); }
   }
+}
+
+/* ---- ⚡ 落雷引燃：只燒自然樹木(原木/樹葉/草)，不燒木板建築，且會自行熄滅 ---- */
+const fires=[];
+let fireFxT=0;
+function flammable(id){ return id===LEAF||id===WOOD||id===GRASS; }
+function igniteBlock(x,y,z){
+  if(fires.length>=42 || !inBounds(x,y,z)) return;
+  if(!flammable(getB(x,y,z))) return;
+  for(const f of fires) if(f.x===x&&f.y===y&&f.z===z) return;
+  const id=getB(x,y,z);
+  fires.push({x,y,z, t: id===LEAF?0.6+Math.random()*0.5 : id===GRASS?0.5 : 1.4+Math.random()*0.8});
+  sfx.ignite();
+}
+function updateFires(dt){
+  if(dim!=='over'){ if(fires.length) fires.length=0; return; }
+  if(!fires.length) return;
+  fireFxT-=dt;
+  const doFx = fireFxT<=0; if(doFx) fireFxT=0.16;
+  const set=new Set(); let changed=false;
+  for(let i=fires.length-1;i>=0;i--){
+    const f=fires[i];
+    if(doFx) spawnParticles(f.x+0.5, f.y+0.35, f.z+0.5, 2, Math.random()<0.5?0xff7a10:0xffd23a);
+    f.t-=dt;
+    if(f.t>0) continue;
+    const id=getB(f.x,f.y,f.z);
+    setBlockRaw(f.x,f.y,f.z, id===GRASS?DIRT:AIR); markChunks(set,f.x,f.z); changed=true;
+    spawnParticles(f.x+0.5,f.y+0.5,f.z+0.5,4,0x555555);
+    fires.splice(i,1);
+    let spread=0;
+    for(const d of [[0,1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[0,-1,0]]){
+      if(spread>=2) break;
+      if(flammable(getB(f.x+d[0],f.y+d[1],f.z+d[2])) && Math.random()<0.55){ igniteBlock(f.x+d[0],f.y+d[1],f.z+d[2]); spread++; }
+    }
+  }
+  if(changed){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+}
+
+/* ---- ❄️ 地表積雪：下雪時在露天表面鋪上薄雪毯，雪停後緩緩融化（不會破壞任何方塊）---- */
+const snowPlaced=new Set();
+let snowSeeded=false, snowAccT=0, meltAccT=0;
+function seedSnowFromDiffs(){
+  snowPlaced.clear();
+  for(const [k,v] of diffs) if(v===SNOW) snowPlaced.add(k);
+  snowSeeded=true;
+}
+function accumulateSnow(dt){
+  if(!snowSeeded) seedSnowFromDiffs();
+  if(snowPlaced.size>=1400) return;
+  snowAccT-=dt; if(snowAccT>0) return; snowAccT=0.35;
+  const set=new Set(); let placed=0;
+  for(let a=0;a<12 && placed<6;a++){
+    const x=Math.floor(player.x+(Math.random()*2-1)*11), z=Math.floor(player.z+(Math.random()*2-1)*11);
+    if(!inBounds(x,0,z)) continue;
+    const gy=surfaceYo(x,z), sy=gy+1;
+    if(sy<1||sy>=WY) continue;
+    const ground=getB(x,gy,z);
+    if(ground===AIR||ground===WATER||ground===LAVA||ground===SNOW) continue;
+    if(getB(x,sy,z)!==AIR) continue;
+    let sky=true;
+    for(let yy=sy+1; yy<WY; yy++){ if(getB(x,yy,z)!==AIR){ sky=false; break; } }
+    if(!sky) continue;
+    setBlockRaw(x,sy,z,SNOW); markChunks(set,x,z); snowPlaced.add(x+','+sy+','+z); placed++;
+  }
+  if(placed){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+}
+function meltSnow(dt){
+  if(!snowSeeded) seedSnowFromDiffs();
+  if(snowPlaced.size===0) return;
+  meltAccT-=dt; if(meltAccT>0) return; meltAccT=0.3;
+  const set=new Set(); let n=0;
+  for(const k of snowPlaced){
+    if(n>=12) break;
+    snowPlaced.delete(k); n++;
+    const [x,y,z]=k.split(',').map(Number);
+    if(getB(x,y,z)===SNOW){ setBlockRaw(x,y,z,AIR); markChunks(set,x,z); }
+  }
+  if(n){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+}
+
+/* ---- 🌈 雨後彩虹：雨停轉晴的白天，天邊掛起一道彩虹 ---- */
+let rainbowObj=null, rainbowT=0;
+function makeRainbow(){
+  const g=new THREE.Group();
+  const cols=[0xff3b3b,0xff9a1f,0xffe32e,0x38d24a,0x2f8bff,0x3b52ff,0x9b3bff], R=118;
+  for(let i=0;i<7;i++){
+    const geo=new THREE.TorusGeometry(R-i*2.1, 1.1, 5, 60, Math.PI);
+    const m=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:cols[i], transparent:true, opacity:0, depthWrite:false, depthTest:false, side:THREE.DoubleSide}));
+    g.add(m);
+  }
+  g.renderOrder=-1;
+  return g;
+}
+function showRainbow(){
+  if(!rainbowObj){ rainbowObj=makeRainbow(); scene.add(rainbowObj); }
+  rainbowT=16;
+  toast('🌈 雨過天晴，天邊掛起一道彩虹！');
+}
+function updateRainbow(dt){
+  if(!rainbowObj) return;
+  if(rainbowT>0 && dim==='over'){
+    rainbowT-=dt;
+    let a=1;
+    if(rainbowT>14) a=(16-rainbowT)/2; else if(rainbowT<3) a=rainbowT/3;
+    a=Math.max(0,Math.min(1,a))*0.68;
+    for(const m of rainbowObj.children) m.material.opacity=a;
+    /* 掛在玩家北方遠處、雙腳沒入地平線的大拱橋 */
+    rainbowObj.position.set(player.x, player.y-58, player.z-92);
+    rainbowObj.visible = a>0.002;
+  } else if(rainbowObj.visible){ rainbowObj.visible=false; }
 }
 
 /* ================= 合成系統 ================= */
@@ -4780,6 +4913,7 @@ function loop(){
   portalCD=Math.max(0,portalCD-dt);
   updateDay(dt);
   updateWeather(dt);
+  updateFires(dt);
   updateParticles(dt);
   updateZombies(dt);
   updateBlazes(dt);
