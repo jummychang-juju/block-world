@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V30・洞穴·成就·音樂</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V31・農耕·養殖·精英怪</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -259,6 +259,10 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#bfa;">🌾 農耕與養殖・👑 精英怪（V31）</b><br>
+    挖草地撿🌱種子 → 點狀態列「🌱種」種在草地上 → 長成金黃色🌾收成小麥<br>
+    小麥用途：合成台烤🍞<b>麵包×2</b>（回4心）｜點「🌾餵」餵動物——<b>餵飽兩隻同種動物就會生小寶寶</b>💕（60秒長大）<br>
+    👑 夜晚 8% 機率出現<b>精英隊長</b>：更大更壯（血×3），打倒掉 🔩×3＋💎×1！<br><br>
     <b style="color:#adf;">🕳️ 洞穴・🏆 成就・🎵 音樂（V30）</b><br>
     地底現在有<b>天然洞穴</b>！蜿蜒地道、發光石照明、礦脈裸露在洞壁——帶著武器下去探險吧<br>
     🏆 <b>成就系統</b>：☰選單→「成就」看12個挑戰，達成解鎖並獲得<b>積分加成</b>直接進商店用！<br>
@@ -337,10 +341,10 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪",55:"冰塊"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪",55:"冰塊",56:"小麥苗",57:"成熟小麥"};
 const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
@@ -790,7 +794,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=68;
+const TILE=16, NTILES=70;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -1085,6 +1089,18 @@ drawTile(65,[150,105,55],8,(x,y)=>{
 });
 /* 積雪 (66)：白色帶淡藍陰影的雪毯 */
 drawTile(66,[240,246,252],5,(x,y,r)=> r()<0.10?[214,226,242,255]:(((x+y)%6===0)?[228,236,248,255]:[242,247,253,255]));
+/* 小麥苗 (68)：嫩綠新芽 */
+drawTile(68,[80,180,60],10,(x,y)=>{
+  const stem=(x===4||x===8||x===12)&&y>6;
+  const leaf=(y>=5&&y<=8)&&((x>=3&&x<=5)||(x>=7&&x<=9)||(x>=11&&x<=13));
+  return (stem||leaf)?[80,190,70,255]:[0,0,0,0];
+});
+/* 成熟小麥 (69)：金黃麥穗 */
+drawTile(69,[220,180,60],10,(x,y)=>{
+  const stem=(x===4||x===8||x===12)&&y>4;
+  const head=(y>=1&&y<=6)&&((x>=3&&x<=5)||(x>=7&&x<=9)||(x>=11&&x<=13));
+  return head?[235,195,80,255]:(stem?[190,160,70,255]:[0,0,0,0]);
+});
 /* 冰塊 (67)：半透明淡藍，帶裂紋 */
 drawTile(67,[160,205,240],6,(x,y)=>{
   const crack=((x*3+y*5)%16===0)||((x+y*2)%13===0);
@@ -1125,11 +1141,12 @@ const TILES = {
   [SECRETB]:{top:50,side:50,bot:50},
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
   [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
-  [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}, [ICE]:{top:67,side:67,bot:67}
+  [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}, [ICE]:{top:67,side:67,bot:67},
+  [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
-const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===ICE||RS_TRANS.has(id);
-const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && id!==SNOW && !RS_TRANS.has(id);
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===ICE||id===CROP||id===WHEATB||RS_TRANS.has(id);
+const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && id!==SNOW && id!==CROP && id!==WHEATB && !RS_TRANS.has(id);
 
 /* ================= 音效 ================= */
 let AC=null;
@@ -1311,11 +1328,12 @@ function buildChunk(cx,cz){
       }
       continue;
     }
-    /* 火把與拉桿：小柱子 */
-    if(id===RTORCH||id===RTORCH_OFF||id===LEVER||id===LEVER_ON){
+    /* 火把與拉桿：小柱子（小麥作物也用此方式呈現） */
+    if(id===RTORCH||id===RTORCH_OFF||id===LEVER||id===LEVER_ON||id===CROP||id===WHEATB){
       const mtile=TILES[id].side;
       const isT=(id===RTORCH||id===RTORCH_OFF);
-      const bx0=isT?0.38:0.26, bx1=isT?0.62:0.74, by1=isT?0.66:0.5;
+      const isC=(id===CROP||id===WHEATB);
+      const bx0=isC?0.12:(isT?0.38:0.26), bx1=isC?0.88:(isT?0.62:0.74), by1=id===CROP?0.45:(id===WHEATB?0.85:(isT?0.66:0.5));
       for(let f=0;f<6;f++){
         const F=FACES[f];
         const mb=tra.pos.length/3;
@@ -1508,7 +1526,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -1526,6 +1544,7 @@ const ACH=[
   {id:'fly',  name:'🪂 展翅高飛',   desc:'獲得鞘翅',                 pts:20},
   {id:'pets', name:'🐺🐱 寵物家族', desc:'同時擁有寵物狼與貓',       pts:15},
   {id:'arm',  name:'🗄 武器收藏家', desc:'武器庫收藏 10 把武器',     pts:25},
+  {id:'brd',  name:'🍞 麵包師傅',   desc:'種小麥並烤出麵包',         pts:10},
 ];
 const achDone=new Set();
 const achPts=()=>{ let s=0; for(const a of ACH) if(achDone.has(a.id)) s+=a.pts; return s; };
@@ -1544,6 +1563,7 @@ function achChk(id){
     case 'fly': return hasElytra;
     case 'pets': return hasWolf&&hasCat;
     case 'arm': return ownedWeapons().length>=10;
+    case 'brd': return (inv.bread||0)>=1;
   }
   return false;
 }
@@ -1753,6 +1773,68 @@ function updateTrident(dt){
   }
   t.mesh.position.set(t.x,t.y,t.z);
 }
+/* ================= 農耕與養殖 ================= */
+let cropT=8;
+function plantSeed(){
+  if(inv.seed<=0){ toast('沒有種子（挖草地有機會撿到🌱）'); return; }
+  const hit=raycast(6);
+  if(!hit || (hit.id!==GRASS && hit.id!==DIRT)){ toast('🌱 對準草地或泥土的上方種植'); return; }
+  if(getB(hit.x,hit.y+1,hit.z)!==AIR){ toast('🌱 上面要有空位才能種'); return; }
+  inv.seed--;
+  setBlock(hit.x,hit.y+1,hit.z,CROP);
+  spawnParticles(hit.x+0.5,hit.y+1.2,hit.z+0.5,6,0x60c050);
+  sfx.place();
+  toast('🌱 種下小麥！等它長成金黃色就能收成');
+  updateHUD(); scheduleSave();
+}
+function growCrops(){
+  if(dim!=='over') return;
+  const grown=[];
+  for(const [k,v] of diffs){
+    if(v===CROP && Math.random()<0.28) grown.push(k);
+  }
+  if(!grown.length) return;
+  const set=new Set();
+  for(const k of grown){
+    const [x,y,z]=k.split(',').map(Number);
+    setBlockRaw(x,y,z,WHEATB);
+    markChunks(set,x,z);
+  }
+  dirty=true; scheduleSave();
+  for(const c of set){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
+}
+function feedWheat(){
+  if(inv.wheat<=0){ toast('沒有小麥（收成成熟小麥🌾）'); return; }
+  let best=null, bd=5;
+  for(const a of animals){
+    if(a.kind==='vil'||a.baby||a.fedT>0) continue;   /* 優先餵還餓著的 */
+    const d=Math.hypot(a.x-player.x,a.z-player.z);
+    if(d<bd){ bd=d; best=a; }
+  }
+  if(!best){ toast('🌾 附近5格內沒有餓著的動物'); return; }
+  inv.wheat--;
+  best.fedT=120;
+  spawnParticles(best.x,best.y+1,best.z,10,0xff70a0);
+  sfx.eat();
+  /* 找同種也吃飽的伴侶 → 生小寶寶！ */
+  for(const b of animals){
+    if(b===best||b.kind!==best.kind||!(b.fedT>0)||b.baby) continue;
+    if(Math.hypot(b.x-best.x,b.z-best.z)>8) continue;
+    best.fedT=0; b.fedT=0;
+    const mk={pig:makePigMesh,cow:makeCowMesh,sheep:makeSheepMesh,chicken:makeChickenMesh}[best.kind];
+    if(!mk) break;
+    const mesh=mk(); mesh.scale.set(0.45,0.45,0.45); scene.add(mesh);
+    animals.push({kind:best.kind,x:(best.x+b.x)/2,y:best.y+0.5,z:(best.z+b.z)/2,vy:0,yaw:0,
+      hp:2,hurtT:0,dirT:0,moving:false,animT:0,mesh,baby:true,growT:60,
+      w:best.w*0.5,h:best.h*0.5});
+    spawnParticles(best.x,best.y+1.2,best.z,18,0xff70a0);
+    sfx.craft(); sfx.oink();
+    toast('💕 動物生了小寶寶！60秒後長大');
+    break;
+  }
+  if(best.fedT>0) toast('🌾 餵食成功！再餵附近同種動物一隻就會生寶寶');
+  updateHUD(); scheduleSave();
+}
 function raycastWater(maxDist){
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   let x=camera.position.x, y=camera.position.y, z=camera.position.z;
@@ -1899,6 +1981,7 @@ function eat(kind){
   else if(kind==='mutton' && inv.mutton>0){ inv.mutton--; heal(3); sfx.eat(); toast('🍢 回復 3 顆心'); }
   else if(kind==='fish' && inv.fish>0){ inv.fish--; heal(3); sfx.eat(); toast('🐟 回復 3 顆心'); }
   else if(kind==='cooked' && inv.cooked>0){ inv.cooked--; heal(5); sfx.eat(); toast('🔥🍖 香噴噴烤肉！回復 5 顆心'); }
+  else if(kind==='bread' && inv.bread>0){ inv.bread--; heal(4); sfx.eat(); toast('🍞 剛出爐的麵包！回復 4 顆心'); }
   else if(kind==='luck' && inv.luck>0){ inv.luck--; luckT=60; sfx.eat(); sfx.eye(); toast('🍀 幸運加持 60 秒！快去許願池'); }
   else if(kind==='redapple' && inv.redapple>0){ inv.redapple--; heal(2); sfx.eat(); toast('🍎 回復 2 顆心'); }
   else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('✨ 金蘋果！生命全滿'); }
@@ -1933,7 +2016,7 @@ function updateHUD(){
   w.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();cycleWeapon(1);},{passive:false});
   w.addEventListener('mousedown',ev=>{ev.stopPropagation();cycleWeapon(1);});
   sb.appendChild(w);
-  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀']];
+  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀']];
   for(const [k,e] of foods){
     if(inv[k]<=0) continue;
     const b=document.createElement('span');
@@ -1963,6 +2046,22 @@ function updateHUD(){
     b.textContent='⚾❄️×'+inv.snowball;
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwSnowball();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwSnowball();});
+    sb.appendChild(b);
+  }
+  if(inv.seed>0){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent='🌱種×'+inv.seed;
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();plantSeed();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();plantSeed();});
+    sb.appendChild(b);
+  }
+  if(inv.wheat>0){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent='🌾餵×'+inv.wheat;
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();feedWheat();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();feedWheat();});
     sb.appendChild(b);
   }
   if(curWeapon==='trident' && weapons.trident){
@@ -2256,6 +2355,15 @@ function trySpawnZombie(){
   scene.add(mesh);
   zombies.push({kind:'z',type:v.type,fromNether:isN,x:x+0.5,y,z:z+0.5,vy:0,yaw:0,hp:(dim==='over'?Math.round(v.hp*1.5):v.hp),sp:v.sp,dmg:v.dmg,hurtT:0,atkT:0,fireT:2+Math.random()*2,fuseT:-1,groanT:Math.random()*5,animT:Math.random()*10,mesh,w:(v.type==='spider'||v.type==='slime'||v.type==='magma')?0.42:0.25*v.scale,h:v.type==='spider'?0.85:(v.type==='slime'||v.type==='magma')?0.72:1.75*v.scale});
   if(v.type!=='skel') sfx.zGroan();
+  /* 精英怪：8% 機率出現「隊長」，血量×3、傷害+1、體型更大、掉落豐厚 */
+  const zz=zombies[zombies.length-1];
+  if(zz && dim==='over' && zz.dmg>0 && zz.type!=='creeper' && zz.type!=='spider' && Math.random()<0.08){
+    zz.elite=true;
+    zz.hp*=3;
+    zz.dmg+=1;
+    zz.mesh.scale.set(1.2,1.2,1.2);
+    sfx.roar();
+  }
 }
 function trySpawnEnder(){
   if(enders.length>=MAX_E) return;
@@ -2405,6 +2513,7 @@ function updateZombies(dt){
       else if(z.type==='skel'){ inv.arrow+=3; toast('🏹 骷髏掉了 3 支箭！'); updateHUD(); scheduleSave(); }
       else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛掉了煤炭'); updateHUD(); scheduleSave(); }
       else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕掉了鐵'); updateHUD(); scheduleSave(); }
+      if(z.elite){ inv.iron+=3; inv.diamond++; spawnParticles(z.x,z.y+1,z.z,20,0xffd700); toast('👑 打倒精英隊長！掉落 🔩×3 💎×1'); updateHUD(); scheduleSave(); }
       const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : z.type==='slime'?0x58c048 : z.type==='magma'?0xd85820 : z.type==='witch'?0x4a2a6a : (z.fromNether?0xf0a8a0:0x55a04a);
       removeEnt(zombies,i,true,col); continue;
     }
@@ -2596,6 +2705,13 @@ function updateEnders(dt){
 function updateAnimals(dt){
   for(let i=animals.length-1;i>=0;i--){
     const a=animals[i];
+    if(a.fedT>0) a.fedT-=dt;
+    if(a.baby){
+      a.growT-=dt;
+      const s=0.45+0.55*Math.max(0,Math.min(1,1-a.growT/60));
+      a.mesh.scale.set(s,s,s);
+      if(a.growT<=0){ a.baby=false; a.mesh.scale.set(1,1,1); a.hp=3; }
+    }
     if(a.hp<=0){
       if(a.kind==='pig'){ inv.pork += 1+(Math.random()<0.5?1:0); toast('🍖 獲得豬排！'); }
       else if(a.kind==='cow'){ inv.beef += 1+(Math.random()<0.5?1:0); toast('🥩 獲得牛排！'); }
@@ -3878,7 +3994,7 @@ function updateRainbow(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星',cooked:'🔥🍖烤肉',luck:'🍀幸運藥水'};
+const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星',cooked:'🔥🍖烤肉',luck:'🍀幸運藥水',wheat:'🌾小麥'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -3912,6 +4028,7 @@ const RECIPES=[
   {id:'wolf',    kind:'wolf',  name:'寵物狼🐺（跟著你、幫你咬怪）', cost:{beef:3,iron:2}},
   {id:'cat',     kind:'cat',   name:'寵物貓🐱（苦力怕害怕貓，不敢靠近你）', cost:{fish:3,gold:1}},
   {id:'luck',    kind:'stack', name:'幸運藥水🍀×1（60秒內許願池勝率大增）', cost:{emerald:2,redapple:1}},
+  {id:'bread',   kind:'stack', name:'麵包🍞×2（每個回4顆心）', cost:{wheat:3}},
   {id:'compass', kind:'compass',name:'尋寶羅盤🧭（顯示最近秘密基地的距離）', cost:{iron:2,gold:1}},
   {id:'rod',     kind:'rod',   name:'釣竿🎣（在水邊釣魚，會釣到好東西）', cost:{wood:3,iron:1}},
   {id:'boat',    kind:'boat',  name:'船🛶（水面和岩漿上都能開！）', cost:{wood:5}},
@@ -3986,6 +4103,7 @@ function renderCraft(){
         else if(r.id==='apple'){ inv.apple++; toast('✨🍎 合成了金蘋果！'); }
         else if(r.id==='spd'){ inv.spd=(inv.spd||0)+1; toast('⚡ 合成了速度藥水！點左上角⚡喝掉'); }
         else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
+        else if(r.id==='bread'){ inv.bread=(inv.bread||0)+2; toast('🍞 烤了2個麵包！香噴噴'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
     }
@@ -4861,6 +4979,23 @@ function mine(){
   const hit=raycast(6);
   if(!hit) return;
   if(hit.id===TNT){ setBlock(hit.x,hit.y,hit.z,AIR); explode(hit.x,hit.y,hit.z); return; }
+  if(hit.id===CROP){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    inv.seed++;
+    toast('🌱 收回種子（等它變金黃再收成才有小麥）');
+    sfx.dig(); updateHUD(); scheduleSave();
+    return;
+  }
+  if(hit.id===WHEATB){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    inv.wheat+=1+(Math.random()<0.4?1:0);
+    if(Math.random()<0.65) inv.seed++;
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,10,0xe8c050);
+    sfx.craft();
+    toast('🌾 收成小麥！可以烤麵包或餵動物繁殖');
+    updateHUD(); scheduleSave();
+    return;
+  }
   if(hit.id===SNOW){
     setBlock(hit.x,hit.y,hit.z,AIR);
     snowPlaced.delete(hit.x+','+hit.y+','+hit.z);
@@ -5086,6 +5221,11 @@ function mine(){
   if(wasLeaf && Math.random()<0.08){
     inv.redapple++;
     toast('🍎 樹葉掉出蘋果！');
+    updateHUD(); scheduleSave();
+  }
+  if(hit.id===GRASS && Math.random()<0.15){
+    inv.seed++;
+    toast('🌱 撿到小麥種子！點狀態列「🌱種」種下去');
     updateHUD(); scheduleSave();
   }
   sfx.dig();
@@ -5534,6 +5674,8 @@ function loop(){
   musicTick(dt);
   achT-=dt;
   if(achT<=0){ checkAch(); achT=3; }
+  cropT-=dt;
+  if(cropT<=0){ growCrops(); cropT=8; }
   updateParticles(dt);
   updateZombies(dt);
   updateBlazes(dt);
