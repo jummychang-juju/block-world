@@ -123,7 +123,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-3</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-4</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -4200,8 +4200,8 @@ function mine(){
 function place(){
   if(paused) return;
   const pidSel=HOTBAR[selSlot];
-  /* 水：不限距離，準心對到哪就放到哪（落地水專用） */
-  const hit=raycast(pidSel===WATER?80:6);
+  /* 水：放置距離放寬到10格（落地水要抓時機才夠帥） */
+  const hit=raycast(pidSel===WATER?10:6);
   if(!hit) return;
   const px=hit.x+hit.face[0], py=hit.y+hit.face[1], pz=hit.z+hit.face[2];
   if(!inBounds(px,py,pz)) return;
