@@ -123,7 +123,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-5</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V20-7</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -218,6 +218,9 @@ window.onerror=function(msg,src,line,col,err){
     WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置｜Space跳｜E互動｜R射箭｜T丟珍珠｜F飛行(需鞘翅)｜⬆️⬇️切換武器｜1-9選方塊<br><br>
     <b style="color:#fbb;">🌊 新生存規則</b><br>
     摔落5格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
+    <b style="color:#9df;">🤿 海底礦洞</b><br>
+    湖底下方藏著發光的水下洞穴（每個世界最多6個）！洞壁鑲滿鐵金綠寶鑽石💎<br>
+    潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
@@ -420,6 +423,48 @@ function generateOver(sd, w){
   }
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=2;y<16;y++){
     if(w[idx(x,y,z)]===STONE && lRng()<0.004) w[idx(x,y,z)]= (lRng()<0.15?SUPERL:LUCKY);
+  }
+  /* 海底礦洞：湖底下方的水下洞穴，礦物超豐富（要潛水才拿得到！） */
+  const uRng=mulberry32(sd^0xB10E5EA);
+  let caveN=0;
+  for(let p2=0;p2<40 && caveN<6;p2++){
+    const cx2=10+((uRng()*(WX-20))|0), cz2=10+((uRng()*(WZ-20))|0);
+    if(w[idx(cx2,SEA,cz2)]!==WATER) continue;
+    /* 找湖底 */
+    let bed=SEA;
+    while(bed>4 && w[idx(cx2,bed,cz2)]===WATER) bed--;
+    if(bed<=5) continue;
+    const depth=4+((uRng()*3)|0);
+    const bot=Math.max(3, bed-depth);
+    const rx=2+((uRng()*2)|0);
+    const cyM=(bed+bot)/2, ry=(bed-bot)/2+1;
+    /* 挖出灌滿水的洞穴（從湖底往下） */
+    for(let dx=-rx-1;dx<=rx+1;dx++) for(let dz=-rx-1;dz<=rx+1;dz++) for(let y=bot;y<=bed;y++){
+      const x=cx2+dx, z=cz2+dz;
+      if(!inBounds(x,y,z)) continue;
+      const dd=(dx*dx+dz*dz)/(rx*rx) + ((y-cyM)*(y-cyM))/(ry*ry);
+      if(dd<=1) w[idx(x,y,z)]=WATER;
+    }
+    /* 洞壁鑲滿礦物與發光石 */
+    for(let dx=-rx-2;dx<=rx+2;dx++) for(let dz=-rx-2;dz<=rx+2;dz++) for(let y=Math.max(2,bot-1);y<=bed;y++){
+      const x=cx2+dx, z=cz2+dz;
+      if(!inBounds(x,y,z)) continue;
+      const b=w[idx(x,y,z)];
+      if(b!==STONE && b!==DIRT) continue;
+      /* 只鑲在貼著水的壁面 */
+      let touch=false;
+      for(const d of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){
+        if(inBounds(x+d[0],y+d[1],z+d[2]) && w[idx(x+d[0],y+d[1],z+d[2])]===WATER && y+d[1]<=bed){ touch=true; break; }
+      }
+      if(!touch) continue;
+      const rr=uRng();
+      if(rr<0.10) w[idx(x,y,z)]=GLOW;
+      else if(rr<0.22) w[idx(x,y,z)]=IRON;
+      else if(rr<0.30) w[idx(x,y,z)]=GOLD;
+      else if(rr<0.36) w[idx(x,y,z)]=EMERALD;
+      else if(rr<0.41) w[idx(x,y,z)]=DIAMOND;
+    }
+    caveN++;
   }
   /* 試煉之地：高空黑曜石競技場（凋零怪出沒！） */
   computeSecrets();
@@ -4648,19 +4693,19 @@ function loop(){
       if(!collide(player.x,player.y+evy*es,player.z)) player.y+=evy*es;
     }
     if(!elytraFly) player.vy += -26*dt;
+    if(player.onGround && fallD>0){
+      if(fallD>5.2 && liquid!==WATER && feetLq!==WATER){
+        const fd=Math.min(8, 1+Math.floor((fallD-5.2)/2));
+        damagePlayer(fd);
+        toast('💥 摔痛了 -'+fd+'（超過5格記得往水裡跳）');
+      }
+      fallD=0;
+    }
     if((keys['Space']||jumpHeld) && player.onGround){ player.vy=perks.jump?10.6:8.4; player.onGround=false; }
   }
-  /* 摔落傷害：3格起跳，每多2格+1（落水免傷） */
+  /* 摔落高度累計（結算已移到起跳判定之前） */
   if(!player.onGround && player.vy<0 && !player.fly && !boating && !gliding) fallD-=player.vy*dt;
   else if(player.fly||boating||gliding||liquid===WATER||liquid===LAVA) fallD=0;
-  if(player.onGround){
-    if(fallD>5.2 && liquid!==WATER && feetLq!==WATER){
-      const fd=Math.min(8, 1+Math.floor((fallD-5.2)/2));
-      damagePlayer(fd);
-      toast('💥 摔痛了 -'+fd+'（下次往水裡跳就不會痛）');
-    }
-    fallD=0;
-  }
   if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
   if(!collide(player.x, player.y, player.z+dz)) player.z+=dz;
   if(!player.fly){
