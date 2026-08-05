@@ -125,13 +125,14 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V27・大世界·村莊·智慧怪物</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V28・個人挖礦積分</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
 </div>
 <div class="overlay" id="pauseOverlay">
   <h2>⏸ 遊戲暫停</h2>
+  <div id="scoreBox" style="background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.45);border-radius:12px;padding:10px 18px;margin-bottom:6px;font-size:14px;line-height:2;text-align:center;color:#ffe9a8;"></div>
   <button class="obtn" id="resumeBtn">▶️ 繼續遊戲</button>
   <button class="obtn gray" id="pauseSaveBtn">💾 儲存進度</button>
   <button class="obtn gray" id="helpBtn">📖 遊戲說明書</button>
@@ -243,6 +244,9 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#fd8;">⛏ 個人挖礦積分</b><br>
+    親手用<b>鎬子挖</b>或<b>自己引爆TNT</b>炸到的礦才算分：💎鑽石每顆<b>1分</b>、🟣獄髓每顆<b>5分</b><br>
+    打開 ☰ 選單就能看到你挖到幾顆和總積分！（苦力怕炸掉的不算、交易買的也不算，要親手挖！）<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
@@ -1379,7 +1383,8 @@ function setBlock(x,y,z,id){
 }
 
 /* ================= TNT 爆炸 ================= */
-function explode(bx,by,bz){
+function explode(bx,by,bz,byPlayer){
+  if(byPlayer===undefined) byPlayer=true;   /* 預設玩家引爆；苦力怕自爆傳 false */
   sfx.boom();
   const R=3.5, set=new Set();
   const cascade=[];
@@ -1395,6 +1400,10 @@ function explode(bx,by,bz){
     if(id===TNT && !(x===bx&&y===by&&z===bz)) cascade.push([x,y,z]);
     const lm=COLLECT[id];
     if(lm) loot[lm]=(loot[lm]||0)+1;
+    if(byPlayer){
+      if(id===DIAMOND) mineStats.diamond++;
+      else if(id===CHAL) mineStats.chal++;
+    }
     setBlockRaw(x,y,z,AIR);
     markChunks(set,x,z);
   }
@@ -1409,7 +1418,7 @@ function explode(bx,by,bz){
   }
   for(const e of entities()) if(Math.hypot(e.x-bx,e.y-by,e.z-bz)<R+1.5) e.hp=0;
   for(const d of dragons) if(Math.hypot(d.x-bx,d.y-by,d.z-bz)<R+2) d.hp-=6;
-  for(const c of cascade) setTimeout(()=>{ if(getB(c[0],c[1],c[2])===AIR) explode(c[0],c[1],c[2]); }, 250);
+  for(const c of cascade) setTimeout(()=>{ if(getB(c[0],c[1],c[2])===AIR) explode(c[0],c[1],c[2],byPlayer); }, 250);
   const pd=Math.hypot(player.x-bx-0.5, player.y+0.9-by, player.z-bz-0.5);
   if(pd<R+1) damagePlayer(pd<2?4:2);
 }
@@ -1441,6 +1450,9 @@ const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
               pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0 };
+/* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
+const mineStats={ diamond:0, chal:0 };
+const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
@@ -2307,7 +2319,7 @@ function updateZombies(dt){
       } else if(z.fuseT<=0){
         const bx=Math.floor(z.x), by=Math.floor(z.y+0.5), bz=Math.floor(z.z);
         removeEnt(zombies,i,false);
-        explode(bx,by,bz);
+        explode(bx,by,bz,false);   /* 苦力怕自爆：不算玩家親手挖礦 */
         continue;
       }
       z.mesh.position.set(z.x,z.y,z.z);
@@ -4935,6 +4947,8 @@ function mine(){
       if(PROT.has(b)) continue;
       const m2=COLLECT[b];
       if(m2) inv[m2]++;
+      if(b===DIAMOND) mineStats.diamond++;
+      else if(b===CHAL) mineStats.chal++;
       setBlockRaw(x,y,z,AIR);
       markChunks(chg,x,z);
     }
@@ -4951,11 +4965,13 @@ function mine(){
   }
   if(mat){
     inv[mat]++;
+    if(hit.id===DIAMOND){ mineStats.diamond++; }
+    else if(hit.id===CHAL){ mineStats.chal++; }
     if(isOre){
       const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb, [EMERALD]:0x50dc78 };
       spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5, 10, oreColors[hit.id]);
       sfx.ore();
-      toast('⛏ 挖到'+NAMES[hit.id]+'！');
+      toast('⛏ 挖到'+NAMES[hit.id]+'！'+(hit.id===DIAMOND?'（積分+1）':hit.id===CHAL?'（積分+5）':''));
     }
     scheduleSave();
   }
@@ -5024,7 +5040,7 @@ async function saveGame(showMsg){
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
-    inv, weapons, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
+    inv, weapons, mineStats, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
     sel: selSlot, dayT,
     time: Date.now()
   });
@@ -5089,6 +5105,7 @@ async function loadGame(){
     }
     if(d.inv) Object.assign(inv, d.inv);
     if(d.weapons) Object.assign(weapons, d.weapons);
+    if(d.mineStats) Object.assign(mineStats, d.mineStats);
     if(d.hasFlint) hasFlint=true;
     if(d.hasBow) hasBow=true;
     if(d.hasBed) hasBed=true;
@@ -5137,6 +5154,7 @@ async function newWorld(){
   player.hp=10; player.fly=false;
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
+  mineStats.diamond=0; mineStats.chal=0;
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
   stopCart();
   for(const k in ench) delete ench[k];
@@ -5163,6 +5181,10 @@ async function newWorld(){
 /* ================= 暫停 / 退出 ================= */
 function openPause(){
   paused=true;
+  document.getElementById('scoreBox').innerHTML =
+    '<b style="color:#ffd700;">⛏ 個人挖礦積分</b>（親手用鎬子或TNT挖到才算！）<br>'+
+    '💎 鑽石挖到 <b>'+mineStats.diamond+'</b> 顆　🟣 獄髓挖到 <b>'+mineStats.chal+'</b> 顆<br>'+
+    '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>';
   document.getElementById('pauseOverlay').style.display='flex';
   if(document.pointerLockElement) document.exitPointerLock();
   saveGame(false);
