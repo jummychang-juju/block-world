@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V34・英文學習·血月之夜</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V35・戰狼進化</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -260,6 +260,8 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#dbc;">🐺 戰狼進化（V35）</b><br>
+    寵物狼累計擊倒 <b>20 隻怪</b>就進化成「<b>戰狼 War Wolf</b>」！體型變大、毛色轉棕紅、咬擊×2、攻速更快，還解鎖新成就+25分！<br><br>
     <b style="color:#fca;">🇬🇧 英文小教室・🔴 血月之夜（V34）</b><br>
     方塊/武器/食物/動物名稱都變<b>中英對照</b>了！挖到什麼、吃到什麼順便學英文單字（國中程度）<br>
     🔴 <b>血月之夜 Blood Moon</b>：每晚 12% 機率天空變紅——怪物狂潮！但每隻怪掉寶加倍，還有機會掉鑽石！<br><br>
@@ -1556,6 +1558,7 @@ const ACH=[
   {id:'pets', name:'🐺🐱 寵物家族', desc:'同時擁有寵物狼與貓',       pts:15},
   {id:'arm',  name:'🗄 武器收藏家', desc:'武器庫收藏 10 把武器',     pts:25},
   {id:'brd',  name:'🍞 麵包師傅',   desc:'種小麥並烤出麵包',         pts:10},
+  {id:'wwolf',name:'🐺 戰狼馴獸師', desc:'寵物狼擊倒20隻怪進化戰狼', pts:25},
 ];
 const achDone=new Set();
 const achPts=()=>{ let s=0; for(const a of ACH) if(achDone.has(a.id)) s+=a.pts; return s; };
@@ -1658,6 +1661,7 @@ function achChk(id){
     case 'pets': return hasWolf&&hasCat;
     case 'arm': return ownedWeapons().length>=10;
     case 'brd': return (inv.bread||0)>=1;
+    case 'wwolf': return (mineStats.wolfK||0)>=20;
   }
   return false;
 }
@@ -3553,6 +3557,10 @@ function updateBuddies(dt){
   if(hasWolf && !wolfEnt){
     const mesh=makeWolfMesh(); scene.add(mesh);
     wolfEnt={x:player.x+1.2,y:player.y,z:player.z,atkT:0,animT:0,mesh};
+    if((mineStats.wolfK||0)>=20){
+      mesh.scale.set(1.3,1.3,1.3);
+      mesh.traverse(o=>{ if(o.isMesh&&o.material&&o.material.color) o.material=new THREE.MeshLambertMaterial({color:0x7a5a48}); });
+    }
   }
   if(!hasWolf && wolfEnt){ scene.remove(wolfEnt.mesh); wolfEnt=null; }
   if(wolfEnt){
@@ -3572,10 +3580,23 @@ function updateBuddies(dt){
     const gy=floorY(Math.floor(w2.x),Math.floor(w2.z));
     if(gy>0) w2.y+=( gy - w2.y )*8*dt;
     if(tgt && td<1.3 && w2.atkT<=0){
-      tgt.hp-=2; tgt.hurtT=0.4; tgt.aggro=true; w2.atkT=1.5;
-      spawnParticles(tgt.x,tgt.y+1,tgt.z,6,0xcccccc);
+      const evolved=(mineStats.wolfK||0)>=20;
+      tgt.hp-= evolved?4:2; tgt.hurtT=0.4; tgt.aggro=true; w2.atkT= evolved?1.0:1.5;
+      spawnParticles(tgt.x,tgt.y+1,tgt.z,6,evolved?0xff8844:0xcccccc);
       tone(500,0.08,'square',0.1,300);
-      if(tgt.hp<=0){ /* 死亡交由 updateZombies 處理 */ }
+      if(tgt.hp<=0){
+        mineStats.wolfK=(mineStats.wolfK||0)+1;
+        if(mineStats.wolfK===20){
+          w2.mesh.scale.set(1.3,1.3,1.3);
+          w2.mesh.traverse(o=>{ if(o.isMesh&&o.material&&o.material.color) o.material=new THREE.MeshLambertMaterial({color:0x7a5a48}); });
+          spawnParticles(w2.x,w2.y+1,w2.z,30,0xff8844);
+          sfx.roar(); sfx.craft();
+          toast('🐺✨ 寵物狼進化成「戰狼 War Wolf」！咬擊×2、攻速更快！');
+          scheduleSave();
+        } else if(mineStats.wolfK<20 && mineStats.wolfK%5===0){
+          toast('🐺 狼狼擊倒 '+mineStats.wolfK+'/20 隻，離進化戰狼不遠了！');
+        }
+      }
     }
     w2.mesh.position.set(w2.x,w2.y,w2.z);
     w2.mesh.rotation.y=Math.atan2(ddx,ddz);
