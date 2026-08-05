@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V23・生態域·冰湖·雪球</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V24・忠誠三叉戟</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -226,7 +226,8 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
-    合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br><br>
+    合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br>
+    🔱 <b>三叉戟＝忠誠投擲武器</b>：手持時電腦按 <b>R</b>／手機點狀態列「🔱擲出」→ 飛出去<b>貫穿路徑上所有怪物</b>（傷害+3、吃附魔加成），打完<b>自動穿牆飛回手中</b>！也能射龍<br><br>
     <b style="color:#9cf;">🌦️ 天氣與流星</b><br>
     主世界會隨機變天：☀️晴天／🌧️下雨／⛈️雷雨／❄️下雪（右上角圖示可看）<br>
     下雨時<b>釣魚更快更容易釣到寶物</b>🎣｜雷雨會落下閃電⚡且夜裡怪物大量增加，要小心！<br>
@@ -1450,6 +1451,103 @@ function updateSnowballs(dt){
     }
   }
 }
+/* ================= 三叉戟投擲（忠誠：擊出後自動飛回手中） ================= */
+let tridentFly=null;
+function makeTridentMesh(){
+  const g=new THREE.Group();
+  const teal=new THREE.MeshLambertMaterial({color:0x35b8a0});
+  const gold=new THREE.MeshLambertMaterial({color:0xd8c26a});
+  const shaft=new THREE.Mesh(new THREE.BoxGeometry(0.07,1.35,0.07),gold); shaft.position.y=-0.25;
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.09,0.09),teal); bar.position.y=0.42;
+  g.add(shaft,bar);
+  for(const dx of [-0.17,0,0.17]){
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.07,dx===0?0.5:0.36,0.07),teal);
+    p.position.set(dx,0.42+(dx===0?0.3:0.22),0);
+    g.add(p);
+  }
+  return g;
+}
+function throwTrident(){
+  if(curWeapon!=='trident'||!weapons.trident) return;
+  if(tridentFly){ toast('🔱 三叉戟還在飛！等它回到手上'); return; }
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  const m=makeTridentMesh();
+  m.position.copy(camera.position);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+  scene.add(m);
+  tridentFly={x:camera.position.x,y:camera.position.y,z:camera.position.z,
+    vx:dir.x*30, vy:dir.y*30+0.4, vz:dir.z*30,
+    dist:0, phase:'out', hit:new Set(), hitD:new Set(),
+    dmg: WEAPON_DMG.trident + (ench.trident||0) + (perks.star||0) + 3,
+    mesh:m, spin:0};
+  sfx.bow();
+  updateHUD();
+}
+function updateTrident(dt){
+  const t=tridentFly;
+  if(!t) return;
+  if(t.phase==='out'){
+    t.vy-=2*dt;
+    const STEPS=3;
+    for(let st=0; st<STEPS && t.phase==='out'; st++){
+      const sx=t.vx*dt/STEPS, sy=t.vy*dt/STEPS, sz=t.vz*dt/STEPS;
+      t.x+=sx; t.y+=sy; t.z+=sz;
+      t.dist+=Math.hypot(sx,sy,sz);
+      if(isSolid(getB(Math.floor(t.x),Math.floor(t.y),Math.floor(t.z)))){
+        t.phase='back';
+        spawnParticles(t.x,t.y,t.z,6,0x35b8a0);
+        noiseBurst(0.1,0.12,900);
+        break;
+      }
+      /* 貫穿：飛行路徑上每隻怪都吃一次高傷害 */
+      for(const e of entities()){
+        if(e.kind==='vil'||t.hit.has(e)) continue;
+        const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:(e.kind==='w'?1.6:0.5)));
+        if(Math.hypot(t.x-e.x,t.y-cy,t.z-e.z)<1.5){
+          t.hit.add(e);
+          e.hp-=t.dmg; e.hurtT=0.4;
+          if(e.kind==='z'||e.kind==='e') e.aggro=true;
+          const dx=e.x-t.x, dz=e.z-t.z, dd=Math.hypot(dx,dz)||1;
+          e.x+=dx/dd*1.5; e.z+=dz/dd*1.5; e.vy=3;
+          spawnParticles(e.x,cy,e.z,9,0x35d0b0);
+          sfx.zHit();
+        }
+      }
+      for(const d of dragons){
+        if(t.hitD.has(d)) continue;
+        if(Math.hypot(t.x-d.x,t.y-d.y,t.z-d.z)<2.2*d.tier.scale){
+          t.hitD.add(d);
+          d.hp-=t.dmg; d.hurtT=0.4;
+          spawnParticles(d.x,d.y,d.z,10,0x35d0b0);
+          sfx.zHit();
+        }
+      }
+    }
+    if(t.dist>40) t.phase='back';
+    if(t.phase==='out'){
+      const vl=Math.hypot(t.vx,t.vy,t.vz)||1;
+      t.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(t.vx/vl,t.vy/vl,t.vz/vl));
+    }
+  } else {
+    /* 忠誠回歸：無視牆壁直線飛回玩家手中 */
+    const dx=player.x-t.x, dy=player.y+1.2-t.y, dz=player.z-t.z;
+    const d=Math.hypot(dx,dy,dz);
+    if(d<1.5){
+      scene.remove(t.mesh);
+      t.mesh.traverse(o=>{ if(o.isMesh){ o.geometry.dispose(); o.material.dispose(); } });
+      tridentFly=null;
+      spawnParticles(player.x,player.y+1.2,player.z,6,0x35d0b0);
+      tone(720,0.12,'sine',0.09,1150);
+      updateHUD();
+      return;
+    }
+    const sp=34*dt/d;
+    t.x+=dx*sp; t.y+=dy*sp; t.z+=dz*sp;
+    t.spin+=14*dt;
+    t.mesh.rotation.set(t.spin,0,t.spin*0.7);
+  }
+  t.mesh.position.set(t.x,t.y,t.z);
+}
 function raycastWater(maxDist){
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   let x=camera.position.x, y=camera.position.y, z=camera.position.z;
@@ -1519,7 +1617,7 @@ const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6
 const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
 const WEAPON_KB = { hammer:2.4, god:2.4 };
 const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍', god:'✨ 天神之劍' };
+const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍', god:'✨ 天神之劍' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
 
 function surfaceYo(x,z){
@@ -1660,6 +1758,16 @@ function updateHUD(){
     b.textContent='⚾❄️×'+inv.snowball;
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwSnowball();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwSnowball();});
+    sb.appendChild(b);
+  }
+  if(curWeapon==='trident' && weapons.trident){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent = tridentFly ? '🔱↩️回歸中…' : '🔱擲出';
+    if(!tridentFly){
+      b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwTrident();},{passive:false});
+      b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwTrident();});
+    }
     sb.appendChild(b);
   }
   if(hasBed && dim==='over' && isNight){
@@ -3516,7 +3624,7 @@ const RECIPES=[
   {id:'iron',    kind:'sword', name:'鐵劍（傷害4・距離6）',    cost:{wood:1,iron:2}},
   {id:'axe',     kind:'sword', name:'戰斧🪓（傷害5・距離6）',  cost:{wood:1,iron:3}},
   {id:'diamond', kind:'sword', name:'鑽石劍（傷害6・距離7）',  cost:{wood:1,diamond:2}},
-  {id:'trident', kind:'sword', name:'三叉戟🔱（傷害7・距離9）', cost:{iron:5,diamond:1}},
+  {id:'trident', kind:'sword', name:'三叉戟🔱（近戰7｜按R擲出：高傷害貫穿＋自動飛回）', cost:{iron:5,diamond:1}},
   {id:'flame',   kind:'sword', name:'烈焰劍🔥（傷害7・距離7）', cost:{blaze:3,iron:2}},
   {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害8・距離8）', cost:{wood:1,chal:3}},
   {id:'hammer',  kind:'sword', name:'巨錘💥（傷害9・超大擊退）', cost:{iron:6,gold:2}},
@@ -4143,7 +4251,7 @@ addEventListener('keydown',e=>{
   }
   if(e.code==='KeyF') toggleFly();
   if(e.code==='KeyE') doAction();
-  if(e.code==='KeyR') shootBow();
+  if(e.code==='KeyR'){ if(curWeapon==='trident') throwTrident(); else shootBow(); }
   if(e.code==='KeyT') throwPearl();
   if(e.code==='KeyG') throwSnowball();
   if(e.code==='ArrowUp'){ e.preventDefault(); cycleWeapon(1); }
@@ -5076,6 +5184,7 @@ function loop(){
   updateBuddies(dt);
   updatePearls(dt);
   updateSnowballs(dt);
+  updateTrident(dt);
   beamT-=dt;
   if(beamT<=0){ refreshBeams(); beamT=8; }
   rsT-=dt;
