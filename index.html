@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V33・星空·螢火蟲·蝙蝠</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V34・英文學習·血月之夜</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -260,6 +260,9 @@ window.onerror=function(msg,src,line,col,err){
     世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
     冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
     ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
+    <b style="color:#fca;">🇬🇧 英文小教室・🔴 血月之夜（V34）</b><br>
+    方塊/武器/食物/動物名稱都變<b>中英對照</b>了！挖到什麼、吃到什麼順便學英文單字（國中程度）<br>
+    🔴 <b>血月之夜 Blood Moon</b>：每晚 12% 機率天空變紅——怪物狂潮！但每隻怪掉寶加倍，還有機會掉鑽石！<br><br>
     <b style="color:#ccf;">🌟 世界活起來（V33）</b><br>
     晴朗夜晚抬頭看<b>滿天星斗</b>緩緩流轉｜草原夜裡有<b>螢火蟲</b>✨群舞｜深入洞穴會遇到<b>蝙蝠</b>🦇亂飛！<br><br>
     <b style="color:#faa;">📅 每日挑戰・⚔️ 怪物亂鬥（V32）</b><br>
@@ -349,9 +352,10 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
       RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57;
-const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
-  14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪",55:"冰塊",56:"小麥苗",57:"成熟小麥"};
+/* 中英對照：融入國中程度英文單字，邊玩邊學！太難的字保留中文 */
+const NAMES = {1:"草地 Grass",2:"泥土 Dirt",3:"石頭 Stone",4:"沙子 Sand",5:"原木 Wood",6:"樹葉 Leaf",7:"木板 Board",8:"玻璃 Glass",11:"磚塊 Brick",12:"TNT 炸藥 Bomb",13:"發光石 Light Stone",
+  14:"煤礦 Coal",15:"鐵礦 Iron",16:"金礦 Gold",17:"鑽石礦 Diamond",18:"獄髓礦",19:"黑曜石",20:"岩漿 Lava",21:"地獄岩",22:"地獄門 Gate",23:"靈魂沙 Soul Sand",24:"合成台 Craft Table",
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat"};
 const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
@@ -1995,7 +1999,7 @@ const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6
 const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
 const WEAPON_KB = { hammer:2.4, god:2.4 };
 const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
-const WEAPON_NAME = { fist:'✊ 空手', wood:'🗡 木劍', stone:'🗡 石劍', iron:'🗡 鐵劍', axe:'🪓 戰斧', diamond:'🗡 鑽石劍', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘', emsword:'🗡 綠寶石劍💚', dagger:'🔪 吸血匕首🩸', frost:'❄️ 冰霜劍', thammer:'⚡ 雷神之鎚', ender:'🗡 終界劍🌌', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍', god:'✨ 天神之劍' };
+const WEAPON_NAME = { fist:'✊ 空手 Hands', wood:'🗡 木劍 Wood Sword', stone:'🗡 石劍 Stone Sword', iron:'🗡 鐵劍 Iron Sword', axe:'🪓 戰斧 Axe', diamond:'🗡 鑽石劍 Diamond Sword', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍 Fire Sword', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘 Hammer', emsword:'🗡 綠寶石劍💚 Emerald Sword', dagger:'🔪 吸血匕首🩸 Knife', frost:'❄️ 冰霜劍 Ice Sword', thammer:'⚡ 雷神之鎚 Thunder Hammer', ender:'🗡 終界劍🌌 End Sword', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍 King Sword', god:'✨ 天神之劍 God Sword' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
 
 function surfaceYo(x,z){
@@ -2066,13 +2070,13 @@ function heal(n){
   updateHUD();
 }
 function eat(kind){
-  if(kind==='pork' && inv.pork>0){ inv.pork--; heal(3); sfx.eat(); toast('🍖 回復 3 顆心'); }
-  else if(kind==='chicken' && inv.chicken>0){ inv.chicken--; heal(3); sfx.eat(); toast('🍗 回復 3 顆心'); }
-  else if(kind==='beef' && inv.beef>0){ inv.beef--; heal(4); sfx.eat(); toast('🥩 回復 4 顆心'); }
-  else if(kind==='mutton' && inv.mutton>0){ inv.mutton--; heal(3); sfx.eat(); toast('🍢 回復 3 顆心'); }
-  else if(kind==='fish' && inv.fish>0){ inv.fish--; heal(3); sfx.eat(); toast('🐟 回復 3 顆心'); }
+  if(kind==='pork' && inv.pork>0){ inv.pork--; heal(3); sfx.eat(); toast('🍖 豬肉 Pork！回復 3 顆心'); }
+  else if(kind==='chicken' && inv.chicken>0){ inv.chicken--; heal(3); sfx.eat(); toast('🍗 雞肉 Chicken！回復 3 顆心'); }
+  else if(kind==='beef' && inv.beef>0){ inv.beef--; heal(4); sfx.eat(); toast('🥩 牛肉 Beef！回復 4 顆心'); }
+  else if(kind==='mutton' && inv.mutton>0){ inv.mutton--; heal(3); sfx.eat(); toast('🍢 羊肉 Lamb！回復 3 顆心'); }
+  else if(kind==='fish' && inv.fish>0){ inv.fish--; heal(3); sfx.eat(); toast('🐟 魚 Fish！回復 3 顆心'); }
   else if(kind==='cooked' && inv.cooked>0){ inv.cooked--; heal(5); sfx.eat(); toast('🔥🍖 香噴噴烤肉！回復 5 顆心'); }
-  else if(kind==='bread' && inv.bread>0){ inv.bread--; heal(4); sfx.eat(); toast('🍞 剛出爐的麵包！回復 4 顆心'); }
+  else if(kind==='bread' && inv.bread>0){ inv.bread--; heal(4); sfx.eat(); toast('🍞 麵包 Bread！回復 4 顆心'); }
   else if(kind==='luck' && inv.luck>0){ inv.luck--; luckT=60; sfx.eat(); sfx.eye(); toast('🍀 幸運加持 60 秒！快去許願池'); }
   else if(kind==='redapple' && inv.redapple>0){ inv.redapple--; heal(2); sfx.eat(); toast('🍎 回復 2 顆心'); }
   else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('✨ 金蘋果！生命全滿'); }
@@ -2601,11 +2605,12 @@ function updateZombies(dt){
       else if(z.type==='wither' && Math.random()<0.5){ inv.blaze++; toast('🔥 凋靈骷髏掉了烈焰粉！'); updateHUD(); scheduleSave(); }
       else if(z.type==='magma' && Math.random()<0.4){ inv.blaze++; toast('🔥 岩漿怪掉了烈焰粉！'); updateHUD(); scheduleSave(); }
       else if(z.type==='witch' && Math.random()<0.6){ inv.gold++; toast('🥇 女巫掉了金塊！'); updateHUD(); scheduleSave(); }
-      else if(z.type==='skel'){ inv.arrow+=3; toast('🏹 骷髏掉了 3 支箭！'); updateHUD(); scheduleSave(); }
-      else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛掉了煤炭'); updateHUD(); scheduleSave(); }
-      else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕掉了鐵'); updateHUD(); scheduleSave(); }
+      else if(z.type==='skel'){ inv.arrow+=3; toast('🏹 骷髏 Skeleton 掉了 3 支箭 Arrow！'); updateHUD(); scheduleSave(); }
+      else if(z.type==='spider' && Math.random()<0.4){ inv.coal++; toast('⚫ 蜘蛛 Spider 掉了煤炭 Coal'); updateHUD(); scheduleSave(); }
+      else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; toast('🔩 拆彈成功！苦力怕 Creeper 掉了鐵 Iron'); updateHUD(); scheduleSave(); }
       if(z.elite){ inv.iron+=3; inv.diamond++; spawnParticles(z.x,z.y+1,z.z,20,0xffd700); toast('👑 打倒精英隊長！掉落 🔩×3 💎×1'); updateHUD(); scheduleSave(); }
       dailyEvt('kill');
+      if(bloodMoon){ const g=['iron','coal','arrow'][(Math.random()*3)|0]; inv[g]+=(g==='arrow'?3:1); if(Math.random()<0.15){ inv.diamond++; toast('🔴💎 血月獎勵：鑽石 Diamond×1！'); } updateHUD(); }
       const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : z.type==='slime'?0x58c048 : z.type==='magma'?0xd85820 : z.type==='witch'?0x4a2a6a : (z.fromNether?0xf0a8a0:0x55a04a);
       removeEnt(zombies,i,true,col); continue;
     }
@@ -2806,11 +2811,11 @@ function updateAnimals(dt){
       if(a.growT<=0){ a.baby=false; a.mesh.scale.set(1,1,1); a.hp=3; }
     }
     if(a.hp<=0){
-      if(a.kind==='pig'){ inv.pork += 1+(Math.random()<0.5?1:0); toast('🍖 獲得豬排！'); }
-      else if(a.kind==='cow'){ inv.beef += 1+(Math.random()<0.5?1:0); toast('🥩 獲得牛排！'); }
-      else if(a.kind==='vil'){ toast('😢 村民倒下了…（村民是好人，別打他們啦）'); }
-      else if(a.kind==='sheep'){ inv.mutton=(inv.mutton||0)+1; toast('🍢 獲得羊肉串！'); }
-      else { inv.chicken += 1; toast('🍗 獲得雞肉！'); }
+      if(a.kind==='pig'){ inv.pork += 1+(Math.random()<0.5?1:0); toast('🍖 獲得豬排！（豬 Pig）'); }
+      else if(a.kind==='cow'){ inv.beef += 1+(Math.random()<0.5?1:0); toast('🥩 獲得牛排！（牛 Cow）'); }
+      else if(a.kind==='vil'){ toast('😢 村民 Villager 倒下了…（村民是好人，別打他們啦）'); }
+      else if(a.kind==='sheep'){ inv.mutton=(inv.mutton||0)+1; toast('🍢 獲得羊肉串！（羊 Sheep）'); }
+      else { inv.chicken += 1; toast('🍗 獲得雞肉！（雞 Chicken）'); }
       updateHUD(); scheduleSave();
       removeEnt(animals,i,true,a.kind==='pig'?0xf0a0a8:(a.kind==='cow'?0x6b4a33:0xffffff));
       continue;
@@ -3697,7 +3702,7 @@ function updateArrows(dt){
 const DAY_LEN=200;
 let dayT=0.05;
 let isNight=false;
-let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0, vilT=0;
+let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0, vilT=0, bloodMoon=false;
 function dayFactor(t){
   if(t<0.45) return 1;
   if(t<0.55) return 1-(t-0.45)/0.1;
@@ -3723,15 +3728,28 @@ function updateDay(dt){
   const f=dayFactor(dayT);
   const wasNight=isNight;
   isNight = f<0.3;
-  if(wasNight!==isNight) updateHUD();
+  if(wasNight!==isNight){
+    updateHUD();
+    /* 🔴 血月之夜：12% 機率！怪物狂潮但掉寶加倍 */
+    if(isNight && Math.random()<0.12){
+      bloodMoon=true;
+      sfx.roar(); sfx.zGroan();
+      toast('🔴 血月之夜 Blood Moon！怪物大量湧現——但打倒牠們掉寶加倍！');
+    } else if(!isNight && bloodMoon){
+      bloodMoon=false;
+      toast('🌅 血月退去，天亮了 Morning！');
+    }
+    document.getElementById('dayIcon').textContent = isNight?(bloodMoon?'🔴':'🌙'):'☀️';
+  }
   skyCol.copy(nightCol).lerp(dayCol,f);
+  if(bloodMoon && isNight){ skyCol.r=Math.min(1,skyCol.r+0.22); skyCol.g*=0.55; skyCol.b*=0.55; }
   scene.background=skyCol;
   scene.fog.color.copy(skyCol);
   ambient.intensity=0.32+0.45*f;
   sun.intensity=0.1+0.5*f;
-  document.getElementById('dayIcon').textContent = isNight?'🌙':'☀️';
+  document.getElementById('dayIcon').textContent = isNight?(bloodMoon?'🔴':'🌙'):'☀️';
   if(isNight){
-    const storm = weather==='thunder';
+    const storm = weather==='thunder' || bloodMoon;
     zSpawnT-=dt;
     if(zSpawnT<=0){ trySpawnZombie(); if(storm) trySpawnZombie(); zSpawnT=(storm?1.6:3)+Math.random()*3; }
     eSpawnT-=dt;
@@ -3809,11 +3827,11 @@ function setWeather(w){
   if(w===weather) return;
   const wasWet=(weather==='rain'||weather==='thunder');
   weather=w;
-  if(w==='rain')        toast('🌧️ 下雨了…水面起漣漪，魚兒更愛上鉤');
-  else if(w==='thunder')toast('⛈️ 暴風雨來襲！小心落雷，夜裡怪物變多了');
-  else if(w==='snow')   toast('❄️ 開始下雪，世界一片靜謐雪白');
+  if(w==='rain')        toast('🌧️ 下雨了 Rain！水面起漣漪，魚兒更愛上鉤');
+  else if(w==='thunder')toast('⛈️ 暴風雨 Storm 來襲！小心閃電 Lightning，夜裡怪物變多了');
+  else if(w==='snow')   toast('❄️ 開始下雪 Snow，世界一片靜謐雪白');
   else if(wasWet && !isNight && dim==='over') showRainbow();
-  else                  toast('☀️ 雲散天開，天氣放晴了');
+  else                  toast('☀️ 天氣放晴了 Sunny Day！');
   if(w!=='clear' && !precInit) seedPrecip();
   updateWeatherHUD();
 }
@@ -4001,7 +4019,7 @@ function spawnShootingStar(){
   m.position.set(sx,sy,sz); scene.add(m);
   const side=Math.random()<0.5?1:-1;
   shootingStars.push({x:sx,y:sy,z:sz, vx:-Math.cos(a)*11+side*6, vy:-6.5, vz:-Math.sin(a)*11-side*6, life:2.4, mesh:m});
-  toast('🌠 流星劃過夜空…快許個願！');
+  toast('🌠 流星 Shooting Star 劃過夜空…快許願 Make a wish！');
   tone(950,0.5,'sine',0.06,1700);
   if(Math.random()<0.34){
     const roll=Math.random();
@@ -4150,7 +4168,7 @@ function makeRainbow(){
 function showRainbow(){
   if(!rainbowObj){ rainbowObj=makeRainbow(); scene.add(rainbowObj); }
   rainbowT=16;
-  toast('🌈 雨過天晴，天邊掛起一道彩虹！');
+  toast('🌈 雨過天晴，天邊掛起一道彩虹 Rainbow！');
 }
 function updateRainbow(dt){
   if(!rainbowObj) return;
@@ -4167,7 +4185,7 @@ function updateRainbow(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木',stone:'🪨石頭',coal:'⚫煤',iron:'🔩鐵',gold:'🥇金',diamond:'💎鑽石',chal:'🟣獄髓',pearl:'🔮珍珠',blaze:'🔥烈焰粉',eye:'👁終界之眼',arrow:'🏹箭',crystal:'💠終界水晶',egg:'🥚龍蛋',emerald:'💚綠寶石',star:'💀凋零之星',cooked:'🔥🍖烤肉',luck:'🍀幸運藥水',wheat:'🌾小麥'};
+const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
