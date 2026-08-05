@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V22・積雪·落雷·彩虹</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V23・生態域·冰湖·雪球</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -230,10 +230,14 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#9cf;">🌦️ 天氣與流星</b><br>
     主世界會隨機變天：☀️晴天／🌧️下雨／⛈️雷雨／❄️下雪（右上角圖示可看）<br>
     下雨時<b>釣魚更快更容易釣到寶物</b>🎣｜雷雨會落下閃電⚡且夜裡怪物大量增加，要小心！<br>
-    ❄️<b>下雪</b>會在露天地面鋪上白色雪毯，雪停後自然融化（純裝飾、可踩過，不影響方塊）<br>
+    ❄️<b>下雪</b>會在露天地面鋪上白色雪毯、<b>湖面漸漸結冰</b>！雪停後雪融化、冰化回水<br>
     ⚡<b>落雷</b>打中樹木有機會引發火災🔥，火會蔓延燒掉樹葉原木後自行熄滅（不燒木板建築）<br>
     🌈雨停轉晴的白天，天邊會掛起一道<b>彩虹</b>！<br>
     晴朗的夜晚偶爾會有🌠<b>流星</b>劃過天際，有機會實現願望送你綠寶石／鑽石／珍珠或幸運藥水！<br><br>
+    <b style="color:#fdb;">🏜️❄️ 生態域與雪球</b><br>
+    世界現在有<b>沙漠</b>（金黃沙丘＋仙人掌🌵，沒有樹）與<b>雪原</b>（白雪覆蓋＋永凍冰湖🧊）！<br>
+    冰湖可以直接<b>走上去</b>！挖開冰面就能在洞口<b>冰釣</b>🎣（下雨時去更好釣）<br>
+    ⚾ <b>雪球</b>：挖積雪❄️得雪球×2 → 電腦按 <b>G</b>／手機點狀態列「⚾❄️」丟出去，打中怪物會凍住牠讓牠慢半拍！<br><br>
     <b style="color:#8fd;">💡 小知識</b><br>
     傳送門會發出沖天光柱方便找路｜床可睡到天亮並回滿血｜盾牌每5秒擋一次攻擊
   </div>
@@ -303,10 +307,10 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55;
 const NAMES = {1:"草地",2:"泥土",3:"石頭",4:"沙子",5:"原木",6:"樹葉",7:"木板",8:"玻璃",11:"磚塊",12:"TNT 炸藥",13:"發光石",
   14:"煤礦",15:"鐵礦",16:"金礦",17:"鑽石礦",18:"獄髓礦",19:"黑曜石",20:"岩漿",21:"地獄岩",22:"地獄門",23:"靈魂沙",24:"合成台",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶",30:"龍蛋",31:"終界折躍門",32:"鞘翅",33:"綠寶石礦",34:"附魔台",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把",38:"紅石火把(熄滅)",39:"拉桿",40:"拉桿(開)",41:"紅石燈",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱",49:"鑄造台",50:"許願池",51:"幸運方塊",52:"超級幸運方塊",53:"儲物箱",54:"積雪",55:"冰塊"};
 const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
@@ -377,14 +381,22 @@ function generateOver(sd, w){
     let h = n1(x/22,z/22)*14 + n2(x/8,z/8)*5 + 4;
     hmap[x*WZ+z] = Math.max(2, Math.min(WY-10, Math.floor(h)));
   }
+  /* 生態域：獨立噪聲決定，不動地形高度與礦物 → 0=平原 1=沙漠 2=雪原 */
+  const bioN = makeNoise(sd^0xB10B10);
+  const bmap = new Uint8Array(WX*WZ);
+  for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++){
+    const b=bioN(x/46,z/46);
+    bmap[x*WZ+z] = b<0.30?1 : (b>0.70?2:0);
+  }
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++){
     const h = hmap[x*WZ+z];
+    const desert = bmap[x*WZ+z]===1 && h>SEA+1;
     for(let y=0;y<=h;y++){
       let id;
       if(y===0) id=BEDROCK;
       else if(y<h-2) id=STONE;
-      else if(y<h) id=DIRT;
-      else id = (h<=SEA+1) ? SAND : GRASS;
+      else if(y<h) id= desert?SAND:DIRT;
+      else id = (h<=SEA+1||desert) ? SAND : GRASS;
       w[idx(x,y,z)]=id;
     }
     if(h<SEA) for(let y=h+1;y<=SEA;y++) w[idx(x,y,z)]=WATER;
@@ -538,6 +550,26 @@ function generateOver(sd, w){
       w[idx(x,h+1,z)]=SECRETB;
     }
   }
+  /* ===== 生態域最終修飾（沙漠仙人掌 / 雪原積雪與結冰湖）===== */
+  const cacRng=mulberry32(sd^0xCAC705);
+  for(let x=1;x<WX-1;x++) for(let z=1;z<WZ-1;z++){
+    const bio=bmap[x*WZ+z];
+    if(bio===1){
+      /* 沙漠：稀疏仙人掌（綠色小柱） */
+      const h=topSolid(w,x,z);
+      if(w[idx(x,h,z)]===SAND && h>SEA+1 && cacRng()<0.006 && h+3<WY){
+        const ch=2+((cacRng()*2)|0);
+        for(let y=1;y<=ch;y++) w[idx(x,h+y,z)]=LEAF;
+      }
+    } else if(bio===2){
+      /* 雪原：湖面結冰（只凍最上層，冰下還是水可以鑿洞釣魚） */
+      if(w[idx(x,SEA,z)]===WATER && w[idx(x,SEA+1,z)]===AIR) w[idx(x,SEA,z)]=ICE;
+      /* 露天表面鋪雪毯（樹頂、屋頂也會積雪） */
+      const t=topSolid(w,x,z);
+      const tb=w[idx(x,t,z)];
+      if(tb!==SNOW && tb!==LUCKY && tb!==SUPERL && tb!==SECRETB && t+1<WY && w[idx(x,t+1,z)]===AIR) w[idx(x,t+1,z)]=SNOW;
+    }
+  }
 }
 
 function generateNether(sd, w){
@@ -661,7 +693,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=67;
+const TILE=16, NTILES=68;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -956,6 +988,13 @@ drawTile(65,[150,105,55],8,(x,y)=>{
 });
 /* 積雪 (66)：白色帶淡藍陰影的雪毯 */
 drawTile(66,[240,246,252],5,(x,y,r)=> r()<0.10?[214,226,242,255]:(((x+y)%6===0)?[228,236,248,255]:[242,247,253,255]));
+/* 冰塊 (67)：半透明淡藍，帶裂紋 */
+drawTile(67,[160,205,240],6,(x,y)=>{
+  const crack=((x*3+y*5)%16===0)||((x+y*2)%13===0);
+  const edge=x===0||y===0||x===15||y===15;
+  if(edge) return [190,225,250,210];
+  return crack?[220,240,255,200]:[150,200,240,185];
+});
 
 const atlasTex = new THREE.CanvasTexture(atlasCv);
 atlasTex.magFilter = THREE.NearestFilter;
@@ -989,10 +1028,10 @@ const TILES = {
   [SECRETB]:{top:50,side:50,bot:50},
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
   [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
-  [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}
+  [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}, [ICE]:{top:67,side:67,bot:67}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
-const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||RS_TRANS.has(id);
+const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===ICE||RS_TRANS.has(id);
 const isSolid = id => id!==AIR && id!==WATER && id!==LAVA && id!==PORTAL && id!==ENDPORTAL && id!==GATEWAY && id!==SNOW && !RS_TRANS.has(id);
 
 /* ================= 音效 ================= */
@@ -1177,13 +1216,13 @@ function buildChunk(cx,cz){
       }
       continue;
     }
-    const target = (id===GLASS||id===WATER||RS_TRANS.has(id)) ? tra : (glowIds.has(id) ? glo : opa);
+    const target = (id===GLASS||id===ICE||id===WATER||RS_TRANS.has(id)) ? tra : (glowIds.has(id) ? glo : opa);
     for(let f=0;f<6;f++){
       const F=FACES[f];
       const nb = getB(x+F.dir[0], y+F.dir[1], z+F.dir[2]);
       let show;
       if(id===WATER||id===LAVA) show = nb===AIR;
-      else if(id===GLASS) show = nb!==GLASS && isTransparent(nb);
+      else if(id===GLASS||id===ICE) show = nb!==id && isTransparent(nb);
       else if(RS_TRANS.has(id)) show = nb!==id && isTransparent(nb);
       else if(id===PORTAL) show = nb!==PORTAL && (nb===AIR||nb===WATER);
       else if(id===ENDPORTAL) show = nb!==ENDPORTAL && (nb===AIR||nb===WATER);
@@ -1315,7 +1354,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0 };
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
@@ -1353,6 +1392,61 @@ function updatePearls(dt){
       toast('🔮 瞬移成功！隱身 3 秒，怪物看不到你');
       scene.remove(pr.mesh); pr.mesh.material.dispose();
       pearlsFly.splice(i,1);
+    }
+  }
+}
+/* ================= 雪球 ================= */
+const snowsFly=[];
+function throwSnowball(){
+  if(inv.snowball<=0){ toast('沒有雪球（挖積雪❄️可以得到）'); return; }
+  inv.snowball--;
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.16,6,6), new THREE.MeshBasicMaterial({color:0xf4f9ff}));
+  m.position.copy(camera.position);
+  scene.add(m);
+  snowsFly.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
+    vx:dir.x*24, vy:dir.y*24+2.5, vz:dir.z*24, life:3, mesh:m});
+  tone(650,0.1,'sine',0.07,900);
+  updateHUD(); scheduleSave();
+}
+function updateSnowballs(dt){
+  for(let i=snowsFly.length-1;i>=0;i--){
+    const s=snowsFly[i];
+    s.life-=dt;
+    s.vy-=10*dt;
+    let hit=false;
+    const STEPS=3;
+    for(let st=0; st<STEPS && !hit; st++){
+      s.x+=s.vx*dt/STEPS; s.y+=s.vy*dt/STEPS; s.z+=s.vz*dt/STEPS;
+      if(isSolid(getB(Math.floor(s.x),Math.floor(s.y),Math.floor(s.z)))){ hit=true; break; }
+      for(const e of entities()){
+        if(e.kind==='vil') continue;
+        const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:(e.kind==='w'?1.6:0.5)));
+        if(Math.hypot(s.x-e.x,s.y-cy,s.z-e.z)<1.0){
+          e.hp-=1; e.hurtT=1.2;   /* 打中會冰得動彈慢半拍 */
+          const dx=e.x-s.x, dz=e.z-s.z, dd=Math.hypot(dx,dz)||1;
+          e.x+=dx/dd*1.2; e.z+=dz/dd*1.2;
+          if(e.kind==='e'&&e.hp>0) e.aggro=true;
+          spawnParticles(e.x,cy,e.z,8,0xf0f6ff);
+          sfx.zHit();
+          hit=true; break;
+        }
+      }
+      if(hit) break;
+      for(const d of dragons){
+        if(Math.hypot(s.x-d.x,s.y-d.y,s.z-d.z)<2.2*d.tier.scale){
+          d.hp-=1; d.hurtT=0.3;
+          spawnParticles(d.x,d.y,d.z,8,0xf0f6ff);
+          hit=true; break;
+        }
+      }
+    }
+    s.mesh.position.set(s.x,s.y,s.z);
+    if(hit||s.life<=0){
+      spawnParticles(s.x,s.y,s.z,6,0xffffff);
+      noiseBurst(0.08,0.1,2200);
+      scene.remove(s.mesh); s.mesh.material.dispose();
+      snowsFly.splice(i,1);
     }
   }
 }
@@ -1558,6 +1652,14 @@ function updateHUD(){
     b.textContent='🔮丟×'+inv.pearl;
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwPearl();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwPearl();});
+    sb.appendChild(b);
+  }
+  if(inv.snowball>0){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent='⚾❄️×'+inv.snowball;
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwSnowball();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwSnowball();});
     sb.appendChild(b);
   }
   if(hasBed && dim==='over' && isNight){
@@ -3226,7 +3328,7 @@ function updateWeather(dt){
     flashT -= dt*2.2; if(flashT<0) flashT=0;
   }
   scene.background=skyCol; scene.fog.color.copy(skyCol);
-  if(weather==='snow') accumulateSnow(dt); else meltSnow(dt);
+  if(weather==='snow'){ accumulateSnow(dt); freezeWater(dt); } else { meltSnow(dt); meltIce(dt); }
   updateRainbow(dt);
   updateSky(dt);
 }
@@ -3306,11 +3408,11 @@ function updateFires(dt){
 }
 
 /* ---- ❄️ 地表積雪：下雪時在露天表面鋪上薄雪毯，雪停後緩緩融化（不會破壞任何方塊）---- */
-const snowPlaced=new Set();
-let snowSeeded=false, snowAccT=0, meltAccT=0;
+const snowPlaced=new Set(), icePlaced=new Set();
+let snowSeeded=false, snowAccT=0, meltAccT=0, iceAccT=0, iceMeltT=0;
 function seedSnowFromDiffs(){
-  snowPlaced.clear();
-  for(const [k,v] of diffs) if(v===SNOW) snowPlaced.add(k);
+  snowPlaced.clear(); icePlaced.clear();
+  for(const [k,v] of diffs){ if(v===SNOW) snowPlaced.add(k); else if(v===ICE) icePlaced.add(k); }
   snowSeeded=true;
 }
 function accumulateSnow(dt){
@@ -3343,6 +3445,33 @@ function meltSnow(dt){
     snowPlaced.delete(k); n++;
     const [x,y,z]=k.split(',').map(Number);
     if(getB(x,y,z)===SNOW){ setBlockRaw(x,y,z,AIR); markChunks(set,x,z); }
+  }
+  if(n){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+}
+/* 下雪時湖面在玩家附近漸漸結冰（只凍最上層），雪停後緩緩解凍回水 */
+function freezeWater(dt){
+  if(!snowSeeded) seedSnowFromDiffs();
+  if(icePlaced.size>=900) return;
+  iceAccT-=dt; if(iceAccT>0) return; iceAccT=0.4;
+  const set=new Set(); let n=0;
+  for(let a=0;a<14 && n<5;a++){
+    const x=Math.floor(player.x+(Math.random()*2-1)*12), z=Math.floor(player.z+(Math.random()*2-1)*12);
+    if(!inBounds(x,SEA,z)) continue;
+    if(getB(x,SEA,z)!==WATER || getB(x,SEA+1,z)!==AIR) continue;
+    setBlockRaw(x,SEA,z,ICE); markChunks(set,x,z); icePlaced.add(x+','+SEA+','+z); n++;
+  }
+  if(n){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+}
+function meltIce(dt){
+  if(!snowSeeded) seedSnowFromDiffs();
+  if(icePlaced.size===0) return;
+  iceMeltT-=dt; if(iceMeltT>0) return; iceMeltT=0.5;
+  const set=new Set(); let n=0;
+  for(const k of icePlaced){
+    if(n>=8) break;
+    icePlaced.delete(k); n++;
+    const [x,y,z]=k.split(',').map(Number);
+    if(getB(x,y,z)===ICE){ setBlockRaw(x,y,z,WATER); markChunks(set,x,z); }
   }
   if(n){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
 }
@@ -4016,6 +4145,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyE') doAction();
   if(e.code==='KeyR') shootBow();
   if(e.code==='KeyT') throwPearl();
+  if(e.code==='KeyG') throwSnowball();
   if(e.code==='ArrowUp'){ e.preventDefault(); cycleWeapon(1); }
   if(e.code==='ArrowDown'){ e.preventDefault(); cycleWeapon(-1); }
   if(e.code==='KeyB') sleepBed();
@@ -4362,6 +4492,25 @@ function mine(){
   const hit=raycast(6);
   if(!hit) return;
   if(hit.id===TNT){ setBlock(hit.x,hit.y,hit.z,AIR); explode(hit.x,hit.y,hit.z); return; }
+  if(hit.id===SNOW){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    snowPlaced.delete(hit.x+','+hit.y+','+hit.z);
+    inv.snowball=(inv.snowball||0)+2;
+    spawnParticles(hit.x+0.5,hit.y+0.3,hit.z+0.5,6,0xffffff);
+    sfx.dig();
+    toast('❄️ 收集雪球×2！（按 G 或點狀態列丟出去）');
+    updateHUD(); scheduleSave();
+    return;
+  }
+  if(hit.id===ICE){
+    setBlock(hit.x,hit.y,hit.z,AIR);
+    icePlaced.delete(hit.x+','+hit.y+','+hit.z);
+    spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,8,0xbfe0ff);
+    sfx.dig();
+    if(getB(hit.x,hit.y-1,hit.z)===WATER) toast('🧊 鑿開冰面！可以在洞口釣魚（冰釣）');
+    updateHUD(); scheduleSave();
+    return;
+  }
   if(hit.id===ENDCRYSTAL){
     breakCrystalAt(hit.x,hit.y,hit.z);
     return;
@@ -4723,6 +4872,7 @@ async function loadGame(){
 async function newWorld(){
   seed=(Math.random()*1e9)|0;
   for(const k of ['over','nether','end']){ dims[k].diffs.clear(); dims[k].made=false; }
+  snowPlaced.clear(); icePlaced.clear(); snowSeeded=false; fires.length=0;
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=animals.length-1;i>=0;i--) removeEnt(animals,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
@@ -4925,6 +5075,7 @@ function loop(){
   updatePet(dt);
   updateBuddies(dt);
   updatePearls(dt);
+  updateSnowballs(dt);
   beamT-=dt;
   if(beamT<=0){ refreshBeams(); beamT=8; }
   rsT-=dt;
@@ -5111,8 +5262,8 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
 /* ================= 啟動 ================= */
 (async function init(){
   document.getElementById('ctrlHint').innerHTML = isTouch
-    ? '🌦️ 新內容：天氣系統！☀️晴🌧️雨⛈️雷雨❄️雪＋🌠夜空流星許願<br>珍珠+烈焰粉=終界之眼 → 用「終界門框」在地上圍一圈 → 👁 鑲眼開門<br>🏹 弓箭遠攻｜🛡 盔甲｜🛏 床｜夜晚新怪：💀骷髏弓手、🕷蜘蛛、💣苦力怕<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
-    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜Q 吃東西｜B 睡覺｜F 飛行<br>🌦️ 新增天氣：雨天釣魚更好、雷雨落雷怪變多、晴夜🌠流星許願！<br>🌌 珍珠+烈焰粉=終界之眼 → 終界門框圍圈鑲眼 → 挑戰終界龍！進度自動儲存';
+    ? '🏜️❄️ 新內容：沙漠與雪原生態域！冰湖可以走上去、鑿冰洞釣魚🎣<br>⚾ 挖積雪❄️收集雪球 → 點狀態列「⚾❄️」丟怪物，凍住牠！<br>🌦️ 天氣系統：雨天好釣魚、雷雨落雷⚡、晴夜流星🌠許願<br>終界龍 Boss 戰：先打破水晶再攻擊！進度自動儲存'
+    : 'WASD 移動｜左鍵攻擊｜右鍵放置｜E 互動｜R 射箭｜G 丟雪球｜Q 吃東西｜F 飛行<br>🏜️❄️ 新增生態域：沙漠仙人掌、雪原冰湖（可以走！鑿冰洞冰釣🎣）<br>⚾ 挖積雪得雪球→按G丟怪物凍住牠｜🌦️ 天氣：雨天好釣魚、雷雨落雷、晴夜流星🌠<br>進度自動儲存';
   const t = await loadGame();
   if(t===null){
     ensureDim('over');
