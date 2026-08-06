@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V41・移除滑翔·跳躍更順</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V42・銅礦青金石·大地升高</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -346,18 +346,18 @@ if(typeof THREE==='undefined'){
 /* ================= 基本設定 ================= */
 const WX=288, WY=64, WZ=288;   /* V27：世界放大 2.25 倍 */
 const CHUNK=16;
-const SEA=9;
+const SEA=21;   /* V42：地形整體升高12格，地底更深 */
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
 const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8, BEDROCK=9, WATER=10, BRICK=11, TNT=12, GLOW=13,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57, COPPER=58, LAPIS=59;
 /* 中英對照：融入國中程度英文單字，邊玩邊學！太難的字保留中文 */
 const NAMES = {1:"草地 Grass",2:"泥土 Dirt",3:"石頭 Stone",4:"沙子 Sand",5:"原木 Wood",6:"樹葉 Leaf",7:"木板 Board",8:"玻璃 Glass",11:"磚塊 Brick",12:"TNT 炸藥 Bomb",13:"發光石 Light Stone",
   14:"煤礦 Coal",15:"鐵礦 Iron",16:"金礦 Gold",17:"鑽石礦 Diamond",18:"獄髓礦",19:"黑曜石",20:"岩漿 Lava",21:"地獄岩",22:"地獄門 Gate",23:"靈魂沙 Soul Sand",24:"合成台 Craft Table",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat"};
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat",58:"銅礦 Copper",59:"青金石 Blue Gem"};
 const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
 
 /* ================= 亂數 ================= */
@@ -426,7 +426,7 @@ function generateOver(sd, w){
   const rng = mulberry32(sd^0x1234);
   const hmap = new Float32Array(WX*WZ);
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++){
-    let h = n1(x/22,z/22)*14 + n2(x/8,z/8)*5 + 4;
+    let h = n1(x/22,z/22)*14 + n2(x/8,z/8)*5 + 16;
     hmap[x*WZ+z] = Math.max(2, Math.min(WY-10, Math.floor(h)));
   }
   /* 生態域：獨立噪聲決定，不動地形高度與礦物 → 0=平原 1=沙漠 2=雪原 */
@@ -458,6 +458,8 @@ function generateOver(sd, w){
     else if(y<10 && r<0.020) w[idx(x,y,z)]=EMERALD;
     else if(y<14 && r<0.045) w[idx(x,y,z)]=IRON;
     else if(r<0.070) w[idx(x,y,z)]=COAL;
+    else if(y<10 && r<0.085) w[idx(x,y,z)]=LAPIS;
+    else if(y<18 && r<0.105) w[idx(x,y,z)]=COPPER;
   }
   const dRng = mulberry32(sd^0x77dd);
   for(let x=0;x<WX;x++) for(let z=0;z<WZ;z++) for(let y=1;y<6;y++){
@@ -807,7 +809,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=70;
+const TILE=16, NTILES=72;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -862,6 +864,8 @@ oreTile(16,[216,167,124]);
 oreTile(17,[250,215,80]);
 oreTile(18,[95,225,230]);
 oreTile(19,[205,140,235]);
+oreTile(70,[224,130,70]);   /* 銅礦 (70) */
+oreTile(71,[60,90,220]);    /* 青金石 (71) */
 drawTile(20,[28,20,42],8,(x,y,r)=> r()<0.1?[70,45,110,255]:[28,20,42,255]);
 drawTile(21,[240,120,20],20,(x,y)=>{
   const s=Math.sin(x*0.9)+Math.cos(y*0.8);
@@ -1155,7 +1159,8 @@ const TILES = {
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
   [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
   [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}, [ICE]:{top:67,side:67,bot:67},
-  [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69}
+  [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69},
+  [COPPER]:{top:70,side:70,bot:70}, [LAPIS]:{top:71,side:71,bot:71}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
 const isTransparent = id => id===AIR||id===GLASS||id===WATER||id===LAVA||id===PORTAL||id===ENDPORTAL||id===GATEWAY||id===SNOW||id===CROP||id===WHEATB||RS_TRANS.has(id);
@@ -1539,7 +1544,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -2004,7 +2009,7 @@ const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond
 const WEAPON_KB = { hammer:2.4, god:2.4 };
 const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
 const WEAPON_NAME = { fist:'✊ 空手 Hands', wood:'🗡 木劍 Wood Sword', stone:'🗡 石劍 Stone Sword', iron:'🗡 鐵劍 Iron Sword', axe:'🪓 戰斧 Axe', diamond:'🗡 鑽石劍 Diamond Sword', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍 Fire Sword', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘 Hammer', emsword:'🗡 綠寶石劍💚 Emerald Sword', dagger:'🔪 吸血匕首🩸 Knife', frost:'❄️ 冰霜劍 Ice Sword', thammer:'⚡ 雷神之鎚 Thunder Hammer', ender:'🗡 終界劍🌌 End Sword', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍 King Sword', god:'✨ 天神之劍 God Sword' };
-const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald' };
+const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald', [COPPER]:'copper', [LAPIS]:'lapis' };
 
 function surfaceYo(x,z){
   for(let y=WY-1;y>=0;y--) if(isSolid(getB(x,y,z))) return y;
@@ -4221,7 +4226,7 @@ function updateRainbow(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat'};
+const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat',copper:'🟠銅Copper',lapis:'🔵青金石Blue Gem'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -4256,6 +4261,8 @@ const RECIPES=[
   {id:'cat',     kind:'cat',   name:'寵物貓🐱（苦力怕害怕貓，不敢靠近你）', cost:{fish:3,gold:1}},
   {id:'luck',    kind:'stack', name:'幸運藥水🍀×1（60秒內許願池勝率大增）', cost:{emerald:2,redapple:1}},
   {id:'bread',   kind:'stack', name:'麵包🍞×2（每個回4顆心）', cost:{wheat:3}},
+  {id:'carrow',  kind:'stack', name:'銅箭🏹×10（銅打的更利）', cost:{copper:3}},
+  {id:'lpotion', kind:'stack', name:'幸運藥水🍀×1（青金石版）', cost:{lapis:2}},
   {id:'compass', kind:'compass',name:'尋寶羅盤🧭（顯示最近秘密基地的距離）', cost:{iron:2,gold:1}},
   {id:'rod',     kind:'rod',   name:'釣竿🎣（在水邊釣魚，會釣到好東西）', cost:{wood:3,iron:1}},
   {id:'boat',    kind:'boat',  name:'船🛶（水面和岩漿上都能開！）', cost:{wood:5}},
@@ -4331,6 +4338,8 @@ function renderCraft(){
         else if(r.id==='spd'){ inv.spd=(inv.spd||0)+1; toast('⚡ 合成了速度藥水！點左上角⚡喝掉'); }
         else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
         else if(r.id==='bread'){ inv.bread=(inv.bread||0)+2; toast('🍞 烤了2個麵包！香噴噴'); }
+        else if(r.id==='carrow'){ inv.arrow+=10; toast('🏹 銅箭×10 打好了！'); }
+        else if(r.id==='lpotion'){ inv.luck=(inv.luck||0)+1; toast('🍀 青金石幸運藥水完成！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
     }
@@ -5473,7 +5482,7 @@ function mine(){
     return;
   }
   const mat=COLLECT[hit.id];
-  const isOre = (hit.id>=COAL && hit.id<=CHAL) || hit.id===EMERALD;
+  const isOre = (hit.id>=COAL && hit.id<=CHAL) || hit.id===EMERALD || hit.id===COPPER || hit.id===LAPIS;
   const wasLeaf = hit.id===LEAF;
   setBlock(hit.x,hit.y,hit.z,AIR);
   /* 天神之劍：挖掘＝安全爆破，3×3×3 連鎖並自動收礦 */
@@ -5508,7 +5517,7 @@ function mine(){
     if(hit.id===DIAMOND){ mineStats.diamond++; }
     else if(hit.id===CHAL){ mineStats.chal++; }
     if(isOre){
-      const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb, [EMERALD]:0x50dc78 };
+      const oreColors={ [COAL]:0x333333, [IRON]:0xd8a77c, [GOLD]:0xfad750, [DIAMOND]:0x5fe1e6, [CHAL]:0xcd8ceb, [EMERALD]:0x50dc78, [COPPER]:0xe08246, [LAPIS]:0x3c5adc };
       spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5, 10, oreColors[hit.id]);
       sfx.ore();
       toast('⛏ 挖到'+NAMES[hit.id]+'！'+(hit.id===DIAMOND?'（積分+1）':hit.id===CHAL?'（積分+5）':''));
@@ -5586,7 +5595,7 @@ async function saveGame(showMsg){
   if(saving){ if(showMsg) toast('儲存中…'); return; }
   saving=true;
   const data = JSON.stringify({
-    v:4, seed, dim,
+    v:5, seed, dim,
     overDiffs: Object.fromEntries(dims.over.diffs),
     netherDiffs: Object.fromEntries(dims.nether.diffs),
     endDiffs: Object.fromEntries(dims.end.diffs),
@@ -5641,6 +5650,14 @@ async function loadGame(){
   }
   if(best){
     const d=best;
+    /* V42 舊檔搬家：地形升高12格，主世界建築/儲物箱/玩家同步上移，不會被埋 */
+    if((d.v||0)<5){
+      const shiftY=o=>{ const n={}; for(const k in (o||{})){ const p=k.split(','); n[p[0]+','+(+p[1]+12)+','+p[2]]=o[k]; } return n; };
+      d.overDiffs=shiftY(d.overDiffs||d.diffs);
+      if(d.chest){ const nc={}; for(const k in d.chest){ if(k.startsWith('over:')){ const co=k.slice(5).split(','); nc['over:'+co[0]+','+(+co[1]+12)+','+co[2]]=d.chest[k]; } else nc[k]=d.chest[k]; } d.chest=nc; }
+      if(d.player && typeof d.player.y==='number') d.player.y+=12;
+      toast('🌍 世界大更新：地形升高、地底更深！你的建築已自動搬到新高度');
+    }
     seed=d.seed;
     applyDiffMap(dims.over, d.overDiffs||d.diffs);
     applyDiffMap(dims.nether, d.netherDiffs);
