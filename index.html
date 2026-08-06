@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V37・冰塊3D修正</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V38・操作大升級</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -234,7 +234,7 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#ffa;">📱 手機操作</b><br>
     左搖桿移動｜滑右半邊轉視角｜⛏挖/攻擊｜🧱放置｜⬆跳(按住連跳)｜⬇蹲｜🕊飛行(需鞘翅)｜🏹射箭｜左上武器名＝切換武器<br><br>
     <b style="color:#aff;">💻 電腦操作</b><br>
-    WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置｜Space跳｜E互動｜R射箭｜T丟珍珠｜F飛行(需鞘翅)｜⬆️⬇️切換武器｜1-9選方塊<br><br>
+    WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置/開介面/交易｜滾輪切快捷欄行｜1-9選方塊<br>下方第三行消耗品列：點選後<b>長按右鍵</b>吃食物喝藥水（按住連吃）、🔮珍珠<b>短按右鍵</b>投擲<br>Space跳｜E互動｜R射箭｜F飛行｜⬆️⬇️切換武器｜👁 終界人：<b>不對視就不會被攻擊</b>！<br><br>
     <b style="color:#fbb;">🌊 新生存規則</b><br>
     摔落5格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
     <b style="color:#9df;">🤿 海底礦洞</b><br>
@@ -2182,6 +2182,7 @@ function updateHUD(){
     sb.appendChild(b);
   }
   document.getElementById('btnBow').style.display = (hasBow&&isTouch)?'flex':'none';
+  if(typeof renderCons==='function') renderCons();
 }
 
 /* ================= 生物 ================= */
@@ -2766,7 +2767,17 @@ function updateEnders(dt){
     if(dist>40){ removeEnt(enders,i,false); continue; }
     e.hurtT=Math.max(0,e.hurtT-dt);
     e.atkT=Math.max(0,e.atkT-dt);
-    if(!e.aggro && dist<14 && invisT<=0) e.aggro=true;   /* 主動索敵 */
+    /* 對視才激怒：玩家視線正對終界人的眼睛才會生氣（不看牠就沒事！） */
+    if(!e.aggro && dist<16 && invisT<=0){
+      const fx2=-Math.sin(player.yaw)*Math.cos(player.pitch), fy2=Math.sin(player.pitch), fz2=-Math.cos(player.yaw)*Math.cos(player.pitch);
+      const ddx=e.x-player.x, ddy=(e.y+2.4)-(player.y+EYE), ddz=e.z-player.z;
+      const dl=Math.hypot(ddx,ddy,ddz)||1;
+      if((fx2*ddx+fy2*ddy+fz2*ddz)/dl > 0.94){
+        e.aggro=true;
+        sfx.warp();
+        toast('👁 你和終界人對視了！牠被激怒了——快跑或戰鬥！');
+      }
+    }
     let sp=0;
     if(e.aggro){
       sp = e.hurtT>0 ? 0 : 2.3;
@@ -4866,7 +4877,7 @@ addEventListener('keydown',e=>{
   }
   if(e.code.startsWith('Digit')){
     const n=+e.code.slice(5);
-    if(n>=1&&n<=9) selectSlot(n-1);
+    if(n>=1&&n<=9) selectSlot(Math.min(HOTBAR.length-1, hotRow*9+n-1));
   }
 });
 addEventListener('keyup',e=>keys[e.code]=false);
@@ -4885,9 +4896,17 @@ if(!isTouch){
   addEventListener('mousedown',e=>{
     if(document.pointerLockElement!==renderer.domElement) return;
     if(e.button===0) mine();
-    if(e.button===2) place();
+    if(e.button===2) rightDown();
   });
+  addEventListener('mouseup',e=>{ if(e.button===2) rightUp(); });
   addEventListener('contextmenu',e=>e.preventDefault());
+  /* 滾輪：切換快捷欄第1/2行 */
+  addEventListener('wheel',e=>{
+    if(!started||paused) return;
+    hotRow=1-hotRow;
+    selectSlot(Math.min(HOTBAR.length-1, hotRow*9+(selSlot%9)));
+    toast('🖱 快捷欄：第 '+(hotRow+1)+' 行');
+  },{passive:true});
 }
 const joyZone=document.getElementById('joyZone'), joyBase=document.getElementById('joyBase'), joyKnob=document.getElementById('joyKnob');
 let joyId=null, lookId=null, lookLast={x:0,y:0};
@@ -5116,12 +5135,61 @@ function buildHotbar(){
     hotbarEl.appendChild(d);
   });
 }
+let hotRow=0;
 function selectSlot(i){
   selSlot=i;
+  hotRow = i>=9?1:0;
+  selCons=-1;
   [...hotbarEl.children].forEach((el,k)=>el.classList.toggle('sel',k===i));
+  renderCons();
   toast(NAMES[HOTBAR[i]]);
 }
 buildHotbar();
+/* ===== 第三行：消耗品列（食物/藥水/珍珠）右鍵使用 ===== */
+const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['luck','🍀'],['pearl','🔮']];
+let selCons=-1;
+const consEl=document.createElement('div');
+consEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:96px;display:flex;gap:4px;z-index:10;justify-content:center;';
+document.body.appendChild(consEl);
+function renderCons(){
+  consEl.innerHTML='';
+  CONSUM.forEach(([k,em],i)=>{
+    const d=document.createElement('div');
+    d.className='slot'+(i===selCons?' sel':'');
+    d.style.cssText='font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;';
+    d.innerHTML=em+'<span class="num" style="font-size:9px;">'+(inv[k]||0)+'</span>';
+    d.addEventListener('mousedown',e=>{
+      e.stopPropagation();
+      selCons=i;
+      [...hotbarEl.children].forEach(el=>el.classList.remove('sel'));
+      renderCons();
+      toast(k==='pearl' ? '🔮 珍珠選好了：短按右鍵投擲' : em+' 選好了：長按右鍵使用（按住連吃）');
+    });
+    d.addEventListener('touchstart',e=>{
+      e.preventDefault(); e.stopPropagation();
+      if(k==='pearl') throwPearl(); else eat(k);
+    },{passive:false});
+    consEl.appendChild(d);
+  });
+}
+renderCons();
+/* 右鍵：消耗品選中→長按吃/喝、珍珠短按投擲；否則互動或放置方塊 */
+let rcT=null, rcInt=null, rcStart=0;
+function rightDown(){
+  if(paused) return;
+  if(selCons>=0){
+    const k=CONSUM[selCons][0];
+    rcStart=performance.now();
+    if(k==='pearl') return;
+    rcT=setTimeout(()=>{ eat(k); rcInt=setInterval(()=>eat(k),600); },350);
+    return;
+  }
+  place();
+}
+function rightUp(){
+  if(selCons>=0 && CONSUM[selCons][0]==='pearl' && performance.now()-rcStart<350) throwPearl();
+  clearTimeout(rcT); clearInterval(rcInt); rcT=rcInt=null;
+}
 
 /* ================= 射線 ================= */
 function raycast(maxDist){
@@ -5450,6 +5518,11 @@ function mine(){
 }
 function place(){
   if(paused) return;
+  /* 右鍵直接互動：村民/豬布林交易、功能方塊開介面（不用按E） */
+  const tent0=raycastEntity(5);
+  if(tent0 && (tent0.kind==='vil' || (tent0.kind==='z'&&tent0.type==='piglin'))){ doAction(); return; }
+  const hit9=raycast(6);
+  if(hit9 && (hit9.id===CRAFT||hit9.id===ENCHANT||hit9.id===FORGE||hit9.id===WISH||hit9.id===CHEST||hit9.id===LEVER||hit9.id===LEVER_ON)){ doAction(); return; }
   const pidSel=HOTBAR[selSlot];
   /* 水：放置距離放寬到10格（落地水要抓時機才夠帥） */
   const hit=raycast(pidSel===WATER?10:6);
