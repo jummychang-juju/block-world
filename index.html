@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V46・金色競技場光柱</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V47・挖土器掉種子修正</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -5524,9 +5524,12 @@ function mine(){
     for(const c of chg){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); }
     if(tid===STONE) inv.stone+=n;
     if(tid===WOOD) inv.wood+=n;
+    /* 挖土器清草地也會掉種子（每塊15%機率） */
+    let sd=0;
+    if(tid===GRASS){ for(let i2=0;i2<n;i2++) if(Math.random()<0.15) sd++; inv.seed+=sd; }
     spawnParticles(hit.x+0.5,hit.y+0.5,hit.z+0.5,14,0xb0906a);
     sfx.dig();
-    toast('🪏 挖土器發動！清除 '+NAMES[tid]+'×'+n+(tid===STONE?'（石頭入包）':''));
+    toast('🪏 挖土器發動！清除 '+NAMES[tid]+'×'+n+(tid===STONE?'（石頭入包）':'')+(sd>0?('　🌱種子×'+sd+'！'):''));
     updateHUD(); scheduleSave();
     return;
   }
