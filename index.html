@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V45・殭屍圍城·煙火慶祝</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V46・金色競技場光柱</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -225,7 +225,7 @@ window.onerror=function(msg,src,line,col,err){
     顯示🔥表示就在附近（往下挖或抬頭看！）→ 敲開金色寶箱領獎 💎×3💚×3🥇×3<br>
     集滿10個＝尋寶大師終極大獎🏆<br><br>
     <b style="color:#dbf;">💀 試煉之地與凋零附魔</b><br>
-    找到白色光柱＝高空黑曜石競技場 → 站上去2秒召喚凋零怪(HP150)！<br>
+    找到金色光柱＝高空黑曜石競技場 → 站上去2秒召喚凋零怪(HP150)！<br>
     打倒獲得凋零之星 → 附魔台「凋零附魔」共10段，每段全武器+1傷害，第10段攻擊會爆炸！<br><br>
     <b style="color:#fea;">⚒ 鑄造台＆🌠 許願池＆🎁 幸運方塊</b><br>
     鑄造台：集齊六神兵（匕首/巨錘/烈焰/冰霜/雷神/王者）→ 熔鑄成✨天神之劍（效果全繼承！）<br>
@@ -3436,8 +3436,8 @@ function refreshBeams(){
   }
   if(dim==='over'){
     const abm=new THREE.Mesh(
-      new THREE.BoxGeometry(1.2,WY*1.4,1.2),
-      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.5, depthWrite:false, fog:false})
+      new THREE.BoxGeometry(1.6,WY*1.6,1.6),
+      new THREE.MeshBasicMaterial({color:0xffd830, transparent:true, opacity:0.6, depthWrite:false, fog:false})
     );
     abm.position.set(ARENA.x+0.5, WY/2, ARENA.z+0.5);
     scene.add(abm);
@@ -5810,7 +5810,7 @@ function openPause(){
     '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>'+
     (achPts()>0 ? '　🏅成就加成 +'+achPts() : '')+
     (mineStats.spent>0||achPts()>0||(mineStats.bonus||0)>0 ? '<br>加成 +'+((mineStats.bonus||0)+achPts())+'　已使用 '+(mineStats.spent||0)+' 分 → 可用 <b style="color:#ffd700;">'+availScore()+'</b> 分' : '');
-  document.getElementById('scoreBox').innerHTML += '<br>⚔️ 試煉競技場座標：<b>'+ARENA.x+', '+ARENA.z+'</b>（找白色光柱，左下角有你的座標）';
+  document.getElementById('scoreBox').innerHTML += '<br>⚔️ 試煉競技場座標：<b>'+ARENA.x+', '+ARENA.z+'</b>（找金色光柱🟡，左下角有你的座標）';
   ensureDaily();
   const DD=DAILY_TYPES[daily.ti];
   document.getElementById('scoreBox').innerHTML += '<br>📅 今日挑戰：'+DD.icon+' '+DD.name+'　'+(daily.done?'<b style="color:#8f8;">✅ 完成(+15分)</b>':'<b>'+daily.prog+'/'+DD.goal+'</b>');
