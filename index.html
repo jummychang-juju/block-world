@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V42・銅礦青金石·大地升高</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V43・床重生點·潛行·競技場導航</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -2022,7 +2022,14 @@ function floorY(x,z){
   }
   return -1;
 }
+let bedSpawn=null;
 function spawn(){
+  if(bedSpawn && dim==='over'){
+    player.x=bedSpawn.x; player.z=bedSpawn.z;
+    player.y=Math.max(bedSpawn.y, surfaceYo(Math.floor(bedSpawn.x),Math.floor(bedSpawn.z))+1.01);
+    player.vy=0;
+    return;
+  }
   player.x=WX/2+0.5; player.z=WZ/2+0.5;
   player.y=surfaceYo(WX/2,WZ/2)+1.01;
   player.vy=0;
@@ -2101,6 +2108,8 @@ function sleepBed(){
   }
   dayT=0.96;
   heal(10);
+  bedSpawn={x:player.x,y:player.y,z:player.z};
+  toast('🛏 重生點已設定！死亡會在這張床附近復活');
   for(let i=zombies.length-1;i>=0;i--) removeEnt(zombies,i,false);
   for(let i=enders.length-1;i>=0;i--) removeEnt(enders,i,false);
   toast('🛏 呼～一覺到天亮，生命全滿！');
@@ -2323,6 +2332,9 @@ function makeEnderMesh(){
   const head=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.45),blk); head.position.y=2.5;
   const eyeM=new THREE.MeshBasicMaterial({color:ENDER_EYES[(Math.random()*ENDER_EYES.length)|0]});
   const eye=new THREE.Mesh(new THREE.BoxGeometry(0.47,0.09,0.47),eyeM); eye.position.y=2.55;
+  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.13,0.06),new THREE.MeshBasicMaterial({color:0xff70ff})); eL.position.set(-0.12,2.55,0.24);
+  const eR=eL.clone(); eR.position.x=0.12;
+  g.add(eL,eR);
   const body=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.85,0.22),blk); body.position.y=1.85;
   const armG=new THREE.BoxGeometry(0.1,1.1,0.1); armG.translate(0,-0.55,0);
   const armL=new THREE.Mesh(armG,blk); armL.position.set(-0.27,2.35,0);
@@ -2777,7 +2789,7 @@ function updateEnders(dt){
       const fx2=-Math.sin(player.yaw)*Math.cos(player.pitch), fy2=Math.sin(player.pitch), fz2=-Math.cos(player.yaw)*Math.cos(player.pitch);
       const ddx=e.x-player.x, ddy=(e.y+2.4)-(player.y+EYE), ddz=e.z-player.z;
       const dl=Math.hypot(ddx,ddy,ddz)||1;
-      if((fx2*ddx+fy2*ddy+fz2*ddz)/dl > 0.94){
+      if((fx2*ddx+fy2*ddy+fz2*ddz)/dl > 0.985){
         e.aggro=true;
         sfx.warp();
         toast('👁 你和終界人對視了！牠被激怒了——快跑或戰鬥！');
@@ -3420,8 +3432,8 @@ function refreshBeams(){
   }
   if(dim==='over'){
     const abm=new THREE.Mesh(
-      new THREE.BoxGeometry(0.5,WY,0.5),
-      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.22, depthWrite:false})
+      new THREE.BoxGeometry(1.2,WY*1.4,1.2),
+      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.42, depthWrite:false})
     );
     abm.position.set(ARENA.x+0.5, WY/2, ARENA.z+0.5);
     scene.add(abm);
@@ -5601,7 +5613,7 @@ async function saveGame(showMsg){
     endDiffs: Object.fromEntries(dims.end.diffs),
     player: {x:player.x, y:player.y, z:player.z, yaw:player.yaw, pitch:player.pitch, hp:player.hp, fly:player.fly},
     inv, weapons, mineStats, ach:[...achDone], daily, hasFlint, hasBow, hasXbow, hasBed, hasElytra, hasPet, hasShield, hasInfBow, hasBoat, hasScope, hasRod, hasCompass, hasChain, hasDigger, hasWolf, hasCat, chest:chestData, found:[...foundSec], ench, perks, armor, dragonDefeated, curWeapon,
-    sel: selSlot, dayT,
+    sel: selSlot, dayT, bedSpawn,
     time: Date.now()
   });
   let okLocal = lsSet(data);
@@ -5701,6 +5713,7 @@ async function loadGame(){
     if(d.curWeapon && WEAPON_DMG[d.curWeapon]) curWeapon=d.curWeapon;
     if(typeof d.sel==='number' && d.sel<HOTBAR.length){ selSlot=d.sel; buildHotbar(); }
     if(typeof d.dayT==='number') dayT=d.dayT;
+    if(d.bedSpawn) bedSpawn=d.bedSpawn;
     return d.time;
   }
   return null;
@@ -5725,6 +5738,7 @@ async function newWorld(){
   for(const k in inv) inv[k]=0;
   for(const k in weapons) weapons[k]=false;
   mineStats.diamond=0; mineStats.chal=0; mineStats.spent=0; mineStats.bonus=0;
+  bedSpawn=null;
   achDone.clear();
   battle.active=false;
   hasFlint=false; hasBow=false; hasXbow=false; hasBed=false; hasElytra=false; hasShield=false; hasInfBow=false; hasBoat=false; hasScope=false; armor=0; dragonDefeated=false;
@@ -5759,6 +5773,7 @@ function openPause(){
     '🏆 總積分：'+mineStats.diamond+'×1 ＋ '+mineStats.chal+'×5 ＝ <b style="color:#ffd700;font-size:17px;">'+mineScore()+' 分</b>'+
     (achPts()>0 ? '　🏅成就加成 +'+achPts() : '')+
     (mineStats.spent>0||achPts()>0||(mineStats.bonus||0)>0 ? '<br>加成 +'+((mineStats.bonus||0)+achPts())+'　已使用 '+(mineStats.spent||0)+' 分 → 可用 <b style="color:#ffd700;">'+availScore()+'</b> 分' : '');
+  document.getElementById('scoreBox').innerHTML += '<br>⚔️ 試煉競技場座標：<b>'+ARENA.x+', '+ARENA.z+'</b>（找白色光柱，左下角有你的座標）';
   ensureDaily();
   const DD=DAILY_TYPES[daily.ti];
   document.getElementById('scoreBox').innerHTML += '<br>📅 今日挑戰：'+DD.icon+' '+DD.name+'　'+(daily.done?'<b style="color:#8f8;">✅ 完成(+15分)</b>':'<b>'+daily.prog+'/'+DD.goal+'</b>');
@@ -6125,8 +6140,16 @@ function loop(){
   /* 摔落高度累計（結算已移到起跳判定之前） */
   if(!player.onGround && player.vy<0 && !player.fly && !boating && !gliding) fallD-=player.vy*dt;
   else if(player.fly||boating||gliding||liquid===WATER||liquid===LAVA) fallD=0;
-  if(!collide(player.x+dx, player.y, player.z)) player.x+=dx;
-  if(!collide(player.x, player.y, player.z+dz)) player.z+=dz;
+  /* Shift 潛行：速度減半，站在邊緣不會走出去掉下來 */
+  const sneaking=(keys['ShiftLeft']||keys['ShiftRight']) && !player.fly && player.onGround && !boating;
+  let mdx=dx, mdz=dz;
+  if(sneaking){
+    mdx*=0.5; mdz*=0.5;
+    if(!isSolid(getB(Math.floor(player.x+mdx*3),Math.floor(player.y-0.5),Math.floor(player.z)))) mdx=0;
+    if(!isSolid(getB(Math.floor(player.x),Math.floor(player.y-0.5),Math.floor(player.z+mdz*3)))) mdz=0;
+  }
+  if(!collide(player.x+mdx, player.y, player.z)) player.x+=mdx;
+  if(!collide(player.x, player.y, player.z+mdz)) player.z+=mdz;
   if(!player.fly){
     const dy=player.vy*dt;
     if(!collide(player.x, player.y+dy, player.z)){
