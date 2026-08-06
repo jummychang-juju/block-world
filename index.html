@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V44・全圖可見光柱</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V45・殭屍圍城·煙火慶祝</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -1596,6 +1596,7 @@ function dailyEvt(t){
     sfx.craft(); sfx.eye(); sfx.portal();
     spawnParticles(player.x,player.y+2,player.z,25,0x60d0ff);
     toast('📅 每日挑戰完成！獲得 15 積分加成，明天有新挑戰！');
+    launchFirework(3);
   } else if(daily.prog===Math.ceil(D.goal/2)){
     toast('📅 每日挑戰過半：'+daily.prog+'/'+D.goal+'，加油！');
   }
@@ -1648,6 +1649,7 @@ function battleTick(dt){
     spawnParticles(player.x,player.y+2,player.z,40,0xffd700);
     sfx.portal(); sfx.roar(); sfx.craft();
     toast('🏆⚔️ 亂鬥全勝！獲得 40 積分＋💎×3＋💚×3！');
+    launchFirework(5);
     updateHUD(); scheduleSave();
   } else nextWave();
 }
@@ -1680,6 +1682,7 @@ function checkAch(){
       sfx.craft(); sfx.eye(); sfx.portal();
       spawnParticles(player.x,player.y+2,player.z,25,0xffd700);
       toast('🏆 達成成就【'+a.name+'】獲得 '+a.pts+' 積分加成！');
+      launchFirework(3);
       scheduleSave();
     }
   }
@@ -3055,6 +3058,7 @@ function allDragonsDead(){
   rebuildAll();
   mineStats.bonus=(mineStats.bonus||0)+50;
   toast('🐉🏆 屠龍獎勵：+50 積分！（終界龍 Dragon Boss）');
+  launchFirework(8);
   document.getElementById('winOverlay').style.display='flex';
   paused=true;
   scheduleSave();
@@ -3510,6 +3514,7 @@ function updateWithers(dt){
       document.getElementById('bossBar').style.display='none';
       mineStats.bonus=(mineStats.bonus||0)+30;
       toast('💀🏆 Boss 討伐獎勵：+30 積分！（凋零怪 Boss）');
+      launchFirework(6);
       updateHUD(); scheduleSave();
       continue;
     }
@@ -3756,6 +3761,19 @@ const DAY_LEN=200;
 let dayT=0.05;
 let isNight=false;
 let zSpawnT=0, aSpawnT=0, eSpawnT=0, bSpawnT=0, vilT=0, bloodMoon=false;
+let siegeNight=false;
+/* 🎆 煙火慶祝：大成就自動施放 */
+function launchFirework(n){
+  for(let i=0;i<(n||3);i++){
+    setTimeout(()=>{
+      const a=Math.random()*6.28, d=4+Math.random()*8;
+      const cols=[0xff5050,0xffd050,0x50ff80,0x50a0ff,0xff70ff];
+      spawnParticles(player.x+Math.cos(a)*d, player.y+10+Math.random()*6, player.z+Math.sin(a)*d, 26, cols[(Math.random()*cols.length)|0]);
+      tone(200+Math.random()*300,0.3,'square',0.07,60);
+      noiseBurst(0.15,0.13,1500);
+    }, i*350);
+  }
+}
 function dayFactor(t){
   if(t<0.45) return 1;
   if(t<0.55) return 1-(t-0.45)/0.1;
@@ -3788,9 +3806,28 @@ function updateDay(dt){
       bloodMoon=true;
       sfx.roar(); sfx.zGroan();
       toast('🔴 血月之夜 Blood Moon！怪物大量湧現——但打倒牠們掉寶加倍！');
-    } else if(!isNight && bloodMoon){
-      bloodMoon=false;
-      toast('🌅 血月退去，天亮了 Morning！');
+    } else if(isNight && dim==='over' && Math.random()<0.10){
+      /* 🧟 殭屍圍城之夜：開場湧入一大群，撐到天亮有獎 */
+      siegeNight=true;
+      sfx.zGroan(); sfx.roar();
+      toast('🧟 殭屍圍城之夜 Zombie Siege！大群殭屍湧來——撐到天亮！');
+      let sn=0;
+      for(let t2=0;t2<40&&sn<8;t2++){
+        const bf=zombies.length;
+        trySpawnZombie();
+        if(zombies.length>bf){ const zz2=zombies[zombies.length-1]; zz2.aggro=true; zz2.sp=(zz2.sp||1.4)*1.15; sn++; }
+      }
+    } else if(!isNight){
+      if(bloodMoon){ bloodMoon=false; toast('🌅 血月退去，天亮了 Morning！'); }
+      if(siegeNight){
+        siegeNight=false;
+        if(player.hp>0){
+          mineStats.bonus=(mineStats.bonus||0)+12;
+          launchFirework(4);
+          toast('🌅🏆 你撐過了殭屍圍城！獎勵 +12 積分！');
+          scheduleSave();
+        }
+      }
     }
     document.getElementById('dayIcon').textContent = isNight?(bloodMoon?'🔴':'🌙'):'☀️';
   }
