@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V43・床重生點·潛行·競技場導航</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V44・全圖可見光柱</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -1240,7 +1240,7 @@ const dayCol = new THREE.Color(0x8fc4e8), nightCol = new THREE.Color(0x0b1035),
 const skyCol = dayCol.clone();
 scene.background = skyCol;
 scene.fog = new THREE.Fog(0x8fc4e8, 40, 95);
-const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 300);
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 650);
 camera.rotation.order = 'YXZ';
 const renderer = new THREE.WebGLRenderer({antialias:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -3433,7 +3433,7 @@ function refreshBeams(){
   if(dim==='over'){
     const abm=new THREE.Mesh(
       new THREE.BoxGeometry(1.2,WY*1.4,1.2),
-      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.42, depthWrite:false})
+      new THREE.MeshBasicMaterial({color:0xf0f0ff, transparent:true, opacity:0.5, depthWrite:false, fog:false})
     );
     abm.position.set(ARENA.x+0.5, WY/2, ARENA.z+0.5);
     scene.add(abm);
@@ -3441,10 +3441,10 @@ function refreshBeams(){
   }
   for(const v of cols.values()){
     const [x,y,z,id]=v;
-    const h=WY-y+6;
+    const h=WY-y+40;
     const m=new THREE.Mesh(
-      new THREE.BoxGeometry(0.35,h,0.35),
-      new THREE.MeshBasicMaterial({color:id===PORTAL?0xb060ff:0x70ffd0, transparent:true, opacity:0.32, depthWrite:false})
+      new THREE.BoxGeometry(0.8,h,0.8),
+      new THREE.MeshBasicMaterial({color:id===PORTAL?0xb060ff:0x70ffd0, transparent:true, opacity:0.45, depthWrite:false, fog:false})
     );
     m.position.set(x+0.5, y+h/2, z+0.5);
     scene.add(m);
