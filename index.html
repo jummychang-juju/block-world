@@ -125,7 +125,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V39・消耗品鍵盤操作</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V40・摔傷5格調整</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -6108,8 +6108,8 @@ function loop(){
     }
     if(!elytraFly) player.vy += -26*dt;
     if(player.onGround && fallD>0){
-      if(fallD>5.2 && liquid!==WATER && feetLq!==WATER){
-        const fd=Math.min(8, 1+Math.floor((fallD-5.2)/2));
+      if(fallD>6.6 && liquid!==WATER && feetLq!==WATER){
+        const fd=Math.min(8, 1+Math.floor((fallD-6.6)/2));
         damagePlayer(fd);
         toast('💥 摔痛了 -'+fd+'（超過5格記得往水裡跳）');
       }
