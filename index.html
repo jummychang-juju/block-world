@@ -70,7 +70,7 @@ window.onerror=function(msg,src,line,col,err){
   #bossBar .bt { font-size:13px; color:#e9c; text-shadow:0 1px 2px #000; margin-bottom:3px; }
   #bossBar .bg { height:10px; background:rgba(0,0,0,.5); border:1px solid #a5a; border-radius:6px; overflow:hidden; }
   #bossBar .fill { height:100%; width:100%; background:linear-gradient(90deg,#c3f,#f6a); }
-  #loot { position:fixed; top:112px; left:50%; transform:translateX(-50%); background:rgba(20,60,20,.92); border:1px solid #7d5; color:#dfffd0; padding:8px 18px; border-radius:14px; font-size:14px; font-weight:bold; z-index:22; opacity:0; transition:opacity .3s; pointer-events:none; max-width:90vw; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.5); }
+  #loot { position:fixed; top:112px; left:50%; transform:translateX(-50%); background:rgba(20,60,20,.92); border:1px solid #7d5; color:#dfffd0; padding:8px 18px; border-radius:14px; font-size:14px; font-weight:bold; z-index:999; opacity:0; transition:opacity .3s; pointer-events:none; max-width:90vw; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.5); }
   #loot.show { opacity:1; }
   #toast { position:fixed; top:76px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); color:#fff; padding:8px 18px; border-radius:20px; font-size:14px; z-index:20; opacity:0; transition:opacity .3s; pointer-events:none; max-width:88vw; text-align:center; }
   #toast.show { opacity:1; }
@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V48・物資置頂·羅盤優化</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V49・物資訊息壓過介面</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -6027,6 +6027,9 @@ let lootTimer=null;
 /* 獲得物資專用置頂訊息：不會被一般提示壓掉 */
 function lootToast(msg){
   lootEl.textContent=msg;
+  /* 全螢幕介面開啟時（許願池/合成台等）改貼齊頂端，確保看得見 */
+  const anyOv=[...document.querySelectorAll('.overlay')].some(o=>o.style.display==='flex');
+  lootEl.style.top = anyOv ? '8px' : '112px';
   lootEl.classList.add('show');
   clearTimeout(lootTimer);
   lootTimer=setTimeout(()=>lootEl.classList.remove('show'),3200);
