@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V51・上下船切換</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V52・潛行按鈕·移除偵測器</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -361,7 +361,7 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
 const NAMES = {1:"草地 Grass",2:"泥土 Dirt",3:"石頭 Stone",4:"沙子 Sand",5:"原木 Wood",6:"樹葉 Leaf",7:"木板 Board",8:"玻璃 Glass",11:"磚塊 Brick",12:"TNT 炸藥 Bomb",13:"發光石 Light Stone",
   14:"煤礦 Coal",15:"鐵礦 Iron",16:"金礦 Gold",17:"鑽石礦 Diamond",18:"獄髓礦",19:"黑曜石",20:"岩漿 Lava",21:"地獄岩",22:"地獄門 Gate",23:"靈魂沙 Soul Sand",24:"合成台 Craft Table",
   25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat",58:"銅礦 Copper",59:"青金石 Blue Gem"};
-const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH,OBSERVER];
+const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,FORGE,WISH];
 
 /* ================= 亂數 ================= */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
@@ -5111,7 +5111,7 @@ function toggleFly(){
   player.vy=0;
   sfx.fly();
   document.getElementById('btnFly').classList.toggle('on',player.fly);
-  document.getElementById('btnDown').style.display=(player.fly&&isTouch)?'flex':'none';
+  { const bd=document.getElementById('btnDown'); bd.style.display=isTouch?'flex':'none'; bd.textContent=player.fly?'⬇':'🐢'; }
   toast(player.fly?'🕊 飛行模式 開':'🚶 飛行模式 關');
 }
 if(!isTouch){
@@ -6245,7 +6245,7 @@ function loop(){
   if(!player.onGround && player.vy<0 && !player.fly && !boating && !gliding) fallD-=player.vy*dt;
   else if(player.fly||boating||gliding||liquid===WATER||liquid===LAVA) fallD=0;
   /* Shift 潛行：速度減半，站在邊緣不會走出去掉下來 */
-  const sneaking=(keys['ShiftLeft']||keys['ShiftRight']) && !player.fly && player.onGround && !boating;
+  const sneaking=(keys['ShiftLeft']||keys['ShiftRight']||downHeld) && !player.fly && player.onGround && !boating;
   let mdx=dx, mdz=dz;
   if(sneaking){
     mdx*=0.5; mdz*=0.5;
@@ -6349,7 +6349,7 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
   if(dim==='end' && !dragonDefeated) spawnDragons();
   updateHUD();
   document.getElementById('btnFly').classList.toggle('on',player.fly);
-  document.getElementById('btnDown').style.display=(player.fly&&isTouch)?'flex':'none';
+  { const bd=document.getElementById('btnDown'); bd.style.display=isTouch?'flex':'none'; bd.textContent=player.fly?'⬇':'🐢'; }
   document.getElementById('startBtn').addEventListener('click',()=>{
     initAudio();
     if(AC && AC.state==='suspended') AC.resume();
