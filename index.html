@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V49・物資訊息壓過介面</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V50・競技場強化</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -228,7 +228,7 @@ window.onerror=function(msg,src,line,col,err){
     顯示🔥表示就在附近（往下挖或抬頭看！）→ 敲開金色寶箱領獎 💎×3💚×3🥇×3<br>
     集滿10個＝尋寶大師終極大獎🏆<br><br>
     <b style="color:#dbf;">💀 試煉之地與凋零附魔</b><br>
-    找到金色光柱＝高空黑曜石競技場 → 站上去2秒召喚凋零怪(HP150)！<br>
+    找到金色光柱＝高空基岩競技場(19×19超大場地) → 站在地板上2秒召喚凋零怪(HP150)！<br>地板是基岩炸不壞，場地每秒自動檢查、破損會自動修復<br>
     打倒獲得凋零之星 → 附魔台「凋零附魔」共10段，每段全武器+1傷害，第10段攻擊會爆炸！<br><br>
     <b style="color:#fea;">⚒ 鑄造台＆🌠 許願池＆🎁 幸運方塊</b><br>
     鑄造台：集齊六神兵（匕首/巨錘/烈焰/冰霜/雷神/王者）→ 熔鑄成✨天神之劍（效果全繼承！）<br>
@@ -563,13 +563,13 @@ function generateOver(sd, w){
   }
   /* 試煉之地：高空黑曜石競技場（凋零怪出沒！） */
   computeSecrets();
-  for(let dx=-4;dx<=4;dx++) for(let dz=-4;dz<=4;dz++){
+  for(let dx=-9;dx<=9;dx++) for(let dz=-9;dz<=9;dz++){
     const ax=ARENA.x+dx, az=ARENA.z+dz;
     if(!inBounds(ax,ARENA.y,az)) continue;
-    w[idx(ax,ARENA.y,az)]=OBSID;
-    for(let dy=1;dy<=4;dy++) if(ARENA.y+dy<WY) w[idx(ax,ARENA.y+dy,az)]=AIR;
+    w[idx(ax,ARENA.y,az)]=BEDROCK;                 /* 地板＝基岩，TNT炸不壞 */
+    for(let dy=1;dy<=5;dy++) if(ARENA.y+dy<WY) w[idx(ax,ARENA.y+dy,az)]=AIR;
   }
-  for(const [cx3,cz3] of [[-4,-4],[4,-4],[-4,4],[4,4]])
+  for(const [cx3,cz3] of [[-9,-9],[9,-9],[-9,9],[9,9],[0,-9],[0,9],[-9,0],[9,0]])
     if(inBounds(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)) w[idx(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)]=GLOW;
   const gRng = mulberry32(sd^0xdead);
   graveyard.x = 8+((gRng()*(WX-24))|0);
@@ -3494,13 +3494,49 @@ function spawnWither(){
   document.getElementById('bossBar').style.display='block';
   document.getElementById('bossTitle').textContent='💀 凋零怪';
 }
+/* 競技場每秒自檢：地板破損/消失就自動重建（含被炸掉、被挖掉） */
+let arenaChkT=0;
+function checkArena(dt){
+  if(dim!=='over') return;
+  arenaChkT-=dt;
+  if(arenaChkT>0) return;
+  arenaChkT=1;
+  let missing=0;
+  for(let dx=-9;dx<=9;dx+=1) for(let dz=-9;dz<=9;dz+=1){
+    const ax=ARENA.x+dx, az=ARENA.z+dz;
+    if(!inBounds(ax,ARENA.y,az)) continue;
+    if(getB(ax,ARENA.y,az)!==BEDROCK) missing++;
+  }
+  if(missing===0) return;
+  const set=new Set();
+  for(let dx=-9;dx<=9;dx++) for(let dz=-9;dz<=9;dz++){
+    const ax=ARENA.x+dx, az=ARENA.z+dz;
+    if(!inBounds(ax,ARENA.y,az)) continue;
+    if(getB(ax,ARENA.y,az)!==BEDROCK){ setBlockRaw(ax,ARENA.y,az,BEDROCK); markChunks(set,ax,az); }
+    for(let dy=1;dy<=5;dy++){
+      if(ARENA.y+dy<WY && isSolid(getB(ax,ARENA.y+dy,az))){ setBlockRaw(ax,ARENA.y+dy,az,AIR); markChunks(set,ax,az); }
+    }
+  }
+  for(const [cx3,cz3] of [[-9,-9],[9,-9],[-9,9],[9,9],[0,-9],[0,9],[-9,0],[9,0]]){
+    const gx2=ARENA.x+cx3, gz2=ARENA.z+cz3;
+    if(inBounds(gx2,ARENA.y+1,gz2)){ setBlockRaw(gx2,ARENA.y+1,gz2,GLOW); markChunks(set,gx2,gz2); }
+  }
+  dirty=true; scheduleSave();
+  for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); }
+  if(missing>6) toast('⚔️ 競技場已自動修復！（'+missing+' 格地板重建）');
+}
 function updateWithers(dt){
+  checkArena(dt);
   witherCD=Math.max(0,witherCD-dt);
   /* 玩家踏上競技場→倒數召喚 */
   if(dim==='over' && withers.length===0 && witherCD<=0){
-    const nearArena = Math.hypot(player.x-ARENA.x,player.z-ARENA.z)<6 && Math.abs(player.y-ARENA.y)<7;
-    if(nearArena){
+    /* 必須「站在」競技場地板上（腳下是基岩且在場地範圍內）才會召喚 */
+    const onFloor = Math.abs(player.x-ARENA.x)<=9.5 && Math.abs(player.z-ARENA.z)<=9.5
+      && player.onGround && getB(Math.floor(player.x),Math.floor(player.y-0.2),Math.floor(player.z))===BEDROCK
+      && Math.abs(player.y-(ARENA.y+1))<1.5;
+    if(onFloor){
       witherWarnT+=dt;
+      if(witherWarnT>=1 && witherWarnT<1+dt) toast('💀 站穩了！凋零怪即將降臨…');
       if(witherWarnT>=2){ witherWarnT=0; spawnWither(); }
     } else witherWarnT=0;
   }
