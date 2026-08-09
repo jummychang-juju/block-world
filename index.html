@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V50・競技場強化</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V51・上下船切換</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -237,7 +237,7 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#ffa;">📱 手機操作</b><br>
     左搖桿移動｜滑右半邊轉視角｜⛏挖/攻擊｜🧱放置｜⬆跳(按住連跳)｜⬇蹲｜🕊飛行(需鞘翅)｜🏹射箭｜左上武器名＝切換武器<br><br>
     <b style="color:#aff;">💻 電腦操作</b><br>
-    WASD移動｜滑鼠視角｜左鍵挖/攻擊｜右鍵放置/開介面/交易｜滾輪切快捷欄行｜1-9選方塊<br>下方第三行消耗品列：點選後<b>長按右鍵</b>吃食物喝藥水（按住連吃）、🔮珍珠<b>短按右鍵</b>投擲<br>Space跳｜E互動｜R射箭｜F飛行｜⬆️⬇️切換武器｜👁 終界人：<b>不對視就不會被攻擊</b>！<br><br>
+    WASD移動｜V上下船｜左鍵挖/攻擊｜右鍵放置/開介面/交易｜滾輪切快捷欄行｜1-9選方塊<br>下方第三行消耗品列：點選後<b>長按右鍵</b>吃食物喝藥水（按住連吃）、🔮珍珠<b>短按右鍵</b>投擲<br>Space跳｜E互動｜R射箭｜F飛行｜⬆️⬇️切換武器｜👁 終界人：<b>不對視就不會被攻擊</b>！<br><br>
     <b style="color:#fbb;">🌊 新生存規則</b><br>
     摔落5格以上會受傷（往水裡跳免傷，快捷欄有水可以鋪）｜水下待10秒開始耗氧🫧，氧盡扣血｜睡覺需站地面且5格內無怪｜終界人會主動攻擊！<br><br>
     <b style="color:#9df;">🤿 海底礦洞</b><br>
@@ -1693,6 +1693,7 @@ function checkAch(){
 const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
+let boatOff=false;   /* 玩家主動下船（可潛水） */
 let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0, gliding=false;
 const pearlsFly=[];
 function throwPearl(){
@@ -2165,6 +2166,15 @@ function updateHUD(){
     b.textContent='⚾❄️×'+inv.snowball;
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwSnowball();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwSnowball();});
+    sb.appendChild(b);
+  }
+  if(hasBoat && (boating||boatOff)){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent = boating ? '🚣 下船（潛水）' : '🚣 上船';
+    const tog=()=>{ boatOff=!boatOff; toast(boatOff?'🏊 已下船！可以潛水了（上岸會自動恢復）':'🚣 回到船上'); updateHUD(); };
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();tog();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();tog();});
     sb.appendChild(b);
   }
   if(inv.seed>0){
@@ -4957,6 +4967,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyR'){ if(curWeapon==='trident') throwTrident(); else shootBow(); }
   if(e.code==='KeyT') throwPearl();
   if(e.code==='KeyG') throwSnowball();
+  if(e.code==='KeyV' && hasBoat){ boatOff=!boatOff; toast(boatOff?'🏊 已下船！可以潛水了':'🚣 回到船上'); updateHUD(); }
   if(e.code==='ArrowUp'){ e.preventDefault(); cycleWeapon(1); }
   if(e.code==='ArrowDown'){ e.preventDefault(); cycleWeapon(-1); }
   if(e.code==='KeyB') sleepBed();
@@ -6182,9 +6193,10 @@ function loop(){
   const feetLq=getB(fx,Math.floor(player.y-0.2),fz);
   const underLq=getB(fx,Math.floor(player.y-1.0),fz);
   const isLq=v=>v===WATER||v===LAVA;
-  boating = hasBoat && !player.fly && (isLq(liquid)||isLq(feetLq)||isLq(underLq));
-  if(boating && !boatMesh){ boatMesh=makeBoatMesh(); scene.add(boatMesh); }
-  if(!boating && boatMesh){ scene.remove(boatMesh); boatMesh=null; }
+  boating = hasBoat && !boatOff && !player.fly && (isLq(liquid)||isLq(feetLq)||isLq(underLq));
+  if(boatOff && !(isLq(liquid)||isLq(feetLq)||isLq(underLq))) boatOff=false;   /* 上岸後自動恢復可搭船 */
+  if(boating && !boatMesh){ boatMesh=makeBoatMesh(); scene.add(boatMesh); updateHUD(); }
+  if(!boating && boatMesh){ scene.remove(boatMesh); boatMesh=null; updateHUD(); }
   if(speedT>0){ speedT-=dt; if(speedT<=0) toast('⚡ 速度藥水效果結束'); }
   let speed = player.fly ? 8.5 : 4.5;
   if(boating) speed=7.5;
