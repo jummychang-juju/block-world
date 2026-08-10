@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V53・重錘·旋風彈</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V54・終界人變多</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -2293,7 +2293,7 @@ function updateHUD(){
 
 /* ================= 生物 ================= */
 const zombies=[], animals=[], enders=[], blazes=[];
-const MAX_Z=10, MAX_A=8, MAX_E=8, MAX_B=4;
+const MAX_Z=10, MAX_A=8, MAX_E=16, MAX_B=4;
 const entities = ()=> zombies.concat(animals, enders, blazes, withers);
 
 function makeZombieMesh(v){
@@ -3917,7 +3917,7 @@ function updateDay(dt){
   if(dim==='end'){
     isNight=true;
     eSpawnT-=dt;
-    if(eSpawnT<=0){ trySpawnEnder(); trySpawnEnder(); eSpawnT=2.5+Math.random()*2; }
+    if(eSpawnT<=0){ trySpawnEnder(); trySpawnEnder(); trySpawnEnder(); eSpawnT=1.5+Math.random()*1.2; }
     return;
   }
   dayT=(dayT+dt/DAY_LEN)%1;
@@ -3968,7 +3968,7 @@ function updateDay(dt){
     zSpawnT-=dt;
     if(zSpawnT<=0){ trySpawnZombie(); if(storm) trySpawnZombie(); zSpawnT=(storm?1.6:3)+Math.random()*3; }
     eSpawnT-=dt;
-    if(eSpawnT<=0){ if(enders.length<4) trySpawnEnder(); eSpawnT=4+Math.random()*3; }
+    if(eSpawnT<=0){ if(enders.length<10){ trySpawnEnder(); trySpawnEnder(); } eSpawnT=1.8+Math.random()*1.5; }
   } else {
     aSpawnT-=dt;
     if(aSpawnT<=0){ trySpawnAnimal(); aSpawnT=4+Math.random()*4; }
