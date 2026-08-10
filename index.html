@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V54・終界人變多</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V55・重錘連跳強化</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -246,8 +246,8 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#fda;">🔨 重錘與 🌪 旋風彈（V53）</b><br>
-    🔨 <b>重錘 Mace</b>（合成：鐵6+鑽石2）：從<b>高處落下</b>砸怪物，每格落差 <b>+3 傷害</b>（最高+60）！<br>
-    　命中時<b>完全免除摔落傷害</b>、自動<b>彈起</b>可連續砸，還會震飛周圍3.5格內的怪<br>
+    🔨 <b>重錘 Mace</b>（合成：鐵6+鑽石2｜攻擊距離9超遠）：從<b>高處落下</b>砸怪物，每格落差 <b>+3 傷害</b>（最高+60）！<br>
+    　命中時<b>完全免除摔落傷害</b>、<b>高高彈起</b>可一直跳來跳去連續砸，還會震飛周圍3.5格內的怪<br>
     🌪 <b>旋風彈</b>（合成：烈焰粉1+鐵2＝5顆）：點狀態列「🌪發射」或按 <b>C</b><br>
     　打地板 → <b>把自己彈上天</b>（免摔傷）｜打怪物 → 強力擊退＋擊飛<br>
     　<b>黃金組合</b>：旋風彈把自己彈到高空 → 用重錘從天而降砸怪，傷害爆表！<br><br>
@@ -2080,7 +2080,7 @@ function maxHpVal(){ return 10+perks.hp*2; }
 let dragonDefeated=false;
 let curWeapon='fist';
 const WEAPON_DMG = { mace:6, fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15, god:18 };
-const WEAPON_REACH = { mace:5, fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
+const WEAPON_REACH = { mace:9, fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
 const WEAPON_KB = { hammer:2.4, god:2.4 };
 const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
 const WEAPON_NAME = { mace:'🔨 重錘 Mace（高處落下更痛）', fist:'✊ 空手 Hands', wood:'🗡 木劍 Wood Sword', stone:'🗡 石劍 Stone Sword', iron:'🗡 鐵劍 Iron Sword', axe:'🪓 戰斧 Axe', diamond:'🗡 鑽石劍 Diamond Sword', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍 Fire Sword', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘 Hammer', emsword:'🗡 綠寶石劍💚 Emerald Sword', dagger:'🔪 吸血匕首🩸 Knife', frost:'❄️ 冰霜劍 Ice Sword', thammer:'⚡ 雷神之鎚 Thunder Hammer', ender:'🗡 終界劍🌌 End Sword', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍 King Sword', god:'✨ 天神之劍 God Sword' };
@@ -5432,7 +5432,7 @@ function mine(){
     let dmg=curDmg();
     if(!player.onGround && player.vy<0){ dmg=Math.round(dmg*1.2); spawnParticles(ent.x,ent.y+1.4,ent.z,6,0xffd050); }
     /* 🔨 重錘：從高處落下砸擊，每格落差+3傷害；命中免摔傷並彈起 */
-    if(curWeapon==='mace' && fallD>1.2){
+    if(curWeapon==='mace' && fallD>0.8){
       const bonus=Math.min(60, Math.round(fallD*3));
       dmg+=bonus;
       spawnParticles(ent.x,ent.y+0.4,ent.z,26,0xffe090);
@@ -5446,8 +5446,8 @@ function mine(){
         }
       }
       lootToast('🔨💥 重錘落擊！落差 '+fallD.toFixed(1)+' 格 → 額外 +'+bonus+' 傷害！');
-      fallD=0;                 /* 免摔落傷害 */
-      player.vy=9;             /* 自動彈起 */
+      fallD=0;                  /* 免摔落傷害 */
+      player.vy=18;             /* 自動高彈起，可連續空中砸擊 */
       player.onGround=false;
     }
     if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
