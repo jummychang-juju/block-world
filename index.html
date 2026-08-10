@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V52・潛行按鈕·移除偵測器</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V53・重錘·旋風彈</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -245,6 +245,12 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#fda;">🔨 重錘與 🌪 旋風彈（V53）</b><br>
+    🔨 <b>重錘 Mace</b>（合成：鐵6+鑽石2）：從<b>高處落下</b>砸怪物，每格落差 <b>+3 傷害</b>（最高+60）！<br>
+    　命中時<b>完全免除摔落傷害</b>、自動<b>彈起</b>可連續砸，還會震飛周圍3.5格內的怪<br>
+    🌪 <b>旋風彈</b>（合成：烈焰粉1+鐵2＝5顆）：點狀態列「🌪發射」或按 <b>C</b><br>
+    　打地板 → <b>把自己彈上天</b>（免摔傷）｜打怪物 → 強力擊退＋擊飛<br>
+    　<b>黃金組合</b>：旋風彈把自己彈到高空 → 用重錘從天而降砸怪，傷害爆表！<br><br>
     <b style="color:#cef;">🗄 武器庫</b><br>
     合成過的武器永久收藏！電腦按 ⬆️⬇️ 上下切換武器｜手機點左上角「武器名稱」輪流切換<br>
     🔱 <b>三叉戟＝忠誠投擲武器</b>：手持時電腦按 <b>R</b>／手機點狀態列「🔱擲出」→ 飛出去<b>貫穿路徑上所有怪物</b>（傷害+3、吃附魔加成），打完<b>自動穿牆飛回手中</b>！也能射龍<br><br>
@@ -1547,7 +1553,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -1690,7 +1696,7 @@ function checkAch(){
     }
   }
 }
-const weapons = { wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
+const weapons = { mace:false, wood:false, stone:false, iron:false, dagger:false, axe:false, diamond:false, trident:false, flame:false, frost:false, chal:false, emsword:false, hammer:false, ender:false, thammer:false, wblade:false, king:false, god:false };
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatOff=false;   /* 玩家主動下船（可潛水） */
@@ -1945,6 +1951,68 @@ function feedWheat(){
   if(best.fedT>0) toast('🌾 餵食成功！再餵附近同種動物一隻就會生寶寶');
   updateHUD(); scheduleSave();
 }
+/* ================= 🌪 旋風彈 ================= */
+const winds=[];
+function throwWind(){
+  if((inv.wind||0)<=0){ toast('沒有旋風彈（合成台：烈焰粉1+鐵2＝5顆）'); return; }
+  inv.wind--;
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.22,7,7), new THREE.MeshBasicMaterial({color:0xc8f0ff, transparent:true, opacity:0.75}));
+  m.position.copy(camera.position);
+  scene.add(m);
+  winds.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
+    vx:dir.x*26, vy:dir.y*26, vz:dir.z*26, life:3, mesh:m});
+  tone(300,0.2,'sine',0.08,900);
+  updateHUD(); scheduleSave();
+}
+function windBurst(x,y,z){
+  spawnParticles(x,y,z,22,0xd8f4ff);
+  noiseBurst(0.25,0.2,2600);
+  tone(900,0.25,'sine',0.09,200);
+  /* 推開範圍內的怪物 */
+  for(const e of entities()){
+    if(e.kind==='vil') continue;
+    const d=Math.hypot(e.x-x,e.y-y,e.z-z);
+    if(d<4.5){
+      const kx=e.x-x, kz=e.z-z, kd=Math.hypot(kx,kz)||1;
+      e.x+=kx/kd*3.2; e.z+=kz/kd*3.2; e.vy=9;
+      e.hurtT=0.5;
+      spawnParticles(e.x,e.y+1,e.z,8,0xd8f4ff);
+    }
+  }
+  /* 把玩家彈飛（對地板發射＝彈射起步） */
+  const pd=Math.hypot(player.x-x,player.y-y,player.z-z);
+  if(pd<4.5){
+    player.vy=Math.max(player.vy,16);
+    const px2=player.x-x, pz2=player.z-z, pd2=Math.hypot(px2,pz2);
+    if(pd2>0.3){ player.x+=px2/pd2*0.8; player.z+=pz2/pd2*0.8; }
+    player.onGround=false;
+    fallD=0;
+    toast('🌪 旋風彈把你彈上天！（落地前記得用重錘砸怪）');
+  }
+}
+function updateWinds(dt){
+  for(let i=winds.length-1;i>=0;i--){
+    const wd=winds[i];
+    wd.life-=dt;
+    let hit=false;
+    for(let st=0; st<3 && !hit; st++){
+      wd.x+=wd.vx*dt/3; wd.y+=wd.vy*dt/3; wd.z+=wd.vz*dt/3;
+      if(isSolid(getB(Math.floor(wd.x),Math.floor(wd.y),Math.floor(wd.z)))){ hit=true; break; }
+      for(const e of entities()){
+        if(e.kind==='vil') continue;
+        const cy=e.y+(e.kind==='z'?1:(e.kind==='e'?1.5:0.6));
+        if(Math.hypot(wd.x-e.x,wd.y-cy,wd.z-e.z)<1.2){ hit=true; break; }
+      }
+    }
+    wd.mesh.position.set(wd.x,wd.y,wd.z);
+    if(hit||wd.life<=0){
+      windBurst(wd.x,wd.y,wd.z);
+      scene.remove(wd.mesh); wd.mesh.material.dispose(); wd.mesh.geometry.dispose();
+      winds.splice(i,1);
+    }
+  }
+}
 function raycastWater(maxDist){
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   let x=camera.position.x, y=camera.position.y, z=camera.position.z;
@@ -2011,11 +2079,11 @@ const PERKS=[
 function maxHpVal(){ return 10+perks.hp*2; }
 let dragonDefeated=false;
 let curWeapon='fist';
-const WEAPON_DMG = { fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15, god:18 };
-const WEAPON_REACH = { fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
+const WEAPON_DMG = { mace:6, fist:1, wood:2, stone:3, iron:4, dagger:5, axe:5, diamond:6, trident:7, flame:7, frost:7, chal:8, emsword:8, hammer:9, ender:10, thammer:11, wblade:12, king:15, god:18 };
+const WEAPON_REACH = { mace:5, fist:3, wood:4, stone:5, iron:6, dagger:5, axe:6, diamond:7, trident:9, flame:7, frost:7, chal:8, emsword:9, hammer:6, ender:10, thammer:7, wblade:8, king:12, god:12 };
 const WEAPON_KB = { hammer:2.4, god:2.4 };
 const GOD_REQ=['dagger','hammer','flame','frost','thammer','king'];
-const WEAPON_NAME = { fist:'✊ 空手 Hands', wood:'🗡 木劍 Wood Sword', stone:'🗡 石劍 Stone Sword', iron:'🗡 鐵劍 Iron Sword', axe:'🪓 戰斧 Axe', diamond:'🗡 鑽石劍 Diamond Sword', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍 Fire Sword', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘 Hammer', emsword:'🗡 綠寶石劍💚 Emerald Sword', dagger:'🔪 吸血匕首🩸 Knife', frost:'❄️ 冰霜劍 Ice Sword', thammer:'⚡ 雷神之鎚 Thunder Hammer', ender:'🗡 終界劍🌌 End Sword', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍 King Sword', god:'✨ 天神之劍 God Sword' };
+const WEAPON_NAME = { mace:'🔨 重錘 Mace（高處落下更痛）', fist:'✊ 空手 Hands', wood:'🗡 木劍 Wood Sword', stone:'🗡 石劍 Stone Sword', iron:'🗡 鐵劍 Iron Sword', axe:'🪓 戰斧 Axe', diamond:'🗡 鑽石劍 Diamond Sword', trident:'🔱 三叉戟·可投擲', flame:'🔥 烈焰劍 Fire Sword', chal:'🗡 獄髓劍✨', hammer:'💥 巨錘 Hammer', emsword:'🗡 綠寶石劍💚 Emerald Sword', dagger:'🔪 吸血匕首🩸 Knife', frost:'❄️ 冰霜劍 Ice Sword', thammer:'⚡ 雷神之鎚 Thunder Hammer', ender:'🗡 終界劍🌌 End Sword', wblade:'🗡 凋靈之刃🖤', king:'👑 王者之劍 King Sword', god:'✨ 天神之劍 God Sword' };
 const COLLECT = { [WOOD]:'wood', [STONE]:'stone', [COAL]:'coal', [IRON]:'iron', [GOLD]:'gold', [DIAMOND]:'diamond', [CHAL]:'chal', [EMERALD]:'emerald', [COPPER]:'copper', [LAPIS]:'lapis' };
 
 function surfaceYo(x,z){
@@ -2158,6 +2226,14 @@ function updateHUD(){
     b.textContent='🔮丟×'+inv.pearl;
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwPearl();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwPearl();});
+    sb.appendChild(b);
+  }
+  if(inv.wind>0){
+    const b=document.createElement('span');
+    b.className='act';
+    b.textContent='🌪發射×'+inv.wind;
+    b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwWind();},{passive:false});
+    b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwWind();});
     sb.appendChild(b);
   }
   if(inv.snowball>0){
@@ -4331,6 +4407,8 @@ const RECIPES=[
   {id:'iron',    kind:'sword', name:'鐵劍（傷害4・距離6）',    cost:{wood:1,iron:2}},
   {id:'axe',     kind:'sword', name:'戰斧🪓（傷害5・距離6）',  cost:{wood:1,iron:3}},
   {id:'diamond', kind:'sword', name:'鑽石劍（傷害6・距離7）',  cost:{wood:1,diamond:2}},
+  {id:'mace',    kind:'sword', name:'重錘🔨（從高處落下砸擊：越高越痛＋免摔傷＋彈起）', cost:{iron:6,diamond:2}},
+  {id:'wind',    kind:'stack', name:'旋風彈🌪×5（對地彈射自己／對怪擊退）', cost:{blaze:1,iron:2}},
   {id:'trident', kind:'sword', name:'三叉戟🔱（近戰7｜按R擲出：高傷害貫穿＋自動飛回）', cost:{iron:5,diamond:1}},
   {id:'flame',   kind:'sword', name:'烈焰劍🔥（傷害7・距離7）', cost:{blaze:3,iron:2}},
   {id:'chal',    kind:'sword', name:'獄髓劍✨（傷害8・距離8）', cost:{wood:1,chal:3}},
@@ -4437,6 +4515,7 @@ function renderCraft(){
         else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
         else if(r.id==='bread'){ inv.bread=(inv.bread||0)+2; toast('🍞 烤了2個麵包！香噴噴'); }
         else if(r.id==='carrow'){ inv.arrow+=10; toast('🏹 銅箭×10 打好了！'); }
+        else if(r.id==='wind'){ inv.wind=(inv.wind||0)+5; toast('🌪 旋風彈×5 完成！點狀態列發射'); }
         else if(r.id==='lpotion'){ inv.luck=(inv.luck||0)+1; toast('🍀 青金石幸運藥水完成！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
       });
@@ -4459,7 +4538,7 @@ const TRADES=[
 ];
 function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0) + (perks.star||0); }
 /* 武器庫：所有擁有過的武器都收藏在這，隨時切換 */
-const WLIST=['fist','wood','stone','iron','dagger','axe','diamond','trident','flame','frost','chal','emsword','hammer','ender','thammer','wblade','king','god'];
+const WLIST=['fist','mace','wood','stone','iron','dagger','axe','diamond','trident','flame','frost','chal','emsword','hammer','ender','thammer','wblade','king','god'];
 function ownedWeapons(){
   return WLIST.filter(k=>k==='fist'||weapons[k]);
 }
@@ -4967,6 +5046,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyR'){ if(curWeapon==='trident') throwTrident(); else shootBow(); }
   if(e.code==='KeyT') throwPearl();
   if(e.code==='KeyG') throwSnowball();
+  if(e.code==='KeyC') throwWind();
   if(e.code==='KeyV' && hasBoat){ boatOff=!boatOff; toast(boatOff?'🏊 已下船！可以潛水了':'🚣 回到船上'); updateHUD(); }
   if(e.code==='ArrowUp'){ e.preventDefault(); cycleWeapon(1); }
   if(e.code==='ArrowDown'){ e.preventDefault(); cycleWeapon(-1); }
@@ -5351,6 +5431,25 @@ function mine(){
   if(ent){
     let dmg=curDmg();
     if(!player.onGround && player.vy<0){ dmg=Math.round(dmg*1.2); spawnParticles(ent.x,ent.y+1.4,ent.z,6,0xffd050); }
+    /* 🔨 重錘：從高處落下砸擊，每格落差+3傷害；命中免摔傷並彈起 */
+    if(curWeapon==='mace' && fallD>1.2){
+      const bonus=Math.min(60, Math.round(fallD*3));
+      dmg+=bonus;
+      spawnParticles(ent.x,ent.y+0.4,ent.z,26,0xffe090);
+      sfx.boom(); noiseBurst(0.3,0.28,400);
+      for(const e2 of entities()){
+        if(e2===ent||e2.kind==='vil') continue;
+        if(Math.hypot(e2.x-ent.x,e2.z-ent.z)<3.5){
+          e2.hp-=Math.round(bonus*0.4); e2.hurtT=0.4;
+          const kx=e2.x-ent.x, kz=e2.z-ent.z, kd=Math.hypot(kx,kz)||1;
+          e2.x+=kx/kd*2; e2.z+=kz/kd*2; e2.vy=6;
+        }
+      }
+      lootToast('🔨💥 重錘落擊！落差 '+fallD.toFixed(1)+' 格 → 額外 +'+bonus+' 傷害！');
+      fallD=0;                 /* 免摔落傷害 */
+      player.vy=9;             /* 自動彈起 */
+      player.onGround=false;
+    }
     if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
     ent.hp-=dmg; ent.hurtT=0.4;
     if(ent.kind==='z') ent.aggro=true;
@@ -6144,6 +6243,7 @@ function loop(){
   updateBuddies(dt);
   updatePearls(dt);
   updateSnowballs(dt);
+  updateWinds(dt);
   updateTrident(dt);
   beamT-=dt;
   if(beamT<=0){ refreshBeams(); beamT=8; }
