@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V55・重錘連跳強化</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V56・重錘彈飛20格</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -247,7 +247,7 @@ window.onerror=function(msg,src,line,col,err){
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#fda;">🔨 重錘與 🌪 旋風彈（V53）</b><br>
     🔨 <b>重錘 Mace</b>（合成：鐵6+鑽石2｜攻擊距離9超遠）：從<b>高處落下</b>砸怪物，每格落差 <b>+3 傷害</b>（最高+60）！<br>
-    　命中時<b>完全免除摔落傷害</b>、<b>高高彈起</b>可一直跳來跳去連續砸，還會震飛周圍3.5格內的怪<br>
+    　命中時<b>完全免除摔落傷害</b>、<b>彈飛20格高</b>可一直跳來跳去連續砸，還會震飛周圍3.5格內的怪<br>
     🌪 <b>旋風彈</b>（合成：烈焰粉1+鐵2＝5顆）：點狀態列「🌪發射」或按 <b>C</b><br>
     　打地板 → <b>把自己彈上天</b>（免摔傷）｜打怪物 → 強力擊退＋擊飛<br>
     　<b>黃金組合</b>：旋風彈把自己彈到高空 → 用重錘從天而降砸怪，傷害爆表！<br><br>
@@ -5447,7 +5447,7 @@ function mine(){
       }
       lootToast('🔨💥 重錘落擊！落差 '+fallD.toFixed(1)+' 格 → 額外 +'+bonus+' 傷害！');
       fallD=0;                  /* 免摔落傷害 */
-      player.vy=18;             /* 自動高彈起，可連續空中砸擊 */
+      player.vy=32;             /* 彈起約20格高，可連續空中砸擊 */
       player.onGround=false;
     }
     if(curWeapon==='dagger' && ent.kind!=='vil') heal(1);
