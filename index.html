@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V59・終界人×3</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V60・不死圖騰·龍吃重錘</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -245,6 +245,10 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#fe8;">🕯 不死圖騰（V60）</b><br>
+    合成：金6+綠寶石3+鑽石1 → <b>死亡瞬間自動復活滿血</b>＋無敵3秒＋加速逃跑！<br>
+    帶在身上就有效（狀態列顯示🕯數量），打Boss、探地獄必備保命符<br>
+    🔨 重錘現在<b>連凋零怪和終界龍都能落擊</b>——從天而降砸Boss，傷害爆表！<br><br>
     <b style="color:#fda;">🔨 重錘與 🌪 旋風彈（V53）</b><br>
     🔨 <b>重錘 Mace</b>（合成：鐵6+鑽石2｜攻擊距離9超遠）：從<b>高處落下</b>砸怪物，每格落差 <b>+3 傷害</b>（最高+60）！<br>
     　命中時<b>完全免除摔落傷害</b>、<b>彈飛20格高</b>可一直跳來跳去連續砸，還會震飛周圍3.5格內的怪<br>
@@ -1553,7 +1557,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -2152,6 +2156,20 @@ function damagePlayer(n){
   f.style.transition='none'; f.style.opacity=1;
   requestAnimationFrame(()=>{ f.style.transition='opacity .5s'; f.style.opacity=0; });
   if(player.hp<=0){
+    /* 🕯 不死圖騰：死亡瞬間自動消耗一個，滿血復活 */
+    if((inv.totem||0)>0){
+      inv.totem--;
+      player.hp=maxHpVal();
+      invulnT=3;
+      speedT=Math.max(speedT,8);
+      spawnParticles(player.x,player.y+1,player.z,45,0xffd700);
+      spawnParticles(player.x,player.y+1,player.z,30,0x60ff90);
+      sfx.portal(); sfx.eye(); sfx.craft();
+      if(typeof launchFirework==='function') launchFirework(2);
+      lootToast('🕯✨ 不死圖騰發動！你從死亡邊緣復活了（剩 '+inv.totem+' 個）');
+      updateHUD(); scheduleSave();
+      return;
+    }
     sfx.die();
     document.getElementById('deathOverlay').style.display='flex';
     paused=true;
@@ -2228,6 +2246,12 @@ function updateHUD(){
     b.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();throwPearl();},{passive:false});
     b.addEventListener('mousedown',ev=>{ev.stopPropagation();throwPearl();});
     sb.appendChild(b);
+  }
+  if(inv.totem>0){
+    const t=document.createElement('span');
+    t.textContent='🕯×'+inv.totem;
+    t.style.color='#ffd700';
+    sb.appendChild(t);
   }
   if(inv.wind>0){
     const b=document.createElement('span');
@@ -4401,7 +4425,7 @@ function updateRainbow(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat',copper:'🟠銅Copper',lapis:'🔵青金石Blue Gem'};
+const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat',totem:'🕯不死圖騰Totem',copper:'🟠銅Copper',lapis:'🔵青金石Blue Gem'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -4409,6 +4433,7 @@ const RECIPES=[
   {id:'axe',     kind:'sword', name:'戰斧🪓（傷害5・距離6）',  cost:{wood:1,iron:3}},
   {id:'diamond', kind:'sword', name:'鑽石劍（傷害6・距離7）',  cost:{wood:1,diamond:2}},
   {id:'mace',    kind:'sword', name:'重錘🔨（從高處落下砸擊：越高越痛＋免摔傷＋彈起）', cost:{iron:6,diamond:2}},
+  {id:'totem',   kind:'stack', name:'不死圖騰🕯×1（死亡時自動復活滿血）', cost:{gold:6,emerald:3,diamond:1}},
   {id:'wind',    kind:'stack', name:'旋風彈🌪×8（對地彈射自己20格／對怪擊退）', cost:{iron:1,copper:1}},
   {id:'trident', kind:'sword', name:'三叉戟🔱（近戰7｜按R擲出：高傷害貫穿＋自動飛回）', cost:{iron:5,diamond:1}},
   {id:'flame',   kind:'sword', name:'烈焰劍🔥（傷害7・距離7）', cost:{blaze:3,iron:2}},
@@ -4516,6 +4541,7 @@ function renderCraft(){
         else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
         else if(r.id==='bread'){ inv.bread=(inv.bread||0)+2; toast('🍞 烤了2個麵包！香噴噴'); }
         else if(r.id==='carrow'){ inv.arrow+=10; toast('🏹 銅箭×10 打好了！'); }
+        else if(r.id==='totem'){ inv.totem=(inv.totem||0)+1; toast('🕯 不死圖騰完成！帶在身上，死掉會自動復活'); }
         else if(r.id==='wind'){ inv.wind=(inv.wind||0)+8; toast('🌪 旋風彈×8 完成！點狀態列發射或按C'); }
         else if(r.id==='lpotion'){ inv.luck=(inv.luck||0)+1; toast('🍀 青金石幸運藥水完成！'); }
         sfx.craft(); updateHUD(); renderCraft(); scheduleSave();
@@ -5424,7 +5450,17 @@ function mine(){
       for(const d2 of dragons) if(d2!==d && Math.hypot(d2.x-d.x,d2.z-d.z)<5) d2.hp-=3;
       spawnParticles(d.x,d.y,d.z,14,0xffe860);
     }
-    d.hp-=dmg; d.hurtT=0.4;
+    let ddmg=dmg;
+    /* 🔨 重錘落擊：終界龍同樣吃高處落下加成 */
+    if(curWeapon==='mace' && fallD>0.8){
+      const bonus=Math.min(60, Math.round(fallD*3));
+      ddmg+=bonus;
+      spawnParticles(d.x,d.y,d.z,26,0xffe090);
+      sfx.boom(); noiseBurst(0.3,0.28,400);
+      lootToast('🔨🐉 重錘落擊終界龍！落差 '+fallD.toFixed(1)+' 格 → 額外 +'+bonus+' 傷害！');
+      fallD=0; maceGrace=true; player.vy=32; player.onGround=false;
+    }
+    d.hp-=ddmg; d.hurtT=0.4;
     spawnParticles(d.x,d.y,d.z,6,d.tier.eye);
     sfx.zHit();
     return;
