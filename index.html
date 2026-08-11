@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V57・旋風彈強化</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V58・重錘落地免傷</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -1700,6 +1700,7 @@ const weapons = { mace:false, wood:false, stone:false, iron:false, dagger:false,
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatOff=false;   /* 玩家主動下船（可潛水） */
+let maceGrace=false; /* 重錘命中後：下次落地免摔傷 */
 let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0, gliding=false;
 const pearlsFly=[];
 function throwPearl(){
@@ -5447,6 +5448,7 @@ function mine(){
       }
       lootToast('🔨💥 重錘落擊！落差 '+fallD.toFixed(1)+' 格 → 額外 +'+bonus+' 傷害！');
       fallD=0;                  /* 免摔落傷害 */
+      maceGrace=true;           /* 彈起後落地也不扣血 */
       player.vy=32;             /* 彈起約20格高，可連續空中砸擊 */
       player.onGround=false;
     }
@@ -6332,7 +6334,10 @@ function loop(){
     gliding=false;
     player.vy += -26*dt;
     if(player.onGround && fallD>0){
-      if(fallD>6.6 && liquid!==WATER && feetLq!==WATER){
+      if(maceGrace){
+        maceGrace=false;
+        if(fallD>6.6) toast('🔨 重錘緩衝！這次落地不受傷');
+      } else if(fallD>6.6 && liquid!==WATER && feetLq!==WATER){
         const fd=Math.min(8, 1+Math.floor((fallD-6.6)/2));
         damagePlayer(fd);
         toast('💥 摔痛了 -'+fd+'（超過5格記得往水裡跳）');
