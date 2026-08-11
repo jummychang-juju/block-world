@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V61・鐵軌轉彎修正</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V62・鐵軌轉角貼圖修正</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -245,7 +245,8 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
-    <b style="color:#dcf;">🛤 鐵軌轉彎修正（V61）</b><br>
+    <b style="color:#dcf;">🛤 鐵軌全面修正（V61-62）</b><br>
+    轉角改成<b>平滑雙軌圓弧</b>，與直軌完美接合（原本是細單線又畫反方向）<br>
     岔路口<b>左轉右轉都靈敏</b>了！在路口<b>前</b>按方向（或推搖桿）就會記住0.6秒，不用卡在那一格才按<br>
     沒操作時：<b>優先直行</b>；沒有直行選項就自動選轉彎幅度最小的（不再固定往同一邊）<br><br>
     <b style="color:#fe8;">🕯 不死圖騰（V60）</b><br>
@@ -1035,24 +1036,29 @@ drawTile(51,[0,0,0],0,(x,y)=>{
   if(x%4===1&&y>=2&&y<=13) return [110,80,45,255];
   return [0,0,0,0];
 });
-/* 鐵軌彎角 52-55：以寬軌帶轉90度 */
+/* 鐵軌彎角 52-55：雙軌 90 度圓弧，與直軌寬度一致（軌距 3~4 與 11~12） */
 function railCornerTile(i, fx, fy){
+  /* 以 (cx,cy) 為圓心畫兩條同心弧，連接一條邊與相鄰邊 */
+  const cx0 = fx>0 ? 15.5 : -0.5;
+  const cy0 = fy>0 ? 15.5 : -0.5;
   drawTile(i,[0,0,0],0,(x,y)=>{
-    const X = fx>0 ? x : 15-x;
-    const Y = fy>0 ? y : 15-y;
-    const h = (Y>=6&&Y<=9&&X>=6);
-    const v = (X>=6&&X<=9&&Y>=6);
-    if(h||v){
-      const edge=(Y===6||Y===9)&&h || (X===6||X===9)&&v;
-      return edge?[155,155,160,255]:[125,95,55,255];
+    const d=Math.hypot(x-cx0, y-cy0);
+    const inner=(d>=3 && d<=4.4);      /* 內側鋼軌 */
+    const outer=(d>=11 && d<=12.4);    /* 外側鋼軌 */
+    if(inner||outer) return [155,155,160,255];
+    /* 枕木：沿弧每隔一段放一根，橫跨兩條鋼軌 */
+    if(d>2.2 && d<13.2){
+      const ang=Math.atan2(Math.abs(y-cy0), Math.abs(x-cx0));
+      const seg=Math.round(ang*7.6);
+      if(Math.abs(ang*7.6-seg)<0.16) return [110,80,45,255];
     }
     return [0,0,0,0];
   });
 }
-railCornerTile(52, 1, 1);
-railCornerTile(53,-1, 1);
-railCornerTile(54, 1,-1);
-railCornerTile(55,-1,-1);
+railCornerTile(52, 1,-1);   /* 東+南 */
+railCornerTile(53,-1,-1);   /* 西+南 */
+railCornerTile(54, 1, 1);   /* 東+北 */
+railCornerTile(55,-1, 1);   /* 西+北 */
 /* 鐵軌十字/三岔 (56) */
 drawTile(56,[0,0,0],0,(x,y)=>{
   const h=(y>=6&&y<=9), v=(x>=6&&x<=9);
