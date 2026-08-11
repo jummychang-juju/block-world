@@ -128,7 +128,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V60・不死圖騰·龍吃重錘</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V61・鐵軌轉彎修正</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -245,6 +245,9 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#dcf;">🛤 鐵軌轉彎修正（V61）</b><br>
+    岔路口<b>左轉右轉都靈敏</b>了！在路口<b>前</b>按方向（或推搖桿）就會記住0.6秒，不用卡在那一格才按<br>
+    沒操作時：<b>優先直行</b>；沒有直行選項就自動選轉彎幅度最小的（不再固定往同一邊）<br><br>
     <b style="color:#fe8;">🕯 不死圖騰（V60）</b><br>
     合成：金6+綠寶石3+鑽石1 → <b>死亡瞬間自動復活滿血</b>＋無敵3秒＋加速逃跑！<br>
     帶在身上就有效（狀態列顯示🕯數量），打Boss、探地獄必備保命符<br>
@@ -3452,6 +3455,23 @@ function makeCartMesh(){
   return g;
 }
 function railAt(x,y,z){ return getB(x,y,z)===RAIL; }
+let steerX=0, steerZ=0, steerT=0;
+function updateSteer(dt){
+  let mx=0,mz=0;
+  if(keys['KeyW']) mz-=1;
+  if(keys['KeyS']) mz+=1;
+  if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
+  if(keys['KeyD']||keys['ArrowRight']) mx+=1;
+  mx+=joyVec.x; mz+=joyVec.y;
+  if(Math.hypot(mx,mz)>0.3){
+    const sin=Math.sin(player.yaw), cos=Math.cos(player.yaw);
+    steerX=mx*cos+mz*sin; steerZ=mz*cos-mx*sin;
+    steerT=0.6;                    /* 意圖保留0.6秒，不必卡在路口那一幀 */
+  } else if(steerT>0){
+    steerT-=dt;
+    if(steerT<=0){ steerX=steerZ=0; }
+  }
+}
 function findNextRail(){
   const [cx,cy,cz]=cartCur;
   const cands=[];
@@ -3469,28 +3489,32 @@ function findNextRail(){
     return null;
   }
   if(cands.length===1) return cands[0];
-  /* 多條岔路：優先聽玩家搖桿/按鍵的方向 */
-  let mx=0,mz=0;
-  if(keys['KeyW']) mz-=1;
-  if(keys['KeyS']) mz+=1;
-  if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
-  if(keys['KeyD']||keys['ArrowRight']) mx+=1;
-  mx+=joyVec.x; mz+=joyVec.y;
-  if(Math.hypot(mx,mz)>0.3){
-    const sin=Math.sin(player.yaw), cos=Math.cos(player.yaw);
-    const wx=mx*cos+mz*sin, wz=mz*cos-mx*sin;
+  /* 多條岔路：先聽玩家轉向意圖（含0.6秒緩衝，左右都靈敏） */
+  if(Math.hypot(steerX,steerZ)>0.3){
+    const sl=Math.hypot(steerX,steerZ);
+    const wx=steerX/sl, wz=steerZ/sl;
+    let best=null, bs=0.35;          /* 需與意圖有一定夾角才採用 */
+    for(const c of cands){
+      const dx=c[0]-cx, dz=c[2]-cz;
+      const dl=Math.hypot(dx,dz)||1;
+      const sc=(dx/dl)*wx+(dz/dl)*wz;
+      if(sc>bs){ bs=sc; best=c; }
+    }
+    if(best){ steerT=0; steerX=steerZ=0; return best; }
+  }
+  /* 沒操作：優先直行；沒有直行選項時選轉彎幅度最小的（左右一視同仁） */
+  if(cartPrev){
+    const vx=cx-cartPrev[0], vz=cz-cartPrev[2];
+    const vl=Math.hypot(vx,vz)||1;
+    for(const c of cands) if(c[0]===cx+vx && c[2]===cz+vz) return c;
     let best=null, bs=-2;
     for(const c of cands){
       const dx=c[0]-cx, dz=c[2]-cz;
-      const sc=dx*wx+dz*wz;
+      const dl=Math.hypot(dx,dz)||1;
+      const sc=(dx/dl)*(vx/vl)+(dz/dl)*(vz/vl);
       if(sc>bs){ bs=sc; best=c; }
     }
     if(best) return best;
-  }
-  /* 沒操作：偏好直線 */
-  if(cartPrev){
-    const vx=cx-cartPrev[0], vz=cz-cartPrev[2];
-    for(const c of cands) if(c[0]===cx+vx && c[2]===cz+vz) return c;
   }
   return cands[0];
 }
@@ -3511,6 +3535,7 @@ function stopCart(){
 }
 function updateCart(dt){
   if(riding!=='cart') return;
+  updateSteer(dt);
   if(keys['Space']||jumpHeld){ stopCart(); player.vy=7; return; }
   if(!railAt(cartCur[0],cartCur[1],cartCur[2])){ stopCart(); return; }
   if(!cartNext){ cartNext=findNextRail(); if(!cartNext){ /* 停在原地 */ } }
