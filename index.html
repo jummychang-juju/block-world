@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V67・礦車依視線單向出發</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V68・競技場封頂·水流重寫</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -594,7 +594,8 @@ function generateOver(sd, w){
     const ax=ARENA.x+dx, az=ARENA.z+dz;
     if(!inBounds(ax,ARENA.y,az)) continue;
     w[idx(ax,ARENA.y,az)]=BEDROCK;                 /* 地板＝基岩，TNT炸不壞 */
-    for(let dy=1;dy<=5;dy++) if(ARENA.y+dy<WY) w[idx(ax,ARENA.y+dy,az)]=AIR;
+    for(let dy=1;dy<=6;dy++) if(ARENA.y+dy<WY) w[idx(ax,ARENA.y+dy,az)]=AIR;
+    if(ARENA.y+7<WY) w[idx(ax,ARENA.y+7,az)]=BEDROCK;   /* 屋頂封起來 */
   }
   for(const [cx3,cz3] of [[-9,-9],[9,-9],[-9,9],[9,9],[0,-9],[0,9],[-9,0],[9,0]])
     if(inBounds(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)) w[idx(ARENA.x+cx3,ARENA.y+1,ARENA.z+cz3)]=GLOW;
@@ -1988,53 +1989,76 @@ function feedWheat(){
   if(best.fedT>0) toast('🌾 餵食成功！再餵附近同種動物一隻就會生寶寶');
   updateHUD(); scheduleSave();
 }
-/* ================= 💧 水與岩漿流動（正版風格，最遠5格）================= */
-const fluidSrc=new Set();      /* 玩家放置的流體來源 */
+/* ================= 💧 水與岩漿流動（正版規則）================= */
+const fluidSrc=new Set();          /* 玩家放置的來源方塊 */
+const fluidFlow=new Map();         /* key -> id：由來源產生的「流動」方塊 */
 let fluidT=0;
 function noteFluid(x,y,z,id){ fluidSrc.add(x+','+y+','+z+','+id); }
-function updateFluids(dt){
-  fluidT-=dt;
-  if(fluidT>0) return;
-  fluidT=0.35;
-  const set=new Set();
-  let changed=false;
-  const spread=[];
+/* 依來源算出「應該有流體」的完整範圍（先往下流；下方有洞就不向旁擴散） */
+function computeFlow(){
+  const want=new Map(), dist=new Map(), q=[];
   for(const key of [...fluidSrc]){
     const [sx,sy,sz,sid]=key.split(',').map(Number);
     if(getB(sx,sy,sz)!==sid){ fluidSrc.delete(key); continue; }
-    /* BFS 由來源往外擴散，最多5格 */
-    const seen=new Map(); seen.set(sx+','+sy+','+sz,0);
-    const q=[[sx,sy,sz,0]];
-    while(q.length){
-      const [x,y,z,d]=q.shift();
-      if(d>=5) continue;
-      /* 先往下流 */
-      const below=getB(x,y-1,z);
-      const cand=[];
-      if(below===AIR||(sid===WATER&&below===LAVA)||(sid===LAVA&&below===WATER)) cand.push([x,y-1,z,d]);
-      else cand.push([x+1,y,z,d+1],[x-1,y,z,d+1],[x,y,z+1,d+1],[x,y,z-1,d+1]);
-      for(const [nx,ny,nz,nd] of cand){
-        if(!inBounds(nx,ny,nz)) continue;
-        const k2=nx+','+ny+','+nz;
-        if(seen.has(k2)&&seen.get(k2)<=nd) continue;
-        const b=getB(nx,ny,nz);
-        /* 水碰岩漿 → 石頭 */
-        if((sid===WATER&&b===LAVA)||(sid===LAVA&&b===WATER)){
-          spread.push([nx,ny,nz,STONE]); seen.set(k2,nd); continue;
+    q.push([sx,sy,sz,0,sid]);
+    dist.set(sx+','+sy+','+sz,0);
+  }
+  let guard=0;
+  while(q.length && guard++<4000){
+    const [x,y,z,d,id]=q.shift();
+    const maxD = id===WATER?5:3;               /* 水5格、岩漿3格 */
+    const bk=x+','+(y-1)+','+z;
+    if(inBounds(x,y-1,z)){
+      const b=getB(x,y-1,z);
+      const other=(id===WATER?LAVA:WATER);
+      if(b===other){ want.set(bk,STONE); }
+      else if(b===AIR || fluidFlow.get(bk)===id){
+        if(!dist.has(bk)||dist.get(bk)>0){
+          dist.set(bk,0); want.set(bk,id); q.push([x,y-1,z,0,id]);  /* 落下重置距離 */
         }
-        if(b!==AIR) continue;
-        spread.push([nx,ny,nz,sid]);
-        seen.set(k2,nd);
-        q.push([nx,ny,nz,nd]);
+        continue;                              /* 下方有洞：只往下流 */
       }
     }
+    if(d>=maxD) continue;
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, nz=z+dz, k2=nx+','+y+','+nz;
+      if(!inBounds(nx,y,nz)) continue;
+      const b=getB(nx,y,nz);
+      const other=(id===WATER?LAVA:WATER);
+      if(b===other){ want.set(k2,STONE); continue; }
+      if(b!==AIR && fluidFlow.get(k2)!==id) continue;
+      if(dist.has(k2) && dist.get(k2)<=d+1) continue;
+      dist.set(k2,d+1); want.set(k2,id);
+      q.push([nx,y,nz,d+1,id]);
+    }
   }
-  for(const [x,y,z,id] of spread){
-    if(getB(x,y,z)===id) continue;
-    setBlockRaw(x,y,z,id); markChunks(set,x,z); changed=true;
-    if(id===STONE) spawnParticles(x+0.5,y+0.8,z+0.5,6,0xcccccc);
+  return want;
+}
+function updateFluids(dt){
+  fluidT-=dt;
+  if(fluidT>0) return;
+  fluidT=0.28;
+  if(fluidSrc.size===0 && fluidFlow.size===0) return;
+  const want=computeFlow();
+  const set=new Set();
+  let n=0, changed=false;
+  /* 逐步鋪開（每次最多12格），看得到流動過程 */
+  for(const [k,id] of want){
+    if(n>=12) break;
+    const [x,y,z]=k.split(',').map(Number);
+    if(getB(x,y,z)===id) { if(id!==STONE) fluidFlow.set(k,id); continue; }
+    setBlockRaw(x,y,z,id); markChunks(set,x,z); changed=true; n++;
+    if(id===STONE){ spawnParticles(x+0.5,y+0.8,z+0.5,7,0xdddddd); noiseBurst(0.12,0.1,900); fluidFlow.delete(k); }
+    else fluidFlow.set(k,id);
   }
-  if(changed){ dirty=true; scheduleSave(); for(const k of set){ const [cx,cz]=k.split(',').map(Number); rebuildChunk(cx,cz); } }
+  /* 來源沒了 → 流動的水/岩漿自動退去 */
+  for(const [k,id] of [...fluidFlow]){
+    if(want.has(k)) continue;
+    fluidFlow.delete(k);
+    const [x,y,z]=k.split(',').map(Number);
+    if(getB(x,y,z)===id){ setBlockRaw(x,y,z,AIR); markChunks(set,x,z); changed=true; }
+  }
+  if(changed){ dirty=true; scheduleSave(); for(const c of set){ const [cx,cz]=c.split(',').map(Number); rebuildChunk(cx,cz); } }
 }
 /* 💨 靈魂沙氣泡柱：靈魂沙上方的水會把玩家往上推 */
 function bubbleColumn(dt){
@@ -3783,6 +3807,7 @@ function checkArena(dt){
     const ax=ARENA.x+dx, az=ARENA.z+dz;
     if(!inBounds(ax,ARENA.y,az)) continue;
     if(getB(ax,ARENA.y,az)!==BEDROCK) missing++;
+    if(ARENA.y+7<WY && getB(ax,ARENA.y+7,az)!==BEDROCK) missing++;
   }
   if(missing===0) return;
   const set=new Set();
@@ -3790,9 +3815,10 @@ function checkArena(dt){
     const ax=ARENA.x+dx, az=ARENA.z+dz;
     if(!inBounds(ax,ARENA.y,az)) continue;
     if(getB(ax,ARENA.y,az)!==BEDROCK){ setBlockRaw(ax,ARENA.y,az,BEDROCK); markChunks(set,ax,az); }
-    for(let dy=1;dy<=5;dy++){
+    for(let dy=1;dy<=6;dy++){
       if(ARENA.y+dy<WY && isSolid(getB(ax,ARENA.y+dy,az))){ setBlockRaw(ax,ARENA.y+dy,az,AIR); markChunks(set,ax,az); }
     }
+    if(ARENA.y+7<WY && getB(ax,ARENA.y+7,az)!==BEDROCK){ setBlockRaw(ax,ARENA.y+7,az,BEDROCK); markChunks(set,ax,az); }
   }
   for(const [cx3,cz3] of [[-9,-9],[9,-9],[-9,9],[9,9],[0,-9],[0,9],[-9,0],[9,0]]){
     const gx2=ARENA.x+cx3, gz2=ARENA.z+cz3;
