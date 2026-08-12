@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V63・水流·氣泡柱·多項修正</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V64・軌道衝出·銅箭·載怪</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -248,6 +248,10 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#fc8;">🚃 軌道與弓箭升級（V64）</b><br>
+    🛤 軌道到盡頭會<b>直接衝出去</b>（邊前衝邊下墜），礦車除非按跳躍下車否則一直存在<br>
+    🐄 靠近的生物會<b>跟著坐上礦車</b>，一起撞進地獄門就會一起被傳送！<br>
+    🏹 <b>長按弓箭鈕</b>（或按 N）切換<b>一般箭／銅箭</b>🟠，銅箭傷害 +4！<br><br>
     <b style="color:#8df;">💧 水流動與氣泡柱（V63）</b><br>
     放下的<b>水和岩漿會自己流動</b>（最遠5格）！<b>流動的水碰到岩漿 → 變成石頭</b>🪨<br>
     快捷欄新增 <b>岩漿</b> 與 <b>靈魂沙</b>：在靈魂沙上方放水柱 → <b>氣泡柱把你往上推</b>💨（跟正版一樣，可搭配礦車與重錘）<br>
@@ -1575,7 +1579,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0, carrow:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -1723,6 +1727,7 @@ let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatOff=false;   /* 玩家主動下船（可潛水） */
 let maceGrace=false; /* 重錘命中後：下次落地免摔傷 */
+let launchVX=0, launchVZ=0, launchT=0;   /* 礦車衝出軌道的慣性 */
 let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0, gliding=false;
 const pearlsFly=[];
 function throwPearl(){
@@ -2337,6 +2342,14 @@ function updateHUD(){
     t.textContent='🕯×'+inv.totem;
     t.style.color='#ffd700';
     sb.appendChild(t);
+  }
+  if(hasBow){
+    const ab=document.createElement('span');
+    ab.className='act';
+    ab.textContent=useCopperArrow ? ('🟠🏹×'+(inv.carrow||0)) : ('🏹×'+inv.arrow);
+    ab.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();toggleArrowType();},{passive:false});
+    ab.addEventListener('mousedown',ev=>{ev.stopPropagation();toggleArrowType();});
+    sb.appendChild(ab);
   }
   if(inv.wind>0){
     const b=document.createElement('span');
@@ -3620,6 +3633,16 @@ function updateCart(dt){
   updateSteer(dt);
   if(keys['Space']||jumpHeld){ stopCart(); player.vy=7; return; }
   if(!railAt(cartCur[0],cartCur[1],cartCur[2])){ stopCart(); return; }
+  /* 軌道盡頭：直接衝出去，邊前衝邊下墜 */
+  if(!cartNext && cartPrev){
+    const vx2=cartCur[0]-cartPrev[0], vz2=cartCur[2]-cartPrev[2];
+    const vl2=Math.hypot(vx2,vz2)||1;
+    stopCart();
+    player.vy=3.5;
+    launchVX=vx2/vl2*11; launchVZ=vz2/vl2*11; launchT=1.4;
+    toast('🚃💨 衝出軌道！');
+    return;
+  }
   if(!cartNext){ cartNext=findNextRail(); if(!cartNext){ /* 停在原地 */ } }
   if(cartNext){
     cartProg+=8*dt;
@@ -3631,6 +3654,13 @@ function updateCart(dt){
     if(t>=1){
       cartPrev=cartCur; cartCur=cartNext;
       cartNext=findNextRail(); cartProg=0;
+      /* 【11】把附近生物一起載走：撞到地獄門一起傳送 */
+      for(const e of entities()){
+        if(e.kind==='vil') continue;
+        if(Math.hypot(e.x-player.x,e.z-player.z)<1.4 && Math.abs(e.y-player.y)<2.2){
+          e.x=player.x; e.z=player.z; e.y=player.y+0.2; e.riding=true;
+        }
+      }
     }
   } else {
     player.x=cartCur[0]+0.5; player.y=cartCur[1]+0.15; player.z=cartCur[2]+0.5;
@@ -3964,11 +3994,23 @@ function updatePet(dt){
 /* ================= 弓箭 ================= */
 const arrows=[];
 const arrowGeo=new THREE.BoxGeometry(0.07,0.07,0.5);
+let useCopperArrow=false;
+function toggleArrowType(){
+  useCopperArrow=!useCopperArrow;
+  toast(useCopperArrow ? '🟠🏹 切換成銅箭（傷害更高，剩 '+(inv.carrow||0)+'）' : '🏹 切換成一般箭（剩 '+inv.arrow+'）');
+  updateHUD();
+}
 function shootBow(){
   if(!hasBow){ return; }
-  if(!hasInfBow){
-    if(inv.arrow<=0){ toast('沒有箭了！合成台：原木+石頭=8支箭'); return; }
-    inv.arrow--;
+  if(useCopperArrow && (inv.carrow||0)<=0 ){ useCopperArrow=false; toast('銅箭用完了，改用一般箭'); }
+  if(!hasInfBow || useCopperArrow){
+    if(useCopperArrow){
+      if((inv.carrow||0)<=0){ toast('沒有銅箭'); return; }
+      inv.carrow--;
+    } else {
+      if(inv.arrow<=0){ toast('沒有箭了！合成台：原木+石頭=8支箭'); return; }
+      inv.arrow--;
+    }
   }
   updateHUD();
   const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
@@ -3978,7 +4020,7 @@ function shootBow(){
   scene.add(m);
   const asp=hasXbow?27:22;
   arrows.push({x:camera.position.x,y:camera.position.y,z:camera.position.z,
-    vx:dir.x*asp,vy:dir.y*asp,vz:dir.z*asp,life:3,dmg:(hasXbow?7:4)+(perks.power?2:0),mesh:m});
+    vx:dir.x*asp,vy:dir.y*asp,vz:dir.z*asp,life:3,dmg:(hasXbow?7:4)+(perks.power?2:0)+(useCopperArrow?4:0),mesh:m});
   sfx.bow();
   scheduleSave();
 }
@@ -4581,7 +4623,7 @@ const RECIPES=[
   {id:'cat',     kind:'cat',   name:'寵物貓🐱（苦力怕害怕貓，不敢靠近你）', cost:{fish:3,gold:1}},
   {id:'luck',    kind:'stack', name:'幸運藥水🍀×1（60秒內許願池勝率大增）', cost:{emerald:2,redapple:1}},
   {id:'bread',   kind:'stack', name:'麵包🍞×2（每個回4顆心）', cost:{wheat:3}},
-  {id:'carrow',  kind:'stack', name:'銅箭🏹×10（銅打的更利）', cost:{copper:3}},
+  {id:'carrow',  kind:'stack', name:'銅箭🟠🏹×10（傷害更高，長按🏹鈕切換）', cost:{copper:3}},
   {id:'lpotion', kind:'stack', name:'幸運藥水🍀×1（青金石版）', cost:{lapis:2}},
   {id:'compass', kind:'compass',name:'尋寶羅盤🧭（顯示最近秘密基地的距離）', cost:{iron:2,gold:1}},
   {id:'rod',     kind:'rod',   name:'釣竿🎣（在水邊釣魚，會釣到好東西）', cost:{wood:3,iron:1}},
@@ -4658,7 +4700,7 @@ function renderCraft(){
         else if(r.id==='spd'){ inv.spd=(inv.spd||0)+1; toast('⚡ 合成了速度藥水！點左上角⚡喝掉'); }
         else if(r.id==='luck'){ inv.luck=(inv.luck||0)+1; toast('🍀 合成了幸運藥水！許願前喝一口'); }
         else if(r.id==='bread'){ inv.bread=(inv.bread||0)+2; toast('🍞 烤了2個麵包！香噴噴'); }
-        else if(r.id==='carrow'){ inv.arrow+=10; toast('🏹 銅箭×10 打好了！'); }
+        else if(r.id==='carrow'){ inv.carrow=(inv.carrow||0)+10; toast('🏹 銅箭×10 打好了！傷害更高'); }
         else if(r.id==='totem'){ inv.totem=(inv.totem||0)+1; toast('🕯 不死圖騰完成！帶在身上，死掉會自動復活'); }
         else if(r.id==='wind'){ inv.wind=(inv.wind||0)+8; toast('🌪 旋風彈×8 完成！點狀態列發射或按C'); }
         else if(r.id==='lpotion'){ inv.luck=(inv.luck||0)+1; toast('🍀 青金石幸運藥水完成！'); }
@@ -5191,6 +5233,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyR'){ if(curWeapon==='trident') throwTrident(); else shootBow(); }
   if(e.code==='KeyT') throwPearl();
   if(e.code==='KeyG') throwSnowball();
+  if(e.code==='KeyN' && hasBow) toggleArrowType();
   if((e.code==='Enter'||e.code==='NumpadEnter') && started){ e.preventDefault(); if(paused) closePause(); else openPause(); }
   if(e.code==='KeyC') throwWind();
   if(e.code==='KeyV' && hasBoat){ boatOff=!boatOff; toast(boatOff?'🏊 已下船！可以潛水了':'🚣 回到船上'); updateHUD(); }
@@ -5328,7 +5371,17 @@ bindBtn('btnJump',()=>jumpHeld=true,()=>jumpHeld=false);
 bindBtn('btnDown',()=>downHeld=true,()=>downHeld=false);
 bindBtn('btnMine',()=>mine());
 bindBtn('btnPlace',()=>place());
-bindBtn('btnBow',()=>shootBow());
+/* 🏹 鈕：短按射箭、長按0.45秒切換一般箭/銅箭 */
+{
+  const bb=document.getElementById('btnBow');
+  let bowT=null, bowLong=false;
+  const dn=()=>{ bowLong=false; bowT=setTimeout(()=>{ bowLong=true; toggleArrowType(); },450); };
+  const up=()=>{ clearTimeout(bowT); if(!bowLong) shootBow(); bowLong=false; };
+  bb.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();dn();},{passive:false});
+  bb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();up();},{passive:false});
+  bb.addEventListener('mousedown',e=>{e.stopPropagation();dn();});
+  bb.addEventListener('mouseup',e=>{e.stopPropagation();up();});
+}
 bindBtn('btnFly',()=>toggleFly());
 bindBtn('btnAct',()=>doAction());
 function toggleFly(){
@@ -6514,6 +6567,13 @@ function loop(){
     mdx*=0.5; mdz*=0.5;
     if(!isSolid(getB(Math.floor(player.x+mdx*3),Math.floor(player.y-0.5),Math.floor(player.z)))) mdx=0;
     if(!isSolid(getB(Math.floor(player.x),Math.floor(player.y-0.5),Math.floor(player.z+mdz*3)))) mdz=0;
+  }
+  if(launchT>0){                       /* 衝出軌道：保持前衝 */
+    launchT-=dt;
+    const lx2=launchVX*dt, lz2=launchVZ*dt;
+    if(!collide(player.x+lx2,player.y,player.z)) player.x+=lx2; else launchT=0;
+    if(!collide(player.x,player.y,player.z+lz2)) player.z+=lz2; else launchT=0;
+    if(player.onGround) launchT=0;
   }
   if(!collide(player.x+mdx, player.y, player.z)) player.x+=mdx;
   if(!collide(player.x, player.y, player.z+mdz)) player.z+=mdz;
