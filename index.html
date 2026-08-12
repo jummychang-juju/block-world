@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V66・礦車不回頭·下船不自動上船</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V67・礦車依視線單向出發</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -3622,7 +3622,30 @@ function findNextRail(){
 function startCart(hit){
   riding='cart';
   cartCur=[hit.x,hit.y,hit.z];
+  /* 由玩家視線方向決定行進方向：把「背後」那段設為 prev，就只會往前開 */
   cartPrev=null;
+  {
+    const fx2=-Math.sin(player.yaw), fz2=-Math.cos(player.yaw);
+    let best=null, bs=-2;
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      let ny=null;
+      for(const dy of [0,1,-1]) if(railAt(hit.x+dx,hit.y+dy,hit.z+dz)){ ny=hit.y+dy; break; }
+      if(ny===null) continue;
+      const sc=dx*fx2+dz*fz2;                 /* 與視線的一致度 */
+      if(sc>bs){ bs=sc; best=[hit.x+dx,ny,hit.z+dz]; }
+    }
+    if(best && bs>0){
+      /* 視線方向有軌道 → 把反方向設為 prev，鎖定單向前進 */
+      cartPrev=[hit.x*2-best[0], hit.y, hit.z*2-best[2]];
+      cartNext=best;
+      cartProg=0;
+      if(!cartMesh){ cartMesh=makeCartMesh(); scene.add(cartMesh); }
+      player.x=hit.x+0.5; player.y=hit.y+0.15; player.z=hit.z+0.5; player.vy=0;
+      toast('🛒 上車！朝你看的方向出發，按 ⬆ 跳車');
+      sfx.place();
+      return;
+    }
+  }
   cartNext=findNextRail();
   cartProg=0;
   if(!cartMesh){ cartMesh=makeCartMesh(); scene.add(cartMesh); }
