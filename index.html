@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V70・新附魔·手機介面精簡</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V71・釀造台大擴充</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -266,9 +266,10 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#f9d;">🔥 熔爐與 ⚗️ 釀造台（V69）</b><br>
     快捷欄新增這兩台機器，放下後<b>對準按右鍵</b>就能打開！<br>
     🔥 <b>熔爐</b>：用煤把礦石燒成更純的錠（鐵/金/銅×2）、生肉烤成🔥🍖、木頭燒成木炭<br>
-    ⚗️ <b>釀造台</b>：釀出四種藥水，喝下馬上生效（點狀態列圖示喝）<br>
-    　⚔️<b>力量</b>(3分鐘傷害+4)｜❤️<b>治療</b>(立即回滿血)｜🛡🔥<b>抗火</b>(3分鐘岩漿不傷你)｜👁<b>夜視</b>(3分鐘夜晚變亮)<br>
-    　打Boss前先喝力量+抗火，超強！<br><br>
+    ⚗️ <b>釀造台</b>：<b>9 種藥水</b>！喝下馬上生效（點狀態列圖示喝）<br>
+    　<b>入門（地表材料就能釀）</b>：❤️治療(回滿血)｜💨神速(90秒加倍)｜🦘跳躍(90秒跳超高)｜🐬水肺(3分鐘不耗氧)<br>
+    　<b>進階</b>：👁夜視｜💗再生(30秒持續回血)｜👻隱身(60秒怪看不到你)｜⚔️力量(傷害+4)｜🛡🔥抗火(免疫岩漿)<br>
+    　打Boss前喝力量+抗火、跑酷喝跳躍+神速、潛水喝水肺，超好用！<br><br>
     <b style="color:#fc8;">🚃 軌道與弓箭升級（V64）</b><br>
     🛤 軌道到盡頭會<b>直接衝出去</b>（邊前衝邊下墜），礦車除非按跳躍下車否則一直存在<br>
     🐄 靠近的生物會<b>跟著坐上礦車</b>，一起撞進地獄門就會一起被傳送！<br>
@@ -1627,7 +1628,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0, carrow:0, pStr:0, pHeal:0, pFire:0, pNight:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0, carrow:0, pStr:0, pHeal:0, pFire:0, pNight:0, pSpd:0, pJump:0, pBreath:0, pRegen:0, pInvis:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -1774,7 +1775,7 @@ const weapons = { mace:false, wood:false, stone:false, iron:false, dagger:false,
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatOff=false;   /* 玩家主動下船（可潛水） */
-let strT=0, fireResT=0, nightT=0;   /* 力量/抗火/夜視 */
+let strT=0, fireResT=0, nightT=0, jumpPT=0, breathT=0, regenT=0, regenTick=0;   /* 藥水效果 */
 let maceGrace=false; /* 重錘命中後：下次落地免摔傷 */
 let launchVX=0, launchVZ=0, launchT=0;   /* 礦車衝出軌道的慣性 */
 let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0, gliding=false;
@@ -2366,6 +2367,11 @@ function eat(kind){
   else if(kind==='pHeal' && inv.pHeal>0){ inv.pHeal--; heal(99); sfx.eat(); sfx.craft(); toast('❤️ 治療藥水！生命全滿'); }
   else if(kind==='pFire' && inv.pFire>0){ inv.pFire--; fireResT=180; sfx.eat(); toast('🛡🔥 抗火藥水！3分鐘內岩漿燒不傷你'); }
   else if(kind==='pNight' && inv.pNight>0){ inv.pNight--; nightT=180; sfx.eat(); toast('👁 夜視藥水！3分鐘內夜晚看得清楚'); }
+  else if(kind==='pSpd' && inv.pSpd>0){ inv.pSpd--; speedT=Math.max(speedT,90); sfx.eat(); sfx.fly(); toast('💨 神速藥水！90秒移動加倍'); }
+  else if(kind==='pJump' && inv.pJump>0){ inv.pJump--; jumpPT=90; sfx.eat(); toast('🦘 跳躍藥水！90秒跳得超高'); }
+  else if(kind==='pBreath' && inv.pBreath>0){ inv.pBreath--; breathT=180; o2=10; sfx.eat(); toast('🐬 水肺藥水！3分鐘水下不耗氧'); updateHUD(); }
+  else if(kind==='pRegen' && inv.pRegen>0){ inv.pRegen--; regenT=30; sfx.eat(); sfx.craft(); toast('💗 再生藥水！30秒持續回血'); }
+  else if(kind==='pInvis' && inv.pInvis>0){ inv.pInvis--; invisT=Math.max(invisT,60); sfx.eat(); sfx.warp(); toast('👻 隱身藥水！60秒怪物看不到你'); }
   else if(kind==='spd' && inv.spd>0){ inv.spd--; speedT=60; sfx.eat(); sfx.fly(); toast('⚡ 速度加倍 60 秒！咻～'); }
   updateHUD();
   scheduleSave();
@@ -2399,7 +2405,7 @@ function updateHUD(){
   w.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();cycleWeapon(1);},{passive:false});
   w.addEventListener('mousedown',ev=>{ev.stopPropagation();cycleWeapon(1);});
   sb.appendChild(w);
-  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pNight','👁']];
+  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pNight','👁'],['pSpd','💨'],['pJump','🦘'],['pBreath','🐬'],['pRegen','💗'],['pInvis','👻']];
   for(const [k,e] of foods){
     if(inv[k]<=0) continue;
     const b=document.createElement('span');
@@ -4697,7 +4703,7 @@ function updateRainbow(dt){
 }
 
 /* ================= 合成系統 ================= */
-const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat',totem:'🕯不死圖騰Totem',copper:'🟠銅Copper',lapis:'🔵青金石Blue Gem'};
+const MAT_NAME={wood:'🪵原木Wood',stone:'🪨石頭Stone',coal:'⚫煤Coal',iron:'🔩鐵Iron',gold:'🥇金Gold',diamond:'💎鑽石Diamond',chal:'🟣獄髓',pearl:'🔮珍珠Pearl',blaze:'🔥烈焰粉',eye:'👁終界之眼Eye',arrow:'🏹箭Arrow',crystal:'💠水晶Crystal',egg:'🥚龍蛋Egg',emerald:'💚綠寶石Emerald',star:'💀凋零之星Star',cooked:'🔥🍖烤肉Meat',luck:'🍀幸運Lucky',wheat:'🌾小麥Wheat',totem:'🕯不死圖騰Totem',redapple:'🍎蘋果Apple',apple:'✨🍎金蘋果',fish:'🐟魚Fish',bread:'🍞麵包Bread',seed:'🌱種子Seed',snowball:'⚾雪球',mutton:'🍢羊肉',pork:'🍖豬肉Pork',beef:'🥩牛肉Beef',chicken:'🍗雞肉',cooked:'🔥🍖烤肉',copper:'🟠銅Copper',lapis:'🔵青金石Blue Gem'};
 const RECIPES=[
   {id:'wood',    kind:'sword', name:'木劍（傷害2・距離4）',    cost:{wood:2}},
   {id:'stone',   kind:'sword', name:'石劍（傷害3・距離5）',    cost:{wood:1,stone:3}},
@@ -5662,7 +5668,7 @@ function selectSlot(i){
 }
 buildHotbar();
 /* ===== 第三行：消耗品列（食物/藥水/珍珠）右鍵使用 ===== */
-const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['cooked','🔥🍖'],['bread','🍞'],['apple','✨🍎'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pearl','🔮']];
+const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['cooked','🔥🍖'],['bread','🍞'],['apple','✨🍎'],['pStr','⚔️'],['pHeal','❤️'],['pRegen','💗'],['pearl','🔮']];
 let selCons=-1;
 const consEl=document.createElement('div');
 consEl.id='consBar';
@@ -6321,10 +6327,17 @@ const FURN=[
   {name:'⚫ 木頭 → 木炭×3（當燃料）', cost:{wood:3}, give:()=>{ inv.coal+=3; }},
 ];
 const BREWS=[
-  {key:'pStr',  name:'⚔️ 力量藥水（3分鐘 傷害+4）',   cost:{blaze:1,gold:2}},
-  {key:'pHeal', name:'❤️ 治療藥水（立即回滿血）',      cost:{emerald:2,redapple:1}},
-  {key:'pFire', name:'🛡🔥 抗火藥水（3分鐘 免疫岩漿）', cost:{blaze:2,lapis:1}},
-  {key:'pNight',name:'👁 夜視藥水（3分鐘 夜晚變亮）',  cost:{lapis:2,gold:1}},
+  /* 入門：地表材料就能釀 */
+  {key:'pHeal', name:'❤️ 治療藥水（立即回滿血）',        cost:{redapple:2,wheat:2}},
+  {key:'pSpd',  name:'💨 神速藥水（90秒 移動加倍）',      cost:{wheat:3,iron:1}},
+  {key:'pJump', name:'🦘 跳躍藥水（90秒 跳得超高）',      cost:{wheat:2,copper:2}},
+  {key:'pBreath',name:'🐬 水肺藥水（3分鐘 水下不耗氧）',  cost:{fish:2,copper:1}},
+  /* 進階 */
+  {key:'pNight',name:'👁 夜視藥水（3分鐘 夜晚變亮）',    cost:{lapis:2,gold:1}},
+  {key:'pRegen',name:'💗 再生藥水（30秒 持續回血）',      cost:{emerald:2,apple:1}},
+  {key:'pInvis',name:'👻 隱身藥水（60秒 怪物看不到你）',  cost:{pearl:1,lapis:2}},
+  {key:'pStr',  name:'⚔️ 力量藥水（3分鐘 傷害+4）',     cost:{blaze:1,gold:2}},
+  {key:'pFire', name:'🛡🔥 抗火藥水（3分鐘 免疫岩漿）',   cost:{blaze:2,lapis:1}},
 ];
 function renderStation(list, elId, isBrew){
   const box=document.getElementById(elId);
@@ -6638,7 +6651,7 @@ function loop(){
     const headB=getB(Math.floor(player.x),Math.floor(player.y+EYE),Math.floor(player.z));
     if(headB===WATER && !boating){
       graceT+=dt;
-      if(graceT>(perks.swim?20:10)){
+      if(breathT<=0 && graceT>(perks.swim?20:10)){
         o2T+=dt;
         while(o2T>=1){
           o2T-=1;
@@ -6652,6 +6665,13 @@ function loop(){
   if(strT>0){ strT-=dt; if(strT<=0) toast('⚔️ 力量藥水結束'); }
   if(fireResT>0){ fireResT-=dt; if(fireResT<=0) toast('🛡🔥 抗火效果結束'); }
   if(nightT>0){ nightT-=dt; if(nightT<=0) toast('👁 夜視效果結束'); else if(dim==='over'||dim==='nether') ambient.intensity=Math.max(ambient.intensity,0.95); }
+  if(jumpPT>0){ jumpPT-=dt; if(jumpPT<=0) toast('🦘 跳躍效果結束'); }
+  if(breathT>0){ breathT-=dt; if(breathT<=0) toast('🐬 水肺效果結束'); }
+  if(regenT>0){
+    regenT-=dt; regenTick-=dt;
+    if(regenTick<=0){ regenTick=2; if(player.hp<maxHpVal()){ heal(1); spawnParticles(player.x,player.y+1,player.z,4,0xff90c0); } }
+    if(regenT<=0) toast('💗 再生效果結束');
+  }
   updateArrows(dt);
   updateActButton();
 
@@ -6727,7 +6747,7 @@ function loop(){
       }
       fallD=0;
     }
-    if((keys['Space']||jumpHeld) && player.onGround){ player.vy=perks.jump?10.6:8.4; player.onGround=false; }
+    if((keys['Space']||jumpHeld) && player.onGround){ player.vy=(jumpPT>0?15:(perks.jump?10.6:8.4)); player.onGround=false; }
   }
   /* 摔落高度累計（結算已移到起跳判定之前） */
   if(!player.onGround && player.vy<0 && !player.fly && !boating && !gliding) fallD-=player.vy*dt;
