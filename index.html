@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V71・釀造台大擴充</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V72・礦車氣泡柱連動</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -260,6 +260,10 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#9df;">💨 氣泡柱電梯做法（V72）</b><br>
+    ①地上挖一格放<b>靈魂沙</b> → ②上方疊 5~8 格<b>水</b> → ③四周用玻璃/方塊圍住不讓水流走<br>
+    站進去就會被<b>沖上天</b>！<b>礦車軌道</b>直接鋪到氣泡柱底部，衝進去會自動彈出車外沖上天，<br>
+    到最高點再用<b>重錘</b>往下砸怪，超帥組合技！<br><br>
     <b style="color:#cf9;">✨ 新附魔（V70）</b><br>
     附魔台新增四種正版風格附魔：<br>
     🌵<b>尖刺</b>(被打時反傷敵人)｜🩸<b>生命偷取</b>(每次擊殺回血)｜🍀<b>幸運</b>(挖礦機率雙倍掉落)｜🐬<b>水下呼吸</b>(氧氣加倍)<br><br>
@@ -2108,7 +2112,8 @@ function bubbleColumn(dt){
   for(let y=fy; y>=Math.max(1,fy-8); y--){
     const b=getB(fx,y,fz);
     if(b===SOUL){
-      player.vy=Math.min(14, player.vy+34*dt);
+      player.vy=Math.min(20, player.vy+46*dt);
+      fallD=0;
       if(Math.random()<0.3) spawnParticles(player.x,player.y+0.4,player.z,2,0xbfefff);
       return;
     }
@@ -3747,6 +3752,17 @@ function stopCart(){
 function updateCart(dt){
   if(riding!=='cart') return;
   updateSteer(dt);
+  /* 🚃💨 礦車開進氣泡柱：自動彈出車外，被水柱沖上天 */
+  {
+    const cx2=Math.floor(player.x), cz2=Math.floor(player.z), cy2=Math.floor(player.y);
+    if(getB(cx2,cy2,cz2)===WATER||getB(cx2,cy2+1,cz2)===WATER){
+      for(let y=cy2; y>=Math.max(1,cy2-8); y--){
+        const b2=getB(cx2,y,cz2);
+        if(b2===SOUL){ stopCart(); player.vy=16; fallD=0; toast('🚃💨 衝進氣泡柱！被水柱沖上天'); return; }
+        if(b2!==WATER) break;
+      }
+    }
+  }
   if(keys['Space']||jumpHeld){ stopCart(); player.vy=7; return; }
   if(!railAt(cartCur[0],cartCur[1],cartCur[2])){ stopCart(); return; }
   /* 軌道盡頭：直接衝出去，邊前衝邊下墜 */
