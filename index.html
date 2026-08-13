@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V68・競技場封頂·水流重寫</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V69・熔爐·釀造台·藥水</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -150,6 +150,18 @@ window.onerror=function(msg,src,line,col,err){
   <button class="obtn gray" id="importBtn">📥 匯入存檔</button>
   <button class="obtn gray" id="newWorldBtn">🌍 建立新世界</button>
   <button class="obtn red" id="exitBtn">🚪 退出遊戲</button>
+</div>
+<div class="overlay" id="furnOverlay" style="display:none;z-index:33;background:rgba(34,26,18,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
+  <h2 style="color:#ffa050;">🔥 熔爐 Furnace</h2>
+  <div style="font-size:13px;color:#dcb;max-width:460px;text-align:center;line-height:1.8;">用⚫煤當燃料把東西燒一燒，變成更好的材料！</div>
+  <div id="furnList" style="display:flex;flex-direction:column;gap:8px;width:min(440px,92vw);"></div>
+  <button class="obtn gray" id="furnCloseBtn">關閉</button>
+</div>
+<div class="overlay" id="brewOverlay" style="display:none;z-index:33;background:rgba(26,14,34,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
+  <h2 style="color:#e080ff;">⚗️ 釀造台 Brewing</h2>
+  <div style="font-size:13px;color:#dcf;max-width:460px;text-align:center;line-height:1.8;">釀出神奇藥水！喝下去馬上生效（狀態列點藥水飲用）</div>
+  <div id="brewList" style="display:flex;flex-direction:column;gap:8px;width:min(440px,92vw);"></div>
+  <button class="obtn gray" id="brewCloseBtn">關閉</button>
 </div>
 <div class="overlay" id="achOverlay" style="display:none;z-index:34;background:rgba(14,18,34,.96);justify-content:flex-start;padding-top:26px;overflow-y:auto;">
   <h2 style="color:#ffd700;">🏆 成就</h2>
@@ -248,6 +260,12 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#f9d;">🔥 熔爐與 ⚗️ 釀造台（V69）</b><br>
+    快捷欄新增這兩台機器，放下後<b>對準按右鍵</b>就能打開！<br>
+    🔥 <b>熔爐</b>：用煤把礦石燒成更純的錠（鐵/金/銅×2）、生肉烤成🔥🍖、木頭燒成木炭<br>
+    ⚗️ <b>釀造台</b>：釀出四種藥水，喝下馬上生效（點狀態列圖示喝）<br>
+    　⚔️<b>力量</b>(3分鐘傷害+4)｜❤️<b>治療</b>(立即回滿血)｜🛡🔥<b>抗火</b>(3分鐘岩漿不傷你)｜👁<b>夜視</b>(3分鐘夜晚變亮)<br>
+    　打Boss前先喝力量+抗火，超強！<br><br>
     <b style="color:#fc8;">🚃 軌道與弓箭升級（V64）</b><br>
     🛤 軌道到盡頭會<b>直接衝出去</b>（邊前衝邊下墜），礦車除非按跳躍下車否則一直存在<br>
     🐄 靠近的生物會<b>跟著坐上礦車</b>，一起撞進地獄門就會一起被傳送！<br>
@@ -383,12 +401,12 @@ const AIR=0, GRASS=1, DIRT=2, STONE=3, SAND=4, WOOD=5, LEAF=6, PLANK=7, GLASS=8,
       COAL=14, IRON=15, GOLD=16, DIAMOND=17, CHAL=18, OBSID=19, LAVA=20, NETHER=21, PORTAL=22, SOUL=23, CRAFT=24,
       ENDSTONE=25, ENDFRAME=26, ENDFRAMEEYE=27, ENDPORTAL=28, ENDCRYSTAL=29, DRAGONEGG=30, GATEWAY=31, ELYTRAB=32, EMERALD=33, ENCHANT=34,
       RWIRE=35, RWIRE_ON=36, RTORCH=37, RTORCH_OFF=38, LEVER=39, LEVER_ON=40, RLAMP=41, RLAMP_ON=42, RBLOCK=43,
-      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57, COPPER=58, LAPIS=59, CARTB=60;
+      RAIL=44, PISTON=45, SPISTON=46, OBSERVER=47, SECRETB=48, FORGE=49, WISH=50, LUCKY=51, SUPERL=52, CHEST=53, SNOW=54, ICE=55, CROP=56, WHEATB=57, COPPER=58, LAPIS=59, CARTB=60, FURNACE=61, BREW=62;
 /* 中英對照：融入國中程度英文單字，邊玩邊學！太難的字保留中文 */
 const NAMES = {1:"草地 Grass",2:"泥土 Dirt",3:"石頭 Stone",4:"沙子 Sand",5:"原木 Wood",6:"樹葉 Leaf",7:"木板 Board",8:"玻璃 Glass",11:"磚塊 Brick",12:"TNT 炸藥 Bomb",13:"發光石 Light Stone",
   14:"煤礦 Coal",15:"鐵礦 Iron",16:"金礦 Gold",17:"鑽石礦 Diamond",18:"獄髓礦",19:"黑曜石",20:"岩漿 Lava",21:"地獄岩",22:"地獄門 Gate",23:"靈魂沙 Soul Sand",24:"合成台 Craft Table",
-  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat",58:"銅礦 Copper",59:"青金石 Blue Gem",60:"礦車 Minecart"};
-const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,LAVA,SOUL,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,CARTB,FORGE,WISH];
+  25:"終界石",26:"終界門框",27:"終界門框(有眼)",28:"終界傳送門",29:"終界水晶 Crystal",30:"龍蛋 Dragon Egg",31:"終界折躍門",32:"鞘翅 Wings",33:"綠寶石礦 Emerald",34:"附魔台 Magic Table",35:"紅石粉",36:"紅石粉(通電)",37:"紅石火把 Torch",38:"紅石火把(熄滅)",39:"拉桿 Lever",40:"拉桿(開)",41:"紅石燈 Lamp",42:"紅石燈(亮)",43:"紅石方塊",44:"鐵軌 Rail",45:"活塞(向上推)",46:"黏性活塞(向上推拉)",47:"偵測器(上方變化發訊號)",48:"神祕寶箱 Secret Box",49:"鑄造台",50:"許願池 Wishing Pool",51:"幸運方塊 Lucky Block",52:"超級幸運方塊 Super Lucky Block",53:"儲物箱 Chest",54:"積雪 Snow",55:"冰塊 Ice",56:"小麥苗 Baby Wheat",57:"成熟小麥 Wheat",58:"銅礦 Copper",59:"青金石 Blue Gem",60:"礦車 Minecart",61:"熔爐 Furnace",62:"釀造台 Brewing Stand"};
+const HOTBAR = [STONE,WOOD,CHEST,GLASS,WATER,LAVA,SOUL,TNT,OBSID,CRAFT,ENDFRAME,ENCHANT,RWIRE,RTORCH,LEVER,RLAMP,RBLOCK,RAIL,CARTB,FURNACE,BREW,FORGE,WISH];
 
 /* ================= 亂數 ================= */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
@@ -840,7 +858,7 @@ function recalcCrystals(){
 }
 
 /* ================= 材質圖集 ================= */
-const TILE=16, NTILES=73;
+const TILE=16, NTILES=75;
 const atlasCv = document.createElement('canvas');
 atlasCv.width = TILE*NTILES; atlasCv.height = TILE;
 const actx = atlasCv.getContext('2d');
@@ -1154,6 +1172,23 @@ drawTile(69,[220,180,60],10,(x,y)=>{
   const head=(y>=1&&y<=6)&&((x>=3&&x<=5)||(x>=7&&x<=9)||(x>=11&&x<=13));
   return head?[235,195,80,255]:(stem?[190,160,70,255]:[0,0,0,0]);
 });
+/* 熔爐 (73)：石身火口 */
+drawTile(73,[110,110,116],10,(x,y)=>{
+  if(x<2||x>13||y<2||y>13) return [86,86,92,255];
+  if(y>=6&&y<=12&&x>=4&&x<=11){
+    const fl=(y>=9)&&((x+y)%3!==0);
+    return fl?[255,150,40,255]:[40,34,30,255];
+  }
+  return [126,126,132,255];
+});
+/* 釀造台 (74)：石座＋藥瓶 */
+drawTile(74,[90,86,96],8,(x,y)=>{
+  if(y>=12) return [110,106,116,255];
+  if(x>=6&&x<=9&&y>=3&&y<=11) return [220,90,220,255];
+  if(x>=6&&x<=9&&y>=1&&y<=2) return [200,200,210,255];
+  if((x>=2&&x<=4||x>=11&&x<=13)&&y>=7&&y<=11) return [120,220,255,255];
+  return [0,0,0,0];
+});
 /* 礦車 (72)：木身鐵輪 */
 drawTile(72,[0,0,0],0,(x,y)=>{
   if(y>=4&&y<=11&&x>=2&&x<=13){
@@ -1204,7 +1239,7 @@ const TILES = {
   [FORGE]:{top:61,side:61,bot:61}, [WISH]:{top:62,side:62,bot:62},
   [LUCKY]:{top:63,side:63,bot:63}, [SUPERL]:{top:64,side:64,bot:64},
   [CHEST]:{top:65,side:65,bot:65}, [SNOW]:{top:66,side:66,bot:66}, [ICE]:{top:67,side:67,bot:67},
-  [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69}, [CARTB]:{top:72,side:72,bot:72},
+  [CROP]:{top:68,side:68,bot:68}, [WHEATB]:{top:69,side:69,bot:69}, [CARTB]:{top:72,side:72,bot:72}, [FURNACE]:{top:73,side:73,bot:73}, [BREW]:{top:74,side:74,bot:74},
   [COPPER]:{top:70,side:70,bot:70}, [LAPIS]:{top:71,side:71,bot:71}
 };
 const RS_TRANS=new Set([RWIRE,RWIRE_ON,RTORCH,RTORCH_OFF,LEVER,LEVER_ON,RAIL]);
@@ -1589,7 +1624,7 @@ const player = { x:WX/2, y:30, z:WZ/2, vy:0, yaw:0, pitch:-0.2, onGround:false, 
 const P_W=0.3, P_H=1.8, EYE=1.62;
 const inv = { wood:0, stone:0, coal:0, iron:0, gold:0, diamond:0, chal:0,
               pearl:0, blaze:0, eye:0, arrow:0, crystal:0, egg:0, emerald:0, spd:0, mutton:0, fish:0, star:0, cooked:0, luck:0,
-              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0, carrow:0 };
+              pork:0, chicken:0, beef:0, redapple:0, apple:0, snowball:0, seed:0, wheat:0, bread:0, copper:0, lapis:0, wind:0, totem:0, carrow:0, pStr:0, pHeal:0, pFire:0, pNight:0 };
 /* 個人挖礦積分：只記錄玩家親手（鎬子/TNT）挖到的 */
 const mineStats={ diamond:0, chal:0, spent:0 };
 const mineScore=()=> mineStats.diamond*1 + mineStats.chal*5;
@@ -1736,6 +1771,7 @@ const weapons = { mace:false, wood:false, stone:false, iron:false, dagger:false,
 let hasXbow=false;
 let hasFlint=false, hasBow=false, hasBed=false, hasElytra=false, hasPet=false, hasShield=false, hasInfBow=false, hasBoat=false, hasScope=false, hasRod=false, hasChain=false, hasDigger=false, hasWolf=false, hasCat=false, boating=false, shieldCD=0, armor=0, speedT=0;
 let boatOff=false;   /* 玩家主動下船（可潛水） */
+let strT=0, fireResT=0, nightT=0;   /* 力量/抗火/夜視 */
 let maceGrace=false; /* 重錘命中後：下次落地免摔傷 */
 let launchVX=0, launchVZ=0, launchT=0;   /* 礦車衝出軌道的慣性 */
 let fishing=false, fishT=0, fishPos=null, hasCompass=false, compT=0, invisT=0, fallD=0, o2=10, o2T=0, graceT=0, luckT=0, gliding=false;
@@ -2310,6 +2346,10 @@ function eat(kind){
   else if(kind==='luck' && inv.luck>0){ inv.luck--; luckT=60; sfx.eat(); sfx.eye(); toast('🍀 幸運加持 60 秒！快去許願池'); }
   else if(kind==='redapple' && inv.redapple>0){ inv.redapple--; heal(2); sfx.eat(); toast('🍎 回復 2 顆心'); }
   else if(kind==='apple' && inv.apple>0){ inv.apple--; heal(10); sfx.eat(); toast('✨ 金蘋果！生命全滿'); }
+  else if(kind==='pStr' && inv.pStr>0){ inv.pStr--; strT=180; sfx.eat(); sfx.eye(); toast('⚔️ 力量藥水！3分鐘內傷害 +4'); }
+  else if(kind==='pHeal' && inv.pHeal>0){ inv.pHeal--; heal(99); sfx.eat(); sfx.craft(); toast('❤️ 治療藥水！生命全滿'); }
+  else if(kind==='pFire' && inv.pFire>0){ inv.pFire--; fireResT=180; sfx.eat(); toast('🛡🔥 抗火藥水！3分鐘內岩漿燒不傷你'); }
+  else if(kind==='pNight' && inv.pNight>0){ inv.pNight--; nightT=180; sfx.eat(); toast('👁 夜視藥水！3分鐘內夜晚看得清楚'); }
   else if(kind==='spd' && inv.spd>0){ inv.spd--; speedT=60; sfx.eat(); sfx.fly(); toast('⚡ 速度加倍 60 秒！咻～'); }
   updateHUD();
   scheduleSave();
@@ -2343,7 +2383,7 @@ function updateHUD(){
   w.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();cycleWeapon(1);},{passive:false});
   w.addEventListener('mousedown',ev=>{ev.stopPropagation();cycleWeapon(1);});
   sb.appendChild(w);
-  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀']];
+  const foods=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['mutton','🍢'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['spd','⚡'],['luck','🍀'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pNight','👁']];
   for(const [k,e] of foods){
     if(inv[k]<=0) continue;
     const b=document.createElement('span');
@@ -4778,7 +4818,7 @@ const TRADES=[
   {give:{iron:5},    get:{emerald:2}, name:'💚 綠寶石×2（賣出鐵×5）'},
   {give:{diamond:2}, get:{emerald:6}, name:'💚 綠寶石×6（賣出鑽石×2）'},
 ];
-function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0) + (perks.star||0); }
+function curDmg(){ return WEAPON_DMG[curWeapon] + (ench[curWeapon]||0) + (perks.star||0) + (strT>0?4:0); }
 /* 武器庫：所有擁有過的武器都收藏在這，隨時切換 */
 const WLIST=['fist','mace','wood','stone','iron','dagger','axe','diamond','trident','flame','frost','chal','emsword','hammer','ender','thammer','wblade','king','god'];
 function ownedWeapons(){
@@ -5299,7 +5339,9 @@ addEventListener('keydown',e=>{
     for(const k of ['pork','chicken','beef','redapple','apple']) if(inv[k]>0){ eat(k); break; }
   }
   if(e.code==='Escape'){
-    if(chestOpen) closeChest();
+    if(document.getElementById('furnOverlay').style.display==='flex'){ document.getElementById('furnOverlay').style.display='none'; paused=false; }
+    else if(document.getElementById('brewOverlay').style.display==='flex'){ document.getElementById('brewOverlay').style.display='none'; paused=false; }
+    else if(chestOpen) closeChest();
     else if(forgeOpen) closeForge();
     else if(wishOpen) closeWish();
     else if(enchOpen) closeEnch();
@@ -5560,6 +5602,8 @@ function doAction(){
   const hit=raycast(5);
   if(!hit) return;
   if(hit.id===CRAFT) openCraft();
+  else if(hit.id===FURNACE) openFurn();
+  else if(hit.id===BREW) openBrew();
   else if(hit.id===ENCHANT) openEnch();
   else if(hit.id===FORGE) openForge();
   else if(hit.id===WISH) openWish();
@@ -5601,7 +5645,7 @@ function selectSlot(i){
 }
 buildHotbar();
 /* ===== 第三行：消耗品列（食物/藥水/珍珠）右鍵使用 ===== */
-const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['fish','🐟'],['cooked','🔥🍖'],['bread','🍞'],['redapple','🍎'],['apple','✨🍎'],['luck','🍀'],['pearl','🔮']];
+const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['cooked','🔥🍖'],['bread','🍞'],['apple','✨🍎'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pearl','🔮']];
 let selCons=-1;
 const consEl=document.createElement('div');
 consEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:132px;display:flex;gap:4px;z-index:10;justify-content:center;';
@@ -6010,7 +6054,7 @@ function place(){
   const tent0=raycastEntity(5);
   if(tent0 && (tent0.kind==='vil' || (tent0.kind==='z'&&tent0.type==='piglin'))){ doAction(); return; }
   const hit9=raycast(6);
-  if(hit9 && (hit9.id===CRAFT||hit9.id===ENCHANT||hit9.id===FORGE||hit9.id===WISH||hit9.id===CHEST||hit9.id===LEVER||hit9.id===LEVER_ON)){ doAction(); return; }
+  if(hit9 && (hit9.id===CRAFT||hit9.id===ENCHANT||hit9.id===FORGE||hit9.id===WISH||hit9.id===CHEST||hit9.id===FURNACE||hit9.id===BREW||hit9.id===LEVER||hit9.id===LEVER_ON)){ doAction(); return; }
   const pidSel=HOTBAR[selSlot];
   /* 🚃 礦車：對準鐵軌放置＝直接上車 */
   if(pidSel===CARTB){
@@ -6246,6 +6290,47 @@ function openPause(){
   if(document.pointerLockElement) document.exitPointerLock();
   saveGame(false);
 }
+/* ================= 🔥 熔爐 & ⚗️ 釀造台 ================= */
+const FURN=[
+  {name:'🔩 鐵礦 → 鐵錠×2（更純）', cost:{iron:2,coal:1}, give:()=>{ inv.iron+=2; }},
+  {name:'🥇 金礦 → 金錠×2',        cost:{gold:2,coal:1}, give:()=>{ inv.gold+=2; }},
+  {name:'🟠 銅礦 → 銅錠×2',        cost:{copper:2,coal:1}, give:()=>{ inv.copper+=2; }},
+  {name:'🔥🍖 生肉 → 烤肉×2（回5心）', cost:{pork:2,coal:1}, give:()=>{ inv.cooked+=2; }},
+  {name:'🪟 沙子 → 玻璃（快捷欄可用）', cost:{stone:2,coal:1}, give:()=>{ inv.stone+=1; }},
+  {name:'⚫ 木頭 → 木炭×3（當燃料）', cost:{wood:3}, give:()=>{ inv.coal+=3; }},
+];
+const BREWS=[
+  {key:'pStr',  name:'⚔️ 力量藥水（3分鐘 傷害+4）',   cost:{blaze:1,gold:2}},
+  {key:'pHeal', name:'❤️ 治療藥水（立即回滿血）',      cost:{emerald:2,redapple:1}},
+  {key:'pFire', name:'🛡🔥 抗火藥水（3分鐘 免疫岩漿）', cost:{blaze:2,lapis:1}},
+  {key:'pNight',name:'👁 夜視藥水（3分鐘 夜晚變亮）',  cost:{lapis:2,gold:1}},
+];
+function renderStation(list, elId, isBrew){
+  const box=document.getElementById(elId);
+  box.innerHTML='';
+  for(const r of list){
+    const ok=Object.entries(r.cost).every(([k,v])=>(inv[k]||0)>=v);
+    const row=document.createElement('button');
+    row.className='obtn';
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0;font-size:13px;'+(ok?(isBrew?'background:#5a2a7a;':'background:#7a4a1a;'):'background:#444;color:#999;');
+    const costTxt=Object.entries(r.cost).map(([k,v])=>(MAT_NAME[k]||k)+'×'+v).join(' ');
+    row.innerHTML='<span style="text-align:left;">'+r.name+'</span><span style="white-space:nowrap;font-size:11px;">'+costTxt+'</span>';
+    if(ok) row.addEventListener('click',()=>{
+      for(const [k,v] of Object.entries(r.cost)) inv[k]-=v;
+      if(isBrew){ inv[r.key]=(inv[r.key]||0)+1; lootToast('⚗️ 釀好了：'+r.name); }
+      else { r.give(); lootToast('🔥 燒好了：'+r.name); }
+      sfx.craft(); spawnParticles(player.x,player.y+1.5,player.z,14,isBrew?0xd060ff:0xff9040);
+      updateHUD(); scheduleSave();
+      renderStation(list, elId, isBrew);
+    });
+    box.appendChild(row);
+  }
+}
+function openFurn(){ paused=true; if(document.pointerLockElement) document.exitPointerLock(); renderStation(FURN,'furnList',false); document.getElementById('furnOverlay').style.display='flex'; }
+function openBrew(){ paused=true; if(document.pointerLockElement) document.exitPointerLock(); renderStation(BREWS,'brewList',true); document.getElementById('brewOverlay').style.display='flex'; }
+document.getElementById('furnCloseBtn').addEventListener('click',()=>{ document.getElementById('furnOverlay').style.display='none'; paused=false; });
+document.getElementById('brewCloseBtn').addEventListener('click',()=>{ document.getElementById('brewOverlay').style.display='none'; paused=false; });
+
 /* ================= 積分兌換商店 ================= */
 const REWARDS=[
   {name:'🏹 箭×10',                        cost:3,  give:()=>{ inv.arrow+=10; }},
@@ -6543,6 +6628,9 @@ function loop(){
     } else if(o2<10||graceT>0){ o2=10; graceT=0; o2T=0; updateHUD(); }
   }
   if(luckT>0) luckT-=dt;
+  if(strT>0){ strT-=dt; if(strT<=0) toast('⚔️ 力量藥水結束'); }
+  if(fireResT>0){ fireResT-=dt; if(fireResT<=0) toast('🛡🔥 抗火效果結束'); }
+  if(nightT>0){ nightT-=dt; if(nightT<=0) toast('👁 夜視效果結束'); else if(dim==='over'||dim==='nether') ambient.intensity=Math.max(ambient.intensity,0.95); }
   updateArrows(dt);
   updateActButton();
 
@@ -6653,7 +6741,7 @@ function loop(){
     if(dim==='end'){ invulnT=0; damagePlayer(10); if(player.hp>0) spawn(); }
     else spawn();
   }
-  if(touchingLava()){
+  if(touchingLava() && fireResT<=0){
     lavaT-=dt;
     if(lavaT<=0){ invulnT=0; damagePlayer(1); lavaT=0.6; }
   } else lavaT=0;
