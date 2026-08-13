@@ -57,8 +57,8 @@ window.onerror=function(msg,src,line,col,err){
     #btnBow   { right:184px; bottom:100px; width:50px; height:50px; }
     #btnFly   { right:190px; bottom:170px; width:44px; height:44px; }
     #btnAct   { right:110px; bottom:196px; width:48px; height:48px; }
-    #hearts { bottom:158px; left:50%; font-size:12px; }
-    #o2bar { bottom:180px; font-size:12px; }
+    #hearts { bottom:120px; left:50%; font-size:12px; }
+    #o2bar { bottom:142px; font-size:12px; }
     #statusBar { top:30px; left:56px; font-size:12px; }
   }
   #btnMenu { position:fixed; top:10px; left:10px; z-index:10; border-radius:10px; padding:8px 14px; background:rgba(0,0,0,.5); color:#fff; font-size:18px; border:1px solid rgba(255,255,255,.4); }
@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V69・熔爐·釀造台·藥水</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V70・新附魔·手機介面精簡</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -260,6 +260,9 @@ window.onerror=function(msg,src,line,col,err){
     潛下去挖礦要注意氧氣🫧——10秒後開始悶氣，快沒氣就趕快浮上來換氣再下潛！<br><br>
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
+    <b style="color:#cf9;">✨ 新附魔（V70）</b><br>
+    附魔台新增四種正版風格附魔：<br>
+    🌵<b>尖刺</b>(被打時反傷敵人)｜🩸<b>生命偷取</b>(每次擊殺回血)｜🍀<b>幸運</b>(挖礦機率雙倍掉落)｜🐬<b>水下呼吸</b>(氧氣加倍)<br><br>
     <b style="color:#f9d;">🔥 熔爐與 ⚗️ 釀造台（V69）</b><br>
     快捷欄新增這兩台機器，放下後<b>對準按右鍵</b>就能打開！<br>
     🔥 <b>熔爐</b>：用煤把礦石燒成更純的錠（鐵/金/銅×2）、生肉烤成🔥🍖、木頭燒成木炭<br>
@@ -2228,7 +2231,7 @@ function makeBoatMesh(){
   return g;
 }
 const ench={};
-const perks={armor:0, hp:0, fire:0, power:0, jump:0, speed:0, star:0};
+const perks={armor:0, hp:0, fire:0, power:0, jump:0, speed:0, star:0, thorn:0, lifest:0, lucky:0, swim:0};
 const PERKS=[
   {id:'armor', name:'🛡 保護附魔（受傷再 -1）',        max:2, cost:{diamond:3,emerald:2}},
   {id:'hp',    name:'❤️ 生命強化（最大生命 +2 顆心）',  max:2, cost:{diamond:4,emerald:4}},
@@ -2236,6 +2239,10 @@ const PERKS=[
   {id:'power', name:'🏹 力量附魔（箭矢傷害 +2）',       max:1, cost:{emerald:4,diamond:2}},
   {id:'jump',  name:'🦘 跳躍提升（跳得更高）',          max:1, cost:{emerald:3,iron:3}},
   {id:'speed', name:'💨 迅捷附魔（移動速度 +25%）',     max:1, cost:{emerald:4,gold:3}},
+  {id:'thorn', name:'🌵 尖刺附魔（被打時反傷敵人3點）',  max:2, cost:{diamond:3,copper:5}},
+  {id:'lifest',name:'🩸 生命偷取（每次擊殺回1顆心）',    max:2, cost:{emerald:5,lapis:3}},
+  {id:'lucky', name:'🍀 幸運附魔（挖礦有機率雙倍掉落）', max:2, cost:{lapis:5,gold:4}},
+  {id:'swim',  name:'🐬 水下呼吸（氧氣多一倍）',        max:1, cost:{lapis:4,iron:5}},
 ];
 function maxHpVal(){ return 10+perks.hp*2; }
 let dragonDefeated=false;
@@ -2305,6 +2312,15 @@ function damagePlayer(n){
   }
   n=Math.max(1, n-armor-(perks.armor||0));
   player.hp=Math.max(0,player.hp-n);
+  if(perks.thorn){                       /* 🌵 尖刺：反傷附近敵人 */
+    for(const e of entities()){
+      if(e.kind==='vil') continue;
+      if(Math.hypot(e.x-player.x,e.z-player.z)<2.5){
+        e.hp-=3*perks.thorn; e.hurtT=0.3;
+        spawnParticles(e.x,e.y+1,e.z,6,0x88ff88);
+      }
+    }
+  }
   invulnT=0.8;
   sfx.hurt();
   updateHUD();
@@ -2920,6 +2936,7 @@ function updateZombies(dt){
       else if(z.type==='creeper' && Math.random()<0.4){ inv.iron++; lootToast('🔩 拆彈成功！苦力怕 Creeper 掉了鐵 Iron'); updateHUD(); scheduleSave(); }
       if(z.elite){ inv.iron+=3; inv.diamond++; spawnParticles(z.x,z.y+1,z.z,20,0xffd700); lootToast('👑 打倒精英隊長！掉落 🔩×3 💎×1'); updateHUD(); scheduleSave(); }
       dailyEvt('kill');
+      if(perks.lifest) heal(perks.lifest);
       if(bloodMoon){ const g=['iron','coal','arrow'][(Math.random()*3)|0]; inv[g]+=(g==='arrow'?3:1); if(Math.random()<0.15){ inv.diamond++; lootToast('🔴💎 血月獎勵：鑽石 Diamond×1！'); } updateHUD(); }
       const col = z.type==='spider'?0x222222 : z.type==='skel'?0xdddddd : z.type==='creeper'?0x4aa04a : z.type==='slime'?0x58c048 : z.type==='magma'?0xd85820 : z.type==='witch'?0x4a2a6a : (z.fromNether?0xf0a8a0:0x55a04a);
       removeEnt(zombies,i,true,col); continue;
@@ -5648,9 +5665,12 @@ buildHotbar();
 const CONSUM=[['pork','🍖'],['chicken','🍗'],['beef','🥩'],['cooked','🔥🍖'],['bread','🍞'],['apple','✨🍎'],['pStr','⚔️'],['pHeal','❤️'],['pFire','🛡🔥'],['pearl','🔮']];
 let selCons=-1;
 const consEl=document.createElement('div');
+consEl.id='consBar';
 consEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:132px;display:flex;gap:4px;z-index:10;justify-content:center;';
+if(isTouch) consEl.style.display='none';
 document.body.appendChild(consEl);
 function renderCons(){
+  if(isTouch){ consEl.style.display='none'; return; }
   consEl.innerHTML='';
   CONSUM.forEach(([k,em],i)=>{
     const d=document.createElement('div');
@@ -6025,6 +6045,7 @@ function mine(){
   }
   if(mat){
     inv[mat]++;
+    if(perks.lucky && Math.random()<0.18*perks.lucky){ inv[mat]++; lootToast('🍀 幸運附魔！'+(MAT_NAME[mat]||mat)+' 雙倍掉落'); }
     if(hit.id===DIAMOND){ mineStats.diamond++; }
     else if(hit.id===CHAL){ mineStats.chal++; }
     if(isOre){
@@ -6617,7 +6638,7 @@ function loop(){
     const headB=getB(Math.floor(player.x),Math.floor(player.y+EYE),Math.floor(player.z));
     if(headB===WATER && !boating){
       graceT+=dt;
-      if(graceT>10){
+      if(graceT>(perks.swim?20:10)){
         o2T+=dt;
         while(o2T>=1){
           o2T-=1;
