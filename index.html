@@ -131,7 +131,7 @@ window.onerror=function(msg,src,line,col,err){
 
 <div class="overlay" id="startOverlay">
   <h1>方塊世界</h1>
-  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V72・礦車氣泡柱連動</p>
+  <p style="color:#8fd68f;font-size:12px;letter-spacing:2px;">版本 V73・軌道穿越氣泡柱</p>
   <p id="saveInfo">正在讀取存檔…</p>
   <p id="ctrlHint"></p>
   <button class="obtn" id="startBtn">開始遊戲</button>
@@ -261,9 +261,9 @@ window.onerror=function(msg,src,line,col,err){
     <b style="color:#cfc;">🐺 寵物與工具</b><br>
     寵物狼：自動咬怪｜寵物貓：苦力怕不敢靠近｜鋸子🪚：砍1格收整棵樹｜挖土器：整片挖光｜打火石對動物按🔥＝烤肉(回5心)｜儲物箱📦：存資源防超級方塊詛咒(放置需木2)<br><br>
     <b style="color:#9df;">💨 氣泡柱電梯做法（V72）</b><br>
-    ①地上挖一格放<b>靈魂沙</b> → ②上方疊 5~8 格<b>水</b> → ③四周用玻璃/方塊圍住不讓水流走<br>
-    站進去就會被<b>沖上天</b>！<b>礦車軌道</b>直接鋪到氣泡柱底部，衝進去會自動彈出車外沖上天，<br>
-    到最高點再用<b>重錘</b>往下砸怪，超帥組合技！<br><br>
+    <b>純電梯版</b>：①地上放<b>靈魂沙</b> → ②上方疊 5~12 格<b>水</b> → ③四周用玻璃圍住不讓水流走 → 站進去沖上天！<br>
+    <b>礦車版</b>：①<b>鐵軌直接鋪過去、穿過柱子那一格</b> → ②<b>靈魂沙放在鐵軌正下方</b> → ③水從<b>鐵軌上方</b>開始往上疊 → ④玻璃圍住<br>
+    坐礦車衝進去 → <b>自動彈出車外＋沖上20格</b> → 最高點用<b>重錘</b>往下砸怪，超帥組合技！<br><br>
     <b style="color:#cf9;">✨ 新附魔（V70）</b><br>
     附魔台新增四種正版風格附魔：<br>
     🌵<b>尖刺</b>(被打時反傷敵人)｜🩸<b>生命偷取</b>(每次擊殺回血)｜🍀<b>幸運</b>(挖礦機率雙倍掉落)｜🐬<b>水下呼吸</b>(氧氣加倍)<br><br>
@@ -2108,7 +2108,7 @@ function updateFluids(dt){
 function bubbleColumn(dt){
   const fx=Math.floor(player.x), fz=Math.floor(player.z);
   const fy=Math.floor(player.y);
-  if(getB(fx,fy,fz)!==WATER && getB(fx,fy+1,fz)!==WATER) return;
+  if(getB(fx,fy,fz)!==WATER && getB(fx,fy+1,fz)!==WATER && !(getB(fx,fy,fz)===RAIL&&getB(fx,fy+1,fz)===WATER)) return;
   for(let y=fy; y>=Math.max(1,fy-8); y--){
     const b=getB(fx,y,fz);
     if(b===SOUL){
@@ -2117,7 +2117,7 @@ function bubbleColumn(dt){
       if(Math.random()<0.3) spawnParticles(player.x,player.y+0.4,player.z,2,0xbfefff);
       return;
     }
-    if(b!==WATER) return;
+    if(b!==WATER && b!==RAIL) return;          /* 鐵軌可穿透 */
   }
 }
 
@@ -3758,8 +3758,8 @@ function updateCart(dt){
     if(getB(cx2,cy2,cz2)===WATER||getB(cx2,cy2+1,cz2)===WATER){
       for(let y=cy2; y>=Math.max(1,cy2-8); y--){
         const b2=getB(cx2,y,cz2);
-        if(b2===SOUL){ stopCart(); player.vy=16; fallD=0; toast('🚃💨 衝進氣泡柱！被水柱沖上天'); return; }
-        if(b2!==WATER) break;
+        if(b2===SOUL){ stopCart(); player.vy=18; fallD=0; lootToast('🚃💨 衝進氣泡柱！被水柱沖上天'); return; }
+        if(b2!==WATER && b2!==RAIL) break;      /* 鐵軌可穿透 */
       }
     }
   }
